@@ -45,19 +45,13 @@ function renderCanvas() {
         canvas.width = CANVAS_WIDTH;
         canvas.height = CANVAS_HEIGHT;
         context = canvas.getContext("2d");
+        //context.font = "20px Georgia";
 
         initAndDrawGrid();
 
         drawLines();
         drawPoints();
 
-    }
-}
-
-function drawPoints(fillStyle) {
-    for (var p = 0; p < points.length; p++) {
-        drawPoint(points[p], fillStyle);
-        console.log (points[p].toString());
     }
 }
 
@@ -77,12 +71,26 @@ function drawLine(pointBegin, pointEnd, fillStyle) {
     context.stroke();
 }
 
+function drawPoints(fillStyle) {
+    for (var p = 0; p < points.length; p++) {
+        drawPoint(points[p], fillStyle);
+        //console.log (points[p].toString());
+        drawPointText(points[p], fillStyle);
+    }
+}
+
 function drawPoint(point, fillStyle) {
     context.beginPath();
     context.arc(point.canvasX, point.canvasY, POINT_RADIUS, 0, Math.PI*2, true);
     context.closePath();
     context.fillStyle = (fillStyle === undefined) ? "#000000" : fillStyle;
     context.fill();
+}
+
+function drawPointText(point, fillStyle) {
+    const CANVAS_TEXT_OFFSET = 10;
+    context.fillStyle = (fillStyle === undefined) ? "#000000" : fillStyle;
+    context.fillText(point.toString(), point.canvasX + CANVAS_TEXT_OFFSET, point.canvasY + CANVAS_TEXT_OFFSET);
 }
 
 function initAndDrawGrid() {
