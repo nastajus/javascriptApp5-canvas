@@ -6,8 +6,9 @@ const POINT_RADIUS = 5;
 
 var gridPoints = [];
 var dataPoints = [];
-var hypothesisLinePoints = [];
-var potentialCorrectLinePoints =[];
+var hypothesisLine;
+var potentialCorrectLine;
+var errorLines = [];
 
 function Point (x, y) {
     this.x = x;
@@ -25,11 +26,9 @@ function init () {
 
     initSpreadPoints();
 
-    //initLinearAlgebraLine(hypothesisLinePoints, 3, 1/2);
-    hypothesisLinePoints = new Line(3, 1/2).endPoints();
+    initLines();
 
-    //initLinearAlgebraLine(potentialCorrectLinePoints, -2, 1/3);
-    potentialCorrectLinePoints = new Line(-2, 1/3).endPoints();
+    initErrorLines(dataPoints, hypothesisLine);
 
 }
 
@@ -51,6 +50,14 @@ function initSpreadPoints() {
     dataPoints.push(new Point(18,8));
 }
 
+function initLines() {
+    //initLinearAlgebraLine(hypothesisLinePoints, 3, 1/2);
+    hypothesisLine = new Line(3, 1/2);
+
+    //initLinearAlgebraLine(potentialCorrectLinePoints, -2, 1/3);
+    potentialCorrectLine = new Line(-2, 1/3);
+}
+
 function renderCanvas() {
     window.onload = function () {
         var canvas = document.getElementById("canvas");
@@ -63,8 +70,11 @@ function renderCanvas() {
 
         drawPoints(dataPoints, "darkred", true);
 
-        drawLinesBetweenPoints(hypothesisLinePoints, "darkred");
-        drawLinesBetweenPoints(potentialCorrectLinePoints, "black");
+        drawLinesBetweenPoints(hypothesisLine.endPoints(), "darkred");
+        drawLinesBetweenPoints(potentialCorrectLine.endPoints(), "black");
+
+        drawLinesBetweenPoints(errorLines, "forestgreen")
+        //drawPoints(errorLines.endPoints(), "forestgreen")
     }
 }
 
@@ -120,22 +130,62 @@ function initGridPoints(gridPoints) {
 
 function Line(b0, b1) {
 
-    this.y_intercept_y_value = b0;
-    this.slope = b1;
-
-    Line.prototype.endPoints = function() {
-        const x_max = CANVAS_WIDTH / CANVAS_SCALE;
-        var y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
-
-        var p1 = new Point (0, this.y_intercept_y_value); //y-intercept
-        var p2 = new Point (x_max, y_at_x_max);
-        return [p1, p2];
-    };
-
     //y=mx + b
     //y_hat = b0 + b1 * x;
     //y_hat = y_intercept + slope * (x);
     // y = 3 + 1/2 * x;
+
+    this.y_intercept_y_value = b0;
+    this.slope = b1;
+
+    const x_max = CANVAS_WIDTH / CANVAS_SCALE;
+    var y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
+
+    var p1 = new Point (0, this.y_intercept_y_value); //y-intercept
+    var p2 = new Point (x_max, y_at_x_max);
+
+    Line.prototype.endPoints = function() {
+        return [p1, p2];
+    };
+}
+
+function LineOfPoints(p1, p2) {
+    this.p1 = p1;
+    this.p2 = p2;
+
+    LineOfPoints.prototype.endPoints = function() {
+        return [p1, p2];
+    };
+
+}
+
+function initErrorLines(points, line) {
+
+    //find a point on a line
+    //y = mx + b
+
+    var m = line.slope;
+    var b = line.y_intercept_y_value;
+
+
+    //var lines = [];
+    for (var p = 0; p < points.length; p++) {
+        var x = points[p].x;
+        var y = m * x + b;
+
+        var p1 = points[p];
+        var p2 = new Point(x, y);
+
+        var eLine = new LineOfPoints(p1, p2);
+        errorLines.push(p1, p2);
+    }
+    var d;
+    //return lines;
+    //errorLines;
+}
+
+function getLineIntercept() {
+
 }
 
 init();
