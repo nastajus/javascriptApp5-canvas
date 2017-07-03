@@ -46,49 +46,59 @@ function renderCanvas() {
         canvas.height = CANVAS_HEIGHT;
         context = canvas.getContext("2d");
 
+        initAndDrawGrid();
+
         drawLines();
         drawPoints();
-
-        initAndDrawGrid();
 
     }
 }
 
-function drawPoints() {
+function drawPoints(fillStyle) {
     for (var p = 0; p < points.length; p++) {
-        drawPoint(points[p]);
+        drawPoint(points[p], fillStyle);
         console.log (points[p].toString());
     }
 }
 
-function drawLines() {
+function drawLines(fillStyle) {
     var pNext;
     for (var p = 0; p < points.length; p++) {
         pNext = (p + 1) % points.length;
-        drawLine(points[p], points[pNext]);
+        drawLine(points[p], points[pNext], fillStyle);
     }
 }
 
-function drawLine(pointBegin, pointEnd) {
+function drawLine(pointBegin, pointEnd, fillStyle) {
     context.beginPath();
-    var x1 = pointBegin.canvasX;
-    var x2 = pointEnd.canvasX;
-    var y1 = pointBegin.canvasY;
-    var y2 = pointEnd.canvasY;
-    context.moveTo(x1, y1);
-    context.lineTo(x2, y2);
+    context.moveTo(pointBegin.canvasX, pointBegin.canvasY);
+    context.lineTo(pointEnd.canvasX, pointEnd.canvasY);
+    context.fillStyle = (fillStyle === undefined) ? "#000000" : fillStyle;
     context.stroke();
 }
 
-function drawPoint(point) {
+function drawPoint(point, fillStyle) {
     context.beginPath();
     context.arc(point.canvasX, point.canvasY, POINT_RADIUS, 0, Math.PI*2, true);
     context.closePath();
+    context.fillStyle = (fillStyle === undefined) ? "#000000" : fillStyle;
     context.fill();
 }
 
 function initAndDrawGrid() {
+    var gridPoints = [];
+    const GRID_SQUARE_SIZE = 30;
 
+    //this is not easy to read easily. refactor to be most readable possible:
+    for (var x = 0; x <= CANVAS_WIDTH; x += GRID_SQUARE_SIZE ) {
+        for (var y = 0; y <= CANVAS_HEIGHT; y += GRID_SQUARE_SIZE ) {
+            gridPoints.push(new Point(x / GRID_SQUARE_SIZE, y / GRID_SQUARE_SIZE));
+        }
+    }
+
+    for (var g = 0; g < gridPoints.length; g++) {
+        drawPoint(gridPoints[g], "lightgray");
+    }
 }
 
 init();
