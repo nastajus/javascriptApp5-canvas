@@ -44,8 +44,8 @@ function init () {
 
     initLines();
 
-    //getTotalError(goodHypothesisLine);
-    //getTotalError(badHypothesisLine);
+    //initErrorLines(dataPoints, goodHypothesisLine);
+    initErrorLines(dataPoints, badHypothesisLine);
 
 }
 
@@ -90,13 +90,11 @@ function renderCanvas() {
         drawLinesBetweenPoints(goodHypothesisLine.endPoints(), "darkred");
         drawLinesBetweenPoints(badHypothesisLine.endPoints(), "black");
 
-        goodHypothesisLine.drawEachLine("forestgreen");
+        drawEachLine(goodHypothesisLine.errorLines, "forestgreen");
+        drawEachLineText(goodHypothesisLine.errorLines, "forestgreen");
 
-        // drawEachLine(goodHypothesisLine.errorLines, "forestgreen");
-        // drawEachLineText(goodHypothesisLine.errorLines, "forestgreen");
-        //
-        // drawEachLine(badHypothesisLine.errorLines, "forestgreen");
-        // drawEachLineText(badHypothesisLine.errorLines, "forestgreen");
+        drawEachLine(badHypothesisLine.errorLines, "forestgreen");
+        drawEachLineText(badHypothesisLine.errorLines, "forestgreen");
 
         //drawPoints(errorLines.endPoints(), "forestgreen");
     }
@@ -110,7 +108,23 @@ function drawLinesBetweenPoints(points, fillStyle) {
     }
 }
 
+function drawEachLine(lines, fillStyle) {
+    if (lines === undefined) {
+        throw new ReferenceError("Cannot draw lines, lines is undefined");
+    }
+    for (var l = 0; l < lines.length; l++) {
+        drawLine(lines[l].p1, lines[l].p2, fillStyle);
+    }
+}
 
+function drawEachLineText(lines, fillStyle) {
+    if (lines === undefined) {
+        throw new ReferenceError("Cannot draw line text, lines is undefined");
+    }
+    for (var l = 0; l < lines.length; l++) {
+        drawPointText(lines[l].midpoint, fillStyle);
+    }
+}
 
 function drawLine(pointBegin, pointEnd, strokeStyle) {
     var originalStrokeStyle = context.strokeStyle;
@@ -178,9 +192,6 @@ function Line(b0, b1) {
     this.p1 = new Point (0, this.y_intercept_y_value); //y-intercept
     this.p2 = new Point (x_max, y_at_x_max);
 
-    // //initErrorLines(dataPoints, goodHypothesisLine);
-    // initErrorLines(dataPoints, badHypothesisLine);
-
     Line.prototype.endPoints = function() {
         return [this.p1, this.p2];
     };
@@ -189,78 +200,12 @@ function Line(b0, b1) {
         this.name = name;
     };
 
-    // Line.prototype.initErrorLines = initErrorLines (dataPoints, this);
-
-    Line.prototype.initErrorLines = function (points, line) {
-
-        //y = mx + b
-
-        var m = line.slope;
-        var b = line.y_intercept_y_value;
-        var errorLines = [];
-
-        for (var p = 0; p < points.length; p++) {
-            var x = points[p].x;
-            var y = m * x + b;
-
-            var p1 = points[p];
-            var p2 = new Point(x, y);    //find a point on a line
-
-
-            var errorLine = new ErrorLine(p1, p2);
-            errorLine.midpoint.setString(errorLine.magnitude);
-            errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
-            errorLines.push(errorLine);
-        }
+    Line.prototype.setErrorLines = function(errorLines) {
         this.errorLines = errorLines;
-
-    }(dataPoints, this);
-
-    Line.prototype.getTotalError = function(hypothesisLine) {
-        var errorLines = this.errorLines;
-        var totalError = 0;
-        var magnitudes = [];
-
-        if (errorLines === undefined) {
-            throw new Error("Cannot get total error, errorLines is undefined in " + this.name);
-        }
-
-        for (var i = 0; i < errorLines.length; i++) {
-            totalError += errorLines[i].magnitude;
-            magnitudes.push(" " + errorLines[i].magnitude);
-        }
-        totalError = round(totalError, 2);
-        this.totalError = totalError;
-        console.log (this.name);
-        console.log ("Each error: " + magnitudes.toString());
-        console.log ("Total error: " + totalError);
-        //return totalError;
-    }(this);
-
-    // Line.prototype.setErrorLines = function(errorLines) {
-    //     this.errorLines = errorLines;
-    // };
+    };
 
     Line.prototype.setTotalError = function(totalError) {
         this.totalError = totalError;
-    };
-
-    Line.prototype.drawEachLine = function (fillStyle) {
-        if (this.errorLines === undefined) {
-            throw new ReferenceError("Cannot draw lines, lines is undefined");
-        }
-        for (var l = 0; l < this.errorLines.length; l++) {
-            drawLine(this.errorLines[l].p1, this.errorLines[l].p2, fillStyle);
-        }
-    }(this);
-
-    Line.prototype.drawEachLineText = function (lines, fillStyle) {
-        if (lines === undefined) {
-            throw new ReferenceError("Cannot draw line text, lines is undefined");
-        }
-        for (var l = 0; l < lines.length; l++) {
-            drawPointText(lines[l].midpoint, fillStyle);
-        }
     };
 }
 
@@ -284,31 +229,51 @@ function ErrorLine(p1, p2) {
 
 }
 
-// function initErrorLines(points, line) {
-//
-//     //y = mx + b
-//
-//     var m = line.slope;
-//     var b = line.y_intercept_y_value;
-//     var errorLines = [];
-//
-//     for (var p = 0; p < points.length; p++) {
-//         var x = points[p].x;
-//         var y = m * x + b;
-//
-//         var p1 = points[p];
-//         var p2 = new Point(x, y);    //find a point on a line
-//
-//
-//         var errorLine = new ErrorLine(p1, p2);
-//         errorLine.midpoint.setString(errorLine.magnitude);
-//         errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
-//         errorLines.push(errorLine);
-//     }
-//     Line.prototype.setErrorLines(errorLines);
-// }
+function initErrorLines(points, line) {
 
+    //find a point on a line
+    //y = mx + b
 
+    var m = line.slope;
+    var b = line.y_intercept_y_value;
+    var errorLines = [];
+
+    for (var p = 0; p < points.length; p++) {
+        var x = points[p].x;
+        var y = m * x + b;
+
+        var p1 = points[p];
+        var p2 = new Point(x, y);
+
+        var errorLine = new ErrorLine(p1, p2);
+        errorLine.midpoint.setString(errorLine.magnitude);
+        errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
+        errorLines.push(errorLine);
+    }
+    Line.prototype.setErrorLines(errorLines);
+    getTotalError(line);
+}
+
+function getTotalError(hypothesisLine) {
+    var errorLines = hypothesisLine.errorLines;
+    var totalError = 0;
+    var magnitudes = [];
+
+    if (errorLines === undefined) {
+        throw new Error("Cannot get total error, errorLines is undefined in " + hypothesisLine.name);
+    }
+
+    for (var i = 0; i < errorLines.length; i++) {
+        totalError += errorLines[i].magnitude;
+        magnitudes.push(" " + errorLines[i].magnitude);
+    }
+    totalError = round(totalError, 2);
+    hypothesisLine.totalError = totalError;
+    console.log (hypothesisLine.name);
+    console.log ("Each error: " + magnitudes.toString());
+    console.log ("Total error: " + totalError);
+    return totalError;
+}
 
 function round(value, decimals) {
     return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
