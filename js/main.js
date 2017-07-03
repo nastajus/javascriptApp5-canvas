@@ -3,6 +3,8 @@ const CANVAS_WIDTH = 600;
 const CANVAS_HEIGHT = 300;
 const CANVAS_SCALE = 30;
 const POINT_RADIUS = 5;
+const CANVAS_TEXT_OFFSET_COORD = 10;
+const CANVAS_TEXT_OFFSET_MAGNI = 5;
 
 var gridPoints = [];
 var dataPoints = [];
@@ -13,23 +15,27 @@ var errorLines = [];
 function Point (x, y) {
     this.x = x;
     this.y = y;
-    //this.errorLine;
 
     this.canvasX = x * CANVAS_SCALE;
     this.canvasY = CANVAS_HEIGHT - (y * CANVAS_SCALE);
 
+    this.customString;
+    this.textOffsetX = CANVAS_TEXT_OFFSET_COORD
+    this.textOffsetY = CANVAS_TEXT_OFFSET_COORD;
+
     Point.prototype.toString = function () {
-        return "(" + this.x + "," + this.y + ")";
+        var result = (this.customString === undefined) ? "(" + this.x + "," + this.y + ")" : this.customString;
+        return result;
     };
 
+    Point.prototype.setString = function (customString) {
+        this.customString = customString;
+    };
 
-    // Point.prototype.getErrorLine = function () {
-    //     return this.errorLine;
-    // };
-    //
-    // Point.prototype.setErrorLine = function (errorLine) {
-    //     this.errorLine = errorLine;
-    // };
+    Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
+        this.textOffsetX = textOffsetX;
+        this.textOffsetY = textOffsetY;
+    };
 
 }
 
@@ -85,7 +91,7 @@ function renderCanvas() {
         drawLinesBetweenPoints(potentialCorrectLine.endPoints(), "black");
 
         drawEachLine(errorLines, "forestgreen");
-        //drawEachLineText(errorLines, "forestgreen");
+        drawEachLineText(errorLines, "forestgreen");
         //drawPoints(errorLines.endPoints(), "forestgreen");
     }
 }
@@ -111,11 +117,13 @@ function drawEachLineText(lines, fillStyle) {
 }
 
 function drawLine(pointBegin, pointEnd, strokeStyle) {
+    var originalStrokeStyle = context.strokeStyle;
     context.beginPath();
     context.moveTo(pointBegin.canvasX, pointBegin.canvasY);
     context.lineTo(pointEnd.canvasX, pointEnd.canvasY);
-    context.strokeStyle = (strokeStyle === null) ? context.strokeStyle : strokeStyle;
+    context.strokeStyle = strokeStyle;
     context.stroke();
+    context.strokeStyle = originalStrokeStyle;
 }
 
 function drawPoints(points, fillStyle, drawText) {
@@ -128,17 +136,20 @@ function drawPoints(points, fillStyle, drawText) {
 }
 
 function drawPoint(point, fillStyle) {
+    var originalFillStyle = context.fillStyle;
     context.beginPath();
     context.arc(point.canvasX, point.canvasY, POINT_RADIUS, 0, Math.PI*2, true);
     context.closePath();
-    context.fillStyle = (fillStyle === null) ? context.fillStyle : fillStyle;
+    context.fillStyle = fillStyle;
     context.fill();
+    context.fillStyle = originalFillStyle;
 }
 
 function drawPointText(point, fillStyle) {
-    const CANVAS_TEXT_OFFSET = 10;
-    context.fillStyle = (fillStyle === null) ? context.fillStyle : fillStyle;
-    context.fillText(point.toString(), point.canvasX + CANVAS_TEXT_OFFSET, point.canvasY + CANVAS_TEXT_OFFSET);
+    var originalFillStyle = context.fillStyle;
+    context.fillStyle = fillStyle;
+    context.fillText(point.toString(), point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
+    context.fillStyle = originalFillStyle;
 }
 
 function initGridPoints(gridPoints) {
@@ -181,7 +192,7 @@ function LineOfPoints(p1, p2) {
     var y = (p1.y + p2.y) / 2;
 
     this.midpoint = new Point(x, y);
-    this.magnitude = x;
+    this.magnitude = (p1.y < p2.y) ? p2.y - p1.y : p1.y - p2.y;
 
     LineOfPoints.prototype.endPoints = function() {
         return [this.p1, this.p2];
@@ -201,8 +212,6 @@ function initErrorLines(points, line) {
     var m = line.slope;
     var b = line.y_intercept_y_value;
 
-
-    //var lines = [];
     for (var p = 0; p < points.length; p++) {
         var x = points[p].x;
         var y = m * x + b;
@@ -211,16 +220,10 @@ function initErrorLines(points, line) {
         var p2 = new Point(x, y);
 
         var errorLine = new LineOfPoints(p1, p2);
+        errorLine.midpoint.setString(errorLine.magnitude);
+        errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
         errorLines.push(errorLine);
-        // points[p].setErrorLine(errorLine);
     }
-    var d;
-    //return lines;
-    //errorLines;
-}
-
-function getLineIntercept() {
-
 }
 
 init();
