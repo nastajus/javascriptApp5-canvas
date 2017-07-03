@@ -13,6 +13,7 @@ var errorLines = [];
 function Point (x, y) {
     this.x = x;
     this.y = y;
+    //this.errorLine;
 
     this.canvasX = x * CANVAS_SCALE;
     this.canvasY = CANVAS_HEIGHT - (y * CANVAS_SCALE);
@@ -20,6 +21,16 @@ function Point (x, y) {
     Point.prototype.toString = function () {
         return "(" + this.x + "," + this.y + ")";
     };
+
+
+    // Point.prototype.getErrorLine = function () {
+    //     return this.errorLine;
+    // };
+    //
+    // Point.prototype.setErrorLine = function (errorLine) {
+    //     this.errorLine = errorLine;
+    // };
+
 }
 
 function init () {
@@ -73,8 +84,9 @@ function renderCanvas() {
         drawLinesBetweenPoints(hypothesisLine.endPoints(), "darkred");
         drawLinesBetweenPoints(potentialCorrectLine.endPoints(), "black");
 
-        drawLinesBetweenPoints(errorLines, "forestgreen")
-        //drawPoints(errorLines.endPoints(), "forestgreen")
+        drawEachLine(errorLines, "forestgreen");
+        //drawEachLineText(errorLines, "forestgreen");
+        //drawPoints(errorLines.endPoints(), "forestgreen");
     }
 }
 
@@ -83,6 +95,18 @@ function drawLinesBetweenPoints(points, fillStyle) {
     for (var p = 0; p < points.length; p++) {
         pNext = (p + 1) % points.length;
         drawLine(points[p], points[pNext], fillStyle);
+    }
+}
+
+function drawEachLine(lines, fillStyle) {
+    for (var l = 0; l < lines.length; l++) {
+        drawLine(lines[l].p1, lines[l].p2, fillStyle);
+    }
+}
+
+function drawEachLineText(lines, fillStyle) {
+    for (var l = 0; l < lines.length; l++) {
+        drawPointText(lines[l].midpoint, fillStyle);
     }
 }
 
@@ -141,11 +165,11 @@ function Line(b0, b1) {
     const x_max = CANVAS_WIDTH / CANVAS_SCALE;
     var y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
 
-    var p1 = new Point (0, this.y_intercept_y_value); //y-intercept
-    var p2 = new Point (x_max, y_at_x_max);
+    this.p1 = new Point (0, this.y_intercept_y_value); //y-intercept
+    this.p2 = new Point (x_max, y_at_x_max);
 
     Line.prototype.endPoints = function() {
-        return [p1, p2];
+        return [this.p1, this.p2];
     };
 }
 
@@ -153,9 +177,19 @@ function LineOfPoints(p1, p2) {
     this.p1 = p1;
     this.p2 = p2;
 
+    var x = (p1.x + p2.x) / 2;
+    var y = (p1.y + p2.y) / 2;
+
+    this.midpoint = new Point(x, y);
+    this.magnitude = x;
+
     LineOfPoints.prototype.endPoints = function() {
-        return [p1, p2];
+        return [this.p1, this.p2];
     };
+
+    // LineOfPoints.prototype.toString = function() {
+    //     return this.magnitude;
+    // }
 
 }
 
@@ -176,8 +210,9 @@ function initErrorLines(points, line) {
         var p1 = points[p];
         var p2 = new Point(x, y);
 
-        var eLine = new LineOfPoints(p1, p2);
-        errorLines.push(p1, p2);
+        var errorLine = new LineOfPoints(p1, p2);
+        errorLines.push(errorLine);
+        // points[p].setErrorLine(errorLine);
     }
     var d;
     //return lines;
