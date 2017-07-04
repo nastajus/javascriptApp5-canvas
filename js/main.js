@@ -1,15 +1,16 @@
-var context;
-const CANVAS_WIDTH = 600;
-const CANVAS_HEIGHT = 300;
+const canvas = document.getElementById("canvas");
+let context;
+const CANVAS_WIDTH = 1200;
+const CANVAS_HEIGHT = 900;
 const CANVAS_SCALE = 30;
 const POINT_RADIUS = 5;
 const CANVAS_TEXT_OFFSET_COORD = 10;
 const CANVAS_TEXT_OFFSET_MAGNI = 5;
 
-var gridPoints = [];
-var dataPoints = [];
-var goodHypothesisLine;
-var badHypothesisLine;
+const gridPoints = [];
+const dataPoints = [];
+let goodHypothesisLine;
+let badHypothesisLine;
 
 function Point (x, y) {
     this.x = x;
@@ -23,7 +24,7 @@ function Point (x, y) {
     this.textOffsetY = CANVAS_TEXT_OFFSET_COORD;
 
     Point.prototype.toString = function () {
-        var result = (this.customString === undefined) ? "(" + this.x + "," + this.y + ")" : this.customString;
+        const result = (this.customString === undefined) ? "(" + this.x + "," + this.y + ")" : this.customString;
         return result;
     };
 
@@ -38,7 +39,17 @@ function Point (x, y) {
 
 }
 
-function init () {
+function initCanvas() {
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    context = canvas.getContext("2d");
+    canvas.oncontextmenu = (e) => e.preventDefault();
+    //canvas.onclick = onClick;
+    canvas.onmouseup = onClick;
+
+}
+
+function buildCanvas () {
 
     initSpreadPoints();
 
@@ -76,11 +87,6 @@ function initLines() {
 }
 
 function renderCanvas() {
-    window.onload = function () {
-        var canvas = document.getElementById("canvas");
-        canvas.width = CANVAS_WIDTH;
-        canvas.height = CANVAS_HEIGHT;
-        context = canvas.getContext("2d");
 
         initGridPoints(gridPoints, "lightgray");
         drawPoints(gridPoints, "lightgray");
@@ -98,11 +104,10 @@ function renderCanvas() {
 
         //drawPoints(errorLines.endPoints(), "forestgreen");
     }
-}
 
 function drawLinesBetweenPoints(points, fillStyle) {
-    var pNext;
-    for (var p = 0; p < points.length; p++) {
+    let pNext;
+    for (let p = 0; p < points.length; p++) {
         pNext = (p + 1) % points.length;
         drawLine(points[p], points[pNext], fillStyle);
     }
@@ -112,7 +117,7 @@ function drawEachLine(lines, fillStyle) {
     if (lines === undefined) {
         throw new ReferenceError("Cannot draw lines, lines is undefined");
     }
-    for (var l = 0; l < lines.length; l++) {
+    for (let l = 0; l < lines.length; l++) {
         drawLine(lines[l].p1, lines[l].p2, fillStyle);
     }
 }
@@ -121,13 +126,13 @@ function drawEachLineText(lines, fillStyle) {
     if (lines === undefined) {
         throw new ReferenceError("Cannot draw line text, lines is undefined");
     }
-    for (var l = 0; l < lines.length; l++) {
+    for (let l = 0; l < lines.length; l++) {
         drawPointText(lines[l].midpoint, fillStyle);
     }
 }
 
 function drawLine(pointBegin, pointEnd, strokeStyle) {
-    var originalStrokeStyle = context.strokeStyle;
+    const originalStrokeStyle = context.strokeStyle;
     context.beginPath();
     context.moveTo(pointBegin.canvasX, pointBegin.canvasY);
     context.lineTo(pointEnd.canvasX, pointEnd.canvasY);
@@ -137,7 +142,7 @@ function drawLine(pointBegin, pointEnd, strokeStyle) {
 }
 
 function drawPoints(points, fillStyle, drawText) {
-    for (var p = 0; p < points.length; p++) {
+    for (let p = 0; p < points.length; p++) {
         drawPoint(points[p], fillStyle);
         if (drawText) {
             drawPointText(points[p], fillStyle);
@@ -146,7 +151,7 @@ function drawPoints(points, fillStyle, drawText) {
 }
 
 function drawPoint(point, fillStyle) {
-    var originalFillStyle = context.fillStyle;
+    const originalFillStyle = context.fillStyle;
     context.beginPath();
     context.arc(point.canvasX, point.canvasY, POINT_RADIUS, 0, Math.PI*2, true);
     context.closePath();
@@ -156,7 +161,7 @@ function drawPoint(point, fillStyle) {
 }
 
 function drawPointText(point, fillStyle) {
-    var originalFillStyle = context.fillStyle;
+    const originalFillStyle = context.fillStyle;
     context.fillStyle = fillStyle;
     context.fillText(point.toString(), point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
     context.fillStyle = originalFillStyle;
@@ -166,8 +171,8 @@ function initGridPoints(gridPoints) {
     const GRID_SQUARE_SIZE = 30;
 
     //this is not easy to read easily. refactor to be most readable possible:
-    for (var x = 0; x <= CANVAS_WIDTH; x += GRID_SQUARE_SIZE ) {
-        for (var y = 0; y <= CANVAS_HEIGHT; y += GRID_SQUARE_SIZE ) {
+    for (let x = 0; x <= CANVAS_WIDTH; x += GRID_SQUARE_SIZE ) {
+        for (let y = 0; y <= CANVAS_HEIGHT; y += GRID_SQUARE_SIZE ) {
             gridPoints.push(new Point(x / GRID_SQUARE_SIZE, y / GRID_SQUARE_SIZE));
         }
     }
@@ -187,7 +192,7 @@ function Line(b0, b1) {
     this.totalError = [];
 
     const x_max = CANVAS_WIDTH / CANVAS_SCALE;
-    var y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
+    const y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
 
     this.p1 = new Point (0, this.y_intercept_y_value); //y-intercept
     this.p2 = new Point (x_max, y_at_x_max);
@@ -213,8 +218,8 @@ function ErrorLine(p1, p2) {
     this.p1 = p1;
     this.p2 = p2;
 
-    var x = (p1.x + p2.x) / 2;
-    var y = (p1.y + p2.y) / 2;
+    const x = (p1.x + p2.x) / 2;
+    const y = (p1.y + p2.y) / 2;
 
     this.midpoint = new Point(x, y);
     this.magnitude = (p1.y < p2.y) ? round(p2.y - p1.y, 2) : round(p1.y - p2.y, 2);
@@ -234,18 +239,18 @@ function initErrorLines(points, line) {
     //find a point on a line
     //y = mx + b
 
-    var m = line.slope;
-    var b = line.y_intercept_y_value;
-    var errorLines = [];
+    const m = line.slope;
+    const b = line.y_intercept_y_value;
+    const errorLines = [];
 
-    for (var p = 0; p < points.length; p++) {
-        var x = points[p].x;
-        var y = m * x + b;
+    for (let p = 0; p < points.length; p++) {
+        const x = points[p].x;
+        const y = m * x + b;
 
-        var p1 = points[p];
-        var p2 = new Point(x, y);
+        const p1 = points[p];
+        const p2 = new Point(x, y);
 
-        var errorLine = new ErrorLine(p1, p2);
+        const errorLine = new ErrorLine(p1, p2);
         errorLine.midpoint.setString(errorLine.magnitude);
         errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
         errorLines.push(errorLine);
@@ -255,15 +260,15 @@ function initErrorLines(points, line) {
 }
 
 function getTotalError(hypothesisLine) {
-    var errorLines = hypothesisLine.errorLines;
-    var totalError = 0;
-    var magnitudes = [];
+    const errorLines = hypothesisLine.errorLines;
+    let totalError = 0;
+    const magnitudes = [];
 
     if (errorLines === undefined) {
         throw new Error("Cannot get total error, errorLines is undefined in " + hypothesisLine.name);
     }
 
-    for (var i = 0; i < errorLines.length; i++) {
+    for (let i = 0; i < errorLines.length; i++) {
         totalError += errorLines[i].magnitude;
         magnitudes.push(" " + errorLines[i].magnitude);
     }
@@ -279,5 +284,71 @@ function round(value, decimals) {
     return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
 
-init();
+initCanvas();
+buildCanvas();
 renderCanvas();
+
+
+function onClick(e) {
+    let element = canvas;
+    let offsetX = 0, offsetY = 0;
+
+    if (element.offsetParent) {
+        do {
+            offsetX += element.offsetLeft;
+            offsetY += element.offsetTop;
+        } while ((element = element.offsetParent));
+    }
+
+    var x = e.pageX - offsetX;
+    var y = e.pageY - offsetY;
+    console.log ("  " + x + " " + y);
+
+    let btnCode = e.button;
+
+    switch (btnCode) {
+        case 0:
+            console.log('Left button clicked.');
+            break;
+
+        case 1:
+            console.log('Middle button clicked.');
+            break;
+
+        case 2:
+            console.log('Right button clicked.');
+            break;
+
+        default:
+            console.log('Unexpected code: ' + btnCode);
+    }
+
+    dataPoints.push(new Point(x/CANVAS_SCALE, (CANVAS_HEIGHT - y)/CANVAS_SCALE)) ;
+    buildCanvas();
+    renderCanvas();
+
+    //tasks
+    /*
+    - make a pixels to ___ conversion function
+    - add points (lclick)
+    - delete points (rclick)
+    - 2 html sliders(b0, b1) to control the (line).
+    - add a second canvas to plot b0, b1
+    - move axes to show negatives plz (at least some way to scale)
+    - as you modify b0,b1 (with a button), plot a point a point on the second canvas
+        where it's color represents the total error (lerp).
+            (ties nicely into gradient descent as is).
+     */
+}
+
+
+setTimeout(() => {
+    const point = new Point(10, 10);
+    dataPoints.push(point);
+    buildCanvas();
+    renderCanvas();
+}, 3000);
+
+
+//window.onload = renderCanvas;
+
