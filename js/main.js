@@ -22,22 +22,22 @@ function Point (x, y) {
     this.customString;
     this.textOffsetX = CANVAS_TEXT_OFFSET_COORD;
     this.textOffsetY = CANVAS_TEXT_OFFSET_COORD;
-
-    Point.prototype.toString = function () {
-        const result = (this.customString === undefined) ? "(" + this.x + "," + this.y + ")" : this.customString;
-        return result;
-    };
-
-    Point.prototype.setString = function (customString) {
-        this.customString = customString;
-    };
-
-    Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
-        this.textOffsetX = textOffsetX;
-        this.textOffsetY = textOffsetY;
-    };
-
 }
+
+Point.prototype.toString = function () {
+    const result = (this.customString === undefined) ? "(" + this.x + "," + this.y + ")" : this.customString;
+    return result;
+};
+
+Point.prototype.setString = function (customString) {
+    this.customString = customString;
+};
+
+Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
+    this.textOffsetX = textOffsetX;
+    this.textOffsetY = textOffsetY;
+};
+
 
 function initCanvas() {
     canvas.width = CANVAS_WIDTH;
@@ -196,23 +196,24 @@ function Line(b0, b1) {
 
     this.p1 = new Point (0, this.y_intercept_y_value); //y-intercept
     this.p2 = new Point (x_max, y_at_x_max);
-
-    Line.prototype.endPoints = function() {
-        return [this.p1, this.p2];
-    };
-
-    Line.prototype.setName = function(name) {
-        this.name = name;
-    };
-
-    Line.prototype.setErrorLines = function(errorLines) {
-        this.errorLines = errorLines;
-    };
-
-    Line.prototype.setTotalError = function(totalError) {
-        this.totalError = totalError;
-    };
 }
+
+Line.prototype.endPoints = function() {
+    return [this.p1, this.p2];
+};
+
+Line.prototype.setName = function(name) {
+    this.name = name;
+};
+
+Line.prototype.setErrorLines = function(errorLines) {
+    this.errorLines = errorLines;
+};
+
+Line.prototype.setTotalError = function(totalError) {
+    this.totalError = totalError;
+};
+
 
 function ErrorLine(p1, p2) {
     this.p1 = p1;
@@ -224,15 +225,15 @@ function ErrorLine(p1, p2) {
     this.midpoint = new Point(x, y);
     this.magnitude = (p1.y < p2.y) ? round(p2.y - p1.y, 2) : round(p1.y - p2.y, 2);
 
-    ErrorLine.prototype.endPoints = function() {
-        return [this.p1, this.p2];
-    };
-
     // ErrorLine.prototype.toString = function() {
     //     return this.magnitude;
     // }
-
 }
+
+ErrorLine.prototype.endPoints = function() {
+    return [this.p1, this.p2];
+};
+
 
 function initErrorLines(points, line) {
 
