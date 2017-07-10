@@ -13,7 +13,8 @@ const POINT_RADIUS = 5;
 const CANVAS_TEXT_OFFSET_COORD = 10;
 const CANVAS_TEXT_OFFSET_MAGNI = 5;
 
-const gridPoints = [];
+const cartesianAxes = [];
+const cartesianGraphPoints = [];
 const dataPoints = [];
 let sampleHypothesisLineGood;
 var sampleHypothesisLineBad;
@@ -35,6 +36,9 @@ function Point (x, y) {
     this.customString;
     this.textOffsetX = CANVAS_TEXT_OFFSET_COORD;
     this.textOffsetY = CANVAS_TEXT_OFFSET_COORD;
+
+    Point.maxX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
+    Point.maxY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
 }
 
 Point.prototype.toString = function () {
@@ -64,6 +68,10 @@ function initCanvas() {
 
 function buildCanvasContent () {
 
+    buildCartesianGraphPoints(cartesianGraphPoints);
+
+    buildAxes(cartesianAxes);
+
     buildSampleDataPoints();
 
     buildSampleHypothesisLines();
@@ -92,10 +100,10 @@ function buildSampleDataPoints() {
 }
 
 function buildSampleHypothesisLines() {
-    sampleHypothesisLineGood = new Line(3, 1/2);
+    sampleHypothesisLineGood = new StraightLine(3, 1/2);
     sampleHypothesisLineGood.name = "good line";
 
-    sampleHypothesisLineBad = new Line(-2, 1/3);
+    sampleHypothesisLineBad = new StraightLine(-2, 1/3);
     sampleHypothesisLineBad.name = "bad line";
 }
 
@@ -107,8 +115,7 @@ function renderCanvas() {
     //works.
     canvas.width = canvas.width;
 
-    initGridPoints(gridPoints, "lightgray");
-    drawPoints(gridPoints, "lightgray");
+    drawPoints(cartesianGraphPoints, "lightgray");
 
     drawPoints(dataPoints, "darkred", true);
 
@@ -120,6 +127,8 @@ function renderCanvas() {
 
     drawEachLine(sampleHypothesisLineBad.errorLines, "forestgreen");
     drawEachLineText(sampleHypothesisLineBad.errorLines, "forestgreen");
+
+    drawEachLine(cartesianAxes, "black");
 
     //drawPoints(errorLines.endPoints(), "forestgreen");
 }
@@ -188,26 +197,42 @@ function drawPointText(point, fillStyle) {
 
 /**
  * Create cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
- * @param {[Point]} gridPoints
+ * @param {[Point]} graphPoints
  */
 
-function initGridPoints(gridPoints) {
+function buildCartesianGraphPoints(graphPoints) {
 
     //this is not easy to read easily. refactor to be most readable possible:
     for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE ) {
         for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE ) {
-            gridPoints.push(new Point(x / CANVAS_SCALE, y / CANVAS_SCALE));
+            graphPoints.push(new Point(x / CANVAS_SCALE, y / CANVAS_SCALE));
         }
     }
 }
 
+function buildAxes(graphLines){
+    let foo = new Object();
+    foo.x = "x";
+    let bar = {graphDimension : { y : "y" }};
+    graphLines.push(new AxisLine(foo));
+    graphLines.push(new AxisLine(bar));
+}
+
 /**
- * Create a line, according to math formula y = mx + b, also known as y = b1x + b0.
+ * Basic Line concept, defined as only between two end points.
+ */
+function Line(p1, p2) {
+    this.p1 = p1;
+    this.p2 = p2;
+}
+
+/**
+ * Create a straight line, according to math formula y = mx + b, also known as y = b1x + b0.
  * @param {Number} b0
  * @param {Number} b1
  * @constructor
  */
-function Line(b0, b1) {
+function StraightLine(b0, b1) {
 
     //y=mx + b
     //y_hat = b0 + b1 * x;
@@ -225,11 +250,43 @@ function Line(b0, b1) {
 
     this.p1 = new Point (0, this.y_intercept_y_value); //y-intercept
     this.p2 = new Point (x_max, y_at_x_max);
+
+    Line.call(this, this.p1, this.p2);
+
 }
 
-Line.prototype.endPoints = function() {
+StraightLine.prototype.endPoints = function() {
     return [this.p1, this.p2];
 };
+
+function AxisLine (graphDimension) {
+    this.p1 = {};
+    this.p2 = {};
+
+    if (graphDimension.hasOwnProperty("x")) {
+        this.p1 = new Point(0, 0);
+        this.p2 = new Point(Point.maxX, 0);
+
+        AxisArrows();
+    }
+    else if (graphDimension.hasOwnProperty("y")) {
+        this.p1 = new Point(0, 0);
+        this.p2 = new Point(0, Point.maxY);
+
+        AxisArrows();
+
+    }
+    Line.call(this, this.p1, this.p2);
+}
+
+AxisLine.prototype.endPoints = function() {
+    return [this.p1, this.p2];
+};
+
+
+function AxisArrows(){
+    //...Line.call(this, this.p1, this.p2);
+}
 
 /**
  * An error line goes between 2 points.
@@ -260,7 +317,7 @@ ErrorLine.prototype.endPoints = function() {
  * Create error lines, going vertically from p1 (sample data point) and p2 (intersecting point on hypothesis line)
  *
  * @param {[Point]} additionalSamplePoints
- * @param {Line} hypothesisLine
+ * @param {StraightLine} hypothesisLine
  */
 function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
 
@@ -288,7 +345,7 @@ function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
 
 /**
  * Display scalar amount of error.
- * @param {Line} hypothesisLine
+ * @param {StraightLine} hypothesisLine
  * @returns {Number} {number}
  */
 function getTotalError(hypothesisLine) {
@@ -319,6 +376,9 @@ function getTotalError(hypothesisLine) {
  * @returns {number}
  */
 function round(value, decimals) {
+    if (decimals === undefined) {
+        throw new TypeError("Cannot round to nearest decimal, as number of decimal places isn't specified.");
+    }
     return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
 
