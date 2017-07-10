@@ -211,11 +211,10 @@ function buildCartesianGraphPoints(graphPoints) {
 }
 
 function buildAxes(graphLines){
-    let foo = new Object();
-    foo.x = "x";
-    let bar = {graphDimension : { y : "y" }};
-    graphLines.push(new AxisLine(foo));
-    graphLines.push(new AxisLine(bar));
+    let y = {};
+    y.y = "y";
+    graphLines.push(new AxisLine({}.x = "x"));
+    graphLines.push(new AxisLine(y));
 }
 
 /**
