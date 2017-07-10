@@ -1,3 +1,9 @@
+/*
+ * Note the design limitation is:
+ *      drawing calls are dependant on initialization calls.
+ *
+ */
+
 const canvas = document.getElementById("canvas");
 let context;
 const CANVAS_WIDTH = 1200;
@@ -9,12 +15,19 @@ const CANVAS_TEXT_OFFSET_MAGNI = 5;
 
 const gridPoints = [];
 const dataPoints = [];
-let goodHypothesisLine;
-let badHypothesisLine;
+let sampleHypothesisLineGood;
+var sampleHypothesisLineBad;
 
+
+/**
+ * Creates new point for graphing.
+ *
+ * @param {Number} x
+ * @param {Number} y
+ */
 function Point (x, y) {
-    this.x = x;
-    this.y = y;
+    this.x = round(x, 1);
+    this.y = round(y, 1);
 
     this.canvasX = x * CANVAS_SCALE;
     this.canvasY = CANVAS_HEIGHT - (y * CANVAS_SCALE);
@@ -25,7 +38,7 @@ function Point (x, y) {
 }
 
 Point.prototype.toString = function () {
-    const result = (this.customString === undefined) ? "(" + this.x + "," + this.y + ")" : this.customString;
+    const result = (this.customString === undefined) ? "(" + this.x + ", " + this.y + ")" : this.customString;
     return result;
 };
 
@@ -49,18 +62,18 @@ function initCanvas() {
 
 }
 
-function buildCanvas () {
+function buildCanvasContent () {
 
-    initSpreadPoints();
+    buildSampleDataPoints();
 
-    initLines();
+    buildSampleHypothesisLines();
 
-    //initErrorLines(dataPoints, goodHypothesisLine);
-    initErrorLines(dataPoints, badHypothesisLine);
+    //buildErrorLinesBetween(dataPoints, sampleHypothesisLineGood);
+    buildErrorLinesBetween(dataPoints, sampleHypothesisLineBad);
 
 }
 
-function initSpreadPoints() {
+function buildSampleDataPoints() {
     dataPoints.push(new Point(1,1));
     dataPoints.push(new Point(3,4));
     dataPoints.push(new Point(2,5));
@@ -78,32 +91,38 @@ function initSpreadPoints() {
     dataPoints.push(new Point(18,8));
 }
 
-function initLines() {
-    goodHypothesisLine = new Line(3, 1/2);
-    goodHypothesisLine.name = "good line";
+function buildSampleHypothesisLines() {
+    sampleHypothesisLineGood = new Line(3, 1/2);
+    sampleHypothesisLineGood.name = "good line";
 
-    badHypothesisLine = new Line(-2, 1/3);
-    badHypothesisLine.name = "bad line";
+    sampleHypothesisLineBad = new Line(-2, 1/3);
+    sampleHypothesisLineBad.name = "bad line";
 }
 
 function renderCanvas() {
 
-        initGridPoints(gridPoints, "lightgray");
-        drawPoints(gridPoints, "lightgray");
+    //doesn't work
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
-        drawPoints(dataPoints, "darkred", true);
+    //works.
+    canvas.width = canvas.width;
 
-        drawLinesBetweenPoints(goodHypothesisLine.endPoints(), "darkred");
-        drawLinesBetweenPoints(badHypothesisLine.endPoints(), "black");
+    initGridPoints(gridPoints, "lightgray");
+    drawPoints(gridPoints, "lightgray");
 
-        drawEachLine(goodHypothesisLine.errorLines, "forestgreen");
-        drawEachLineText(goodHypothesisLine.errorLines, "forestgreen");
+    drawPoints(dataPoints, "darkred", true);
 
-        drawEachLine(badHypothesisLine.errorLines, "forestgreen");
-        drawEachLineText(badHypothesisLine.errorLines, "forestgreen");
+    drawLinesBetweenPoints(sampleHypothesisLineGood.endPoints(), "darkred");
+    drawLinesBetweenPoints(sampleHypothesisLineBad.endPoints(), "black");
 
-        //drawPoints(errorLines.endPoints(), "forestgreen");
-    }
+    drawEachLine(sampleHypothesisLineGood.errorLines, "forestgreen");
+    drawEachLineText(sampleHypothesisLineGood.errorLines, "forestgreen");
+
+    drawEachLine(sampleHypothesisLineBad.errorLines, "forestgreen");
+    drawEachLineText(sampleHypothesisLineBad.errorLines, "forestgreen");
+
+    //drawPoints(errorLines.endPoints(), "forestgreen");
+}
 
 function drawLinesBetweenPoints(points, fillStyle) {
     let pNext;
@@ -167,17 +186,27 @@ function drawPointText(point, fillStyle) {
     context.fillStyle = originalFillStyle;
 }
 
+/**
+ * Create cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
+ * @param {[Point]} gridPoints
+ */
+
 function initGridPoints(gridPoints) {
-    const GRID_SQUARE_SIZE = 30;
 
     //this is not easy to read easily. refactor to be most readable possible:
-    for (let x = 0; x <= CANVAS_WIDTH; x += GRID_SQUARE_SIZE ) {
-        for (let y = 0; y <= CANVAS_HEIGHT; y += GRID_SQUARE_SIZE ) {
-            gridPoints.push(new Point(x / GRID_SQUARE_SIZE, y / GRID_SQUARE_SIZE));
+    for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE ) {
+        for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE ) {
+            gridPoints.push(new Point(x / CANVAS_SCALE, y / CANVAS_SCALE));
         }
     }
 }
 
+/**
+ * Create a line, according to math formula y = mx + b, also known as y = b1x + b0.
+ * @param {Number} b0
+ * @param {Number} b1
+ * @constructor
+ */
 function Line(b0, b1) {
 
     //y=mx + b
@@ -215,6 +244,12 @@ Line.prototype.setTotalError = function(totalError) {
 };
 
 
+/**
+ * An error line goes between 2 points.
+ * @param p1
+ * @param p2
+ * @constructor
+ */
 function ErrorLine(p1, p2) {
     this.p1 = p1;
     this.p2 = p2;
@@ -234,21 +269,26 @@ ErrorLine.prototype.endPoints = function() {
     return [this.p1, this.p2];
 };
 
-
-function initErrorLines(points, line) {
+/**
+ * Create error lines, going vertically from p1 (sample data point) and p2 (intersecting point on hypothesis line)
+ *
+ * @param {[Point]} additionalSamplePoints
+ * @param {Line} hypothesisLine
+ */
+function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
 
     //find a point on a line
     //y = mx + b
 
-    const m = line.slope;
-    const b = line.y_intercept_y_value;
+    const m = hypothesisLine.slope;
+    const b = hypothesisLine.y_intercept_y_value;
     const errorLines = [];
 
-    for (let p = 0; p < points.length; p++) {
-        const x = points[p].x;
+    for (let p = 0; p < additionalSamplePoints.length; p++) {
+        const x = additionalSamplePoints[p].x;
         const y = m * x + b;
 
-        const p1 = points[p];
+        const p1 = additionalSamplePoints[p];
         const p2 = new Point(x, y);
 
         const errorLine = new ErrorLine(p1, p2);
@@ -257,7 +297,7 @@ function initErrorLines(points, line) {
         errorLines.push(errorLine);
     }
     Line.prototype.setErrorLines(errorLines);
-    getTotalError(line);
+    getTotalError(hypothesisLine);
 }
 
 function getTotalError(hypothesisLine) {
@@ -281,14 +321,15 @@ function getTotalError(hypothesisLine) {
     return totalError;
 }
 
+/**
+ * Limit number of decimal places for a float value
+ * @param {Number} value
+ * @param {Integer} decimals
+ * @returns {number}
+ */
 function round(value, decimals) {
     return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
 }
-
-initCanvas();
-buildCanvas();
-renderCanvas();
-
 
 function onClick(e) {
     let element = canvas;
@@ -301,9 +342,9 @@ function onClick(e) {
         } while ((element = element.offsetParent));
     }
 
-    var x = e.pageX - offsetX;
-    var y = e.pageY - offsetY;
-    console.log ("  " + x + " " + y);
+    let pageX = e.pageX - offsetX;
+    let pageY = e.pageY - offsetY;
+    console.log ("  " + pageX + " " + pageY);
 
     let btnCode = e.button;
 
@@ -324,8 +365,13 @@ function onClick(e) {
             console.log('Unexpected code: ' + btnCode);
     }
 
-    dataPoints.push(new Point(x/CANVAS_SCALE, (CANVAS_HEIGHT - y)/CANVAS_SCALE)) ;
-    buildCanvas();
+    let graphPosition = convertCanvasToGraph(pageX, pageY);
+    let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
+
+    dataPoints.push(clickPoint);
+    //buildCanvasContent();
+    //buildErrorLinesBetween(clickPoint, sampleHypothesisLineGood);
+    buildErrorLinesBetween(clickPoint, sampleHypothesisLineBad);
     renderCanvas();
 
     //tasks
@@ -342,13 +388,30 @@ function onClick(e) {
      */
 }
 
+/**
+ * Converts X and Y page positions, into the graphing cartesian system.
+ * Note these are already offset by the canvas' position within the page.
+ *
+ * @param {Number} pageX
+ * @param {Number} pageY
+ * @returns {{cartesianX: {Number} number, cartesianY: {Number} number}}
+ */
+function convertCanvasToGraph(pageX, pageY) {
+    return { cartesianX : (pageX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - pageY) / CANVAS_SCALE) }
+}
 
-setTimeout(() => {
-    const point = new Point(10, 10);
-    dataPoints.push(point);
-    buildCanvas();
-    renderCanvas();
-}, 3000);
+
+initCanvas();
+buildCanvasContent();
+renderCanvas();
+
+
+// setTimeout(() => {
+//     const point = new Point(10, 10);
+//     dataPoints.push(point);
+//     buildCanvasContent();
+//     renderCanvas();
+// }, 3000);
 
 
 //window.onload = renderCanvas;
