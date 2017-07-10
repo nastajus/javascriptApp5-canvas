@@ -216,8 +216,8 @@ function Line(b0, b1) {
 
     this.y_intercept_y_value = b0;
     this.slope = b1;
-    this.name;
-    this.errorLines;
+    this.name = "";
+    this.errorLines = [];
     this.totalError = [];
 
     const x_max = CANVAS_WIDTH / CANVAS_SCALE;
@@ -230,19 +230,6 @@ function Line(b0, b1) {
 Line.prototype.endPoints = function() {
     return [this.p1, this.p2];
 };
-
-Line.prototype.setName = function(name) {
-    this.name = name;
-};
-
-Line.prototype.setErrorLines = function(errorLines) {
-    this.errorLines = errorLines;
-};
-
-Line.prototype.setTotalError = function(totalError) {
-    this.totalError = totalError;
-};
-
 
 /**
  * An error line goes between 2 points.
@@ -282,7 +269,6 @@ function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
 
     const m = hypothesisLine.slope;
     const b = hypothesisLine.y_intercept_y_value;
-    const errorLines = [];
 
     for (let p = 0; p < additionalSamplePoints.length; p++) {
         const x = additionalSamplePoints[p].x;
@@ -294,12 +280,17 @@ function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
         const errorLine = new ErrorLine(p1, p2);
         errorLine.midpoint.setString(errorLine.magnitude);
         errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
-        errorLines.push(errorLine);
+        
+        hypothesisLine.errorLines.push(errorLine);
     }
-    Line.prototype.setErrorLines(errorLines);
     getTotalError(hypothesisLine);
 }
 
+/**
+ * Display scalar amount of error.
+ * @param {Line} hypothesisLine
+ * @returns {Number} {number}
+ */
 function getTotalError(hypothesisLine) {
     const errorLines = hypothesisLine.errorLines;
     let totalError = 0;
@@ -369,9 +360,9 @@ function onClick(e) {
     let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
 
     dataPoints.push(clickPoint);
+    //buildErrorLinesBetween([clickPoint], sampleHypothesisLineGood);
+    buildErrorLinesBetween([clickPoint], sampleHypothesisLineBad);
     //buildCanvasContent();
-    //buildErrorLinesBetween(clickPoint, sampleHypothesisLineGood);
-    buildErrorLinesBetween(clickPoint, sampleHypothesisLineBad);
     renderCanvas();
 
     //tasks
