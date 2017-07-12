@@ -14,6 +14,7 @@ const CANVAS_TEXT_OFFSET_COORD = 10;
 const CANVAS_TEXT_OFFSET_MAGNI = 5;
 
 const cartesianAxes = [];
+const cartesianAxesArrowHeads = [];
 const cartesianGraphPoints = [];
 const dataPoints = [];
 let sampleHypothesisLineGood;
@@ -128,7 +129,8 @@ function renderCanvas() {
     drawEachLine(sampleHypothesisLineBad.errorLines, "forestgreen");
     drawEachLineText(sampleHypothesisLineBad.errorLines, "forestgreen");
 
-    drawEachLine(cartesianAxes, "black");
+    drawEachLine(cartesianAxes, "black", 5);
+    drawArrowHeads(cartesianAxesArrowHeads, "black", 5);
 
     //drawPoints(errorLines.endPoints(), "forestgreen");
 }
@@ -141,12 +143,12 @@ function drawLinesBetweenPoints(points, fillStyle) {
     }
 }
 
-function drawEachLine(lines, fillStyle) {
+function drawEachLine(lines, fillStyle, lineWidth) {
     if (lines === undefined) {
         throw new ReferenceError("Cannot draw lines, lines is undefined");
     }
     for (let l = 0; l < lines.length; l++) {
-        drawLine(lines[l].p1, lines[l].p2, fillStyle);
+        drawLine(lines[l].p1, lines[l].p2, fillStyle, lineWidth);
     }
 }
 
@@ -159,14 +161,24 @@ function drawEachLineText(lines, fillStyle) {
     }
 }
 
-function drawLine(pointBegin, pointEnd, strokeStyle) {
+function drawLine(pointBegin, pointEnd, strokeStyle, lineWidth) {
     const originalStrokeStyle = context.strokeStyle;
+    const originalLineWidth = context.lineWidth;
     context.beginPath();
     context.moveTo(pointBegin.canvasX, pointBegin.canvasY);
     context.lineTo(pointEnd.canvasX, pointEnd.canvasY);
-    context.strokeStyle = strokeStyle;
+
+    if (strokeStyle !== undefined) {
+        context.strokeStyle = strokeStyle;
+    }
+
+    if (lineWidth !== undefined) {
+        context.lineWidth = lineWidth;
+    }
+
     context.stroke();
     context.strokeStyle = originalStrokeStyle;
+    context.lineWidth = originalLineWidth;
 }
 
 function drawPoints(points, fillStyle, drawText) {
@@ -211,10 +223,8 @@ function buildCartesianGraphPoints(graphPoints) {
 }
 
 function buildAxes(graphLines){
-    let y = {};
-    y.y = "y";
-    graphLines.push(new AxisLine({}.x = "x"));
-    graphLines.push(new AxisLine(y));
+    graphLines.push(new AxisLine("x"));
+    graphLines.push(new AxisLine("y"));
 }
 
 /**
@@ -261,30 +271,64 @@ StraightLine.prototype.endPoints = function() {
 function AxisLine (graphDimension) {
     this.p1 = {};
     this.p2 = {};
+    this.a1 = [];
+    this.a2 = [];
 
-    if (graphDimension.hasOwnProperty("x")) {
+    if (graphDimension === "x") {
         this.p1 = new Point(0, 0);
         this.p2 = new Point(Point.maxX, 0);
 
-        AxisArrows();
+        this.a1.push(new AxisArrows(this.p1, "left"));
+        this.a2.push(new AxisArrows(this.p2, "right"));
     }
-    else if (graphDimension.hasOwnProperty("y")) {
+    else if (graphDimension === "y") {
         this.p1 = new Point(0, 0);
         this.p2 = new Point(0, Point.maxY);
 
-        AxisArrows();
+        this.a1.push(new AxisArrows(this.p1, "down"));
+        this.a2.push(new AxisArrows(this.p2, "up"));
 
     }
     Line.call(this, this.p1, this.p2);
 }
 
-AxisLine.prototype.endPoints = function() {
-    return [this.p1, this.p2];
-};
+function AxisArrows(point, arrowDirection){
+
+    let off = [ [1/2, 1/2], [1/2, 1/2] ]; //offset
+    let dir; //direction
+
+    switch (arrowDirection) {
+        case "right":
+            dir = [[-1,1], [-1,-1]];
+            break;
+
+        case "left":
+            dir = [[1,1], [1,-1]];
+            break;
+
+        case "up":
+            dir = [[1,-1], [-1,-1]];
+            break;
+
+        case "down":
+            dir = [[1,1], [-1,1]];
+            break;
+    }
 
 
-function AxisArrows(){
-    //...Line.call(this, this.p1, this.p2);
+    this.pTip = point;
+    this.p1 = new Point(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
+    this.p2 = new Point(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
+
+    this.arrowTipBranch1 = new Line(this.pTip, this.p1);
+
+    //this.arrowTipBranch2 = new Line(this.pTip, this.p2);
+
+    //this.p1 = new Point(pTip.x + offset1x, pTip.y + offset1y);
+    //this.p2 = new Point(pTip.x + offset2x, pTip.y + offset2y);
+    //this.p2 = new Point(pTip.x + offset2x, pTip.y + offset2y);
+
+    //if (arrowDirection === "")
 }
 
 /**
