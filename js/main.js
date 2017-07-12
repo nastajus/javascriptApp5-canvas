@@ -18,7 +18,7 @@ const cartesianAxesArrowHeads = [];
 const cartesianGraphPoints = [];
 const dataPoints = [];
 let sampleHypothesisLineGood;
-var sampleHypothesisLineBad;
+let sampleHypothesisLineBad;
 
 
 /**
@@ -27,7 +27,7 @@ var sampleHypothesisLineBad;
  * @param {Number} x
  * @param {Number} y
  */
-function Point (x, y) {
+function Point(x, y) {
     this.x = round(x, 1);
     this.y = round(y, 1);
 
@@ -67,7 +67,7 @@ function initCanvas() {
 
 }
 
-function buildCanvasContent () {
+function buildCanvasContent() {
 
     buildCartesianGraphPoints(cartesianGraphPoints);
 
@@ -83,28 +83,28 @@ function buildCanvasContent () {
 }
 
 function buildSampleDataPoints() {
-    dataPoints.push(new Point(1,1));
-    dataPoints.push(new Point(3,4));
-    dataPoints.push(new Point(2,5));
-    dataPoints.push(new Point(3,6));
-    dataPoints.push(new Point(5,5));
-    dataPoints.push(new Point(5,9));
-    dataPoints.push(new Point(6,4));
-    dataPoints.push(new Point(7,7));
-    dataPoints.push(new Point(7,8));
-    dataPoints.push(new Point(8,7));
-    dataPoints.push(new Point(9,9));
-    dataPoints.push(new Point(12,8));
-    dataPoints.push(new Point(13,9));
-    dataPoints.push(new Point(14,7));
-    dataPoints.push(new Point(18,8));
+    dataPoints.push(new Point(1, 1));
+    dataPoints.push(new Point(3, 4));
+    dataPoints.push(new Point(2, 5));
+    dataPoints.push(new Point(3, 6));
+    dataPoints.push(new Point(5, 5));
+    dataPoints.push(new Point(5, 9));
+    dataPoints.push(new Point(6, 4));
+    dataPoints.push(new Point(7, 7));
+    dataPoints.push(new Point(7, 8));
+    dataPoints.push(new Point(8, 7));
+    dataPoints.push(new Point(9, 9));
+    dataPoints.push(new Point(12, 8));
+    dataPoints.push(new Point(13, 9));
+    dataPoints.push(new Point(14, 7));
+    dataPoints.push(new Point(18, 8));
 }
 
 function buildSampleHypothesisLines() {
-    sampleHypothesisLineGood = new StraightLine(3, 1/2);
+    sampleHypothesisLineGood = new StraightLine(3, 1 / 2);
     sampleHypothesisLineGood.name = "good line";
 
-    sampleHypothesisLineBad = new StraightLine(-2, 1/3);
+    sampleHypothesisLineBad = new StraightLine(-2, 1 / 3);
     sampleHypothesisLineBad.name = "bad line";
 }
 
@@ -193,7 +193,7 @@ function drawPoints(points, fillStyle, drawText) {
 function drawPoint(point, fillStyle) {
     const originalFillStyle = context.fillStyle;
     context.beginPath();
-    context.arc(point.canvasX, point.canvasY, POINT_RADIUS, 0, Math.PI*2, true);
+    context.arc(point.canvasX, point.canvasY, POINT_RADIUS, 0, Math.PI * 2, true);
     context.closePath();
     context.fillStyle = fillStyle;
     context.fill();
@@ -215,14 +215,14 @@ function drawPointText(point, fillStyle) {
 function buildCartesianGraphPoints(graphPoints) {
 
     //this is not easy to read easily. refactor to be most readable possible:
-    for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE ) {
-        for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE ) {
+    for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
+        for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
             graphPoints.push(new Point(x / CANVAS_SCALE, y / CANVAS_SCALE));
         }
     }
 }
 
-function buildAxes(graphLines){
+function buildAxes(graphLines) {
     graphLines.push(new AxisLine("x"));
     graphLines.push(new AxisLine("y"));
 }
@@ -257,18 +257,18 @@ function StraightLine(b0, b1) {
     const x_max = CANVAS_WIDTH / CANVAS_SCALE;
     const y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
 
-    this.p1 = new Point (0, this.y_intercept_y_value); //y-intercept
-    this.p2 = new Point (x_max, y_at_x_max);
+    this.p1 = new Point(0, this.y_intercept_y_value); //y-intercept
+    this.p2 = new Point(x_max, y_at_x_max);
 
     Line.call(this, this.p1, this.p2);
 
 }
 
-StraightLine.prototype.endPoints = function() {
+StraightLine.prototype.endPoints = function () {
     return [this.p1, this.p2];
 };
 
-function AxisLine (graphDimension) {
+function AxisLine(graphDimension) {
     this.p1 = {};
     this.p2 = {};
     this.a1 = [];
@@ -292,26 +292,26 @@ function AxisLine (graphDimension) {
     Line.call(this, this.p1, this.p2);
 }
 
-function AxisArrows(point, arrowDirection){
+function AxisArrows(point, arrowDirection) {
 
-    let off = [ [1/2, 1/2], [1/2, 1/2] ]; //offset
+    let off = [[1 / 2, 1 / 2], [1 / 2, 1 / 2]]; //offset
     let dir; //direction
 
     switch (arrowDirection) {
         case "right":
-            dir = [[-1,1], [-1,-1]];
+            dir = [[-1, 1], [-1, -1]];
             break;
 
         case "left":
-            dir = [[1,1], [1,-1]];
+            dir = [[1, 1], [1, -1]];
             break;
 
         case "up":
-            dir = [[1,-1], [-1,-1]];
+            dir = [[1, -1], [-1, -1]];
             break;
 
         case "down":
-            dir = [[1,1], [-1,1]];
+            dir = [[1, 1], [-1, 1]];
             break;
     }
 
@@ -352,7 +352,7 @@ function ErrorLine(p1, p2) {
     // }
 }
 
-ErrorLine.prototype.endPoints = function() {
+ErrorLine.prototype.endPoints = function () {
     return [this.p1, this.p2];
 };
 
@@ -380,7 +380,7 @@ function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
         const errorLine = new ErrorLine(p1, p2);
         errorLine.midpoint.setString(errorLine.magnitude);
         errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
-        
+
         hypothesisLine.errorLines.push(errorLine);
     }
     getTotalError(hypothesisLine);
@@ -406,9 +406,9 @@ function getTotalError(hypothesisLine) {
     }
     totalError = round(totalError, 2);
     hypothesisLine.totalError = totalError;
-    console.log (hypothesisLine.name);
-    console.log ("Each error: " + magnitudes.toString());
-    console.log ("Total error: " + totalError);
+    console.log(hypothesisLine.name);
+    console.log("Each error: " + magnitudes.toString());
+    console.log("Total error: " + totalError);
     return totalError;
 }
 
@@ -422,7 +422,7 @@ function round(value, decimals) {
     if (decimals === undefined) {
         throw new TypeError("Cannot round to nearest decimal, as number of decimal places isn't specified.");
     }
-    return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+    return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
 }
 
 function onClick(e) {
@@ -438,7 +438,7 @@ function onClick(e) {
 
     let pageX = e.pageX - offsetX;
     let pageY = e.pageY - offsetY;
-    console.log ("  " + pageX + " " + pageY);
+    console.log("  " + pageX + " " + pageY);
 
     let btnCode = e.button;
 
@@ -460,6 +460,7 @@ function onClick(e) {
     }
 
     let graphPosition = convertCanvasToGraph(pageX, pageY);
+    //graphPosition = {cartesianX: round(graphPosition.cartesianX, 0), cartesianY: round(graphPosition.cartesianY, 0)};
     let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
 
     dataPoints.push(clickPoint);
@@ -470,15 +471,15 @@ function onClick(e) {
 
     //tasks
     /*
-    - make a pixels to ___ conversion function
-    - add points (lclick)
-    - delete points (rclick)
-    - 2 html sliders(b0, b1) to control the (line).
-    - add a second canvas to plot b0, b1
-    - move axes to show negatives plz (at least some way to scale)
-    - as you modify b0,b1 (with a button), plot a point a point on the second canvas
-        where it's color represents the total error (lerp).
-            (ties nicely into gradient descent as is).
+     - make a pixels to ___ conversion function
+     - add points (lclick)
+     - delete points (rclick)
+     - 2 html sliders(b0, b1) to control the (line).
+     - add a second canvas to plot b0, b1
+     - move axes to show negatives plz (at least some way to scale)
+     - as you modify b0,b1 (with a button), plot a point a point on the second canvas
+     where it's color represents the total error (lerp).
+     (ties nicely into gradient descent as is).
      */
 }
 
@@ -491,7 +492,7 @@ function onClick(e) {
  * @returns {{cartesianX: {Number} number, cartesianY: {Number} number}}
  */
 function convertCanvasToGraph(pageX, pageY) {
-    return { cartesianX : (pageX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - pageY) / CANVAS_SCALE) }
+    return {cartesianX: (pageX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - pageY) / CANVAS_SCALE)}
 }
 
 
