@@ -13,12 +13,13 @@ const POINT_RADIUS = 5;
 const CANVAS_TEXT_OFFSET_COORD = 10;
 const CANVAS_TEXT_OFFSET_MAGNI = 5;
 const GRAPH_DECIMALS_ACCURACY = 1;
-const CLOSEST_ACCURACY_DISTANCE = 1/2;
+const CLICK_DISTANCE_ACCURACY_TO_POINT = 1/2;
 
 const cartesianAxes = [];
 const cartesianAxesArrowHeads = [];
 const cartesianGraphPoints = [];
 let dataPoints = [];
+let highlightPoints = [];
 let sampleHypothesisLineGood;
 let sampleHypothesisLineBad;
 
@@ -66,7 +67,7 @@ function initCanvas() {
     canvas.oncontextmenu = (e) => e.preventDefault();
     //canvas.onclick = onClick;
     canvas.onmouseup = onClick;
-    canvas.onmouseover = onOver;
+    canvas.onmousemove = onMove;
 
 }
 
@@ -136,6 +137,9 @@ function renderCanvas() {
     //drawArrowHeads(cartesianAxesArrowHeads, "black", 5);
 
     //drawPoints(errorLines.endPoints(), "forestgreen");
+
+    drawHighlightPoints(highlightPoints);
+    removeHighlightPoints();
 }
 
 function drawLinesBetweenPoints(points, fillStyle) {
@@ -193,10 +197,10 @@ function drawPoints(points, fillStyle, drawText) {
     }
 }
 
-function drawPoint(point, fillStyle) {
+function drawPoint(point, fillStyle, pointRadius) {
     const originalFillStyle = context.fillStyle;
     context.beginPath();
-    context.arc(point.canvasX, point.canvasY, POINT_RADIUS, 0, Math.PI * 2, true);
+    context.arc(point.canvasX, point.canvasY, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
     context.closePath();
     context.fillStyle = fillStyle;
     context.fill();
@@ -208,6 +212,20 @@ function drawPointText(point, fillStyle) {
     context.fillStyle = fillStyle;
     context.fillText(point.toString(), point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
     context.fillStyle = originalFillStyle;
+}
+
+function drawHighlightPoints(hightlightPoints) {
+    for (let i = 0; i < hightlightPoints.length; i++) {
+        drawHighlight(hightlightPoints[i]);
+    }
+}
+
+function drawHighlight(highlightPoint) {
+    drawFatterPoint(highlightPoint);
+}
+
+function drawFatterPoint(point) {
+    drawPoint(point, "darkyellow", 10);
 }
 
 /**
@@ -440,15 +458,15 @@ function onClick(e) {
         } while ((element = element.offsetParent));
     }
 
-    let pageX = e.pageX - offsetX;
-    let pageY = e.pageY - offsetY;
+    let canvasX = e.pageX - offsetX;
+    let canvasY = e.pageY - offsetY;
 
     let btnCode = e.button;
 
     switch (btnCode) {
         case 0:
-            console.log('Left button clicked, Adding point, at (pageX: ' + pageX + ", pageY: " + pageY + ").");
-            addPoint(pageX, pageY);
+            console.log('Left button clicked, Adding point, at (canvasX: ' + canvasX + ", canvasY: " + canvasY + ").");
+            addPoint(canvasX, canvasY);
             break;
 
         case 1:
@@ -456,14 +474,13 @@ function onClick(e) {
             break;
 
         case 2:
-            console.log('Right button clicked, Removing point, at (pageX: ' + pageX + ", pageY: " + pageY + ").");
-            removePoint(pageX, pageY);
+            console.log('Right button clicked, Removing point, at (canvasX: ' + canvasX + ", canvasY: " + canvasY + ").");
+            removePoint(canvasX, canvasY);
             break;
 
         default:
-            console.log('Unexpected code: ' + btnCode);
+            console.log('Unexpected button code from click: ' + btnCode);
     }
-
 
     //tasks
     /*
@@ -476,8 +493,31 @@ function onClick(e) {
      */
 }
 
-function onOver() {
+function onMove(e) {
+    let element = canvas;
+    let offsetX = 0, offsetY = 0;
 
+    if (element.offsetParent) {
+        do {
+            offsetX += element.offsetLeft;
+            offsetY += element.offsetTop;
+        } while ((element = element.offsetParent));
+    }
+
+    let canvasX = e.pageX - offsetX;
+    let canvasY = e.pageY - offsetY;
+
+    let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
+
+    let closestDataPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT)
+
+    addHighlightPoints(closestDataPoints, highlightPoints);
+
+    let diff = arrayDifference (dataPoints, closestDataPoints);
+
+    removeHighlightPoints(diff, highlightPoints);
+
+    renderCanvas();
 }
 
 /**
@@ -534,11 +574,11 @@ function addPoint(pageX, pageY) {
  */
 function removePoint(pageX, pageY) {
     let graphPosition = convertCanvasToGraph(pageX, pageY, GRAPH_DECIMALS_ACCURACY);
-    let foundPoints = findClosestDataPoints(graphPosition, CLOSEST_ACCURACY_DISTANCE);
+    let foundPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT);
     for (let i = 0; i < foundPoints.length; i++) {
         let firstMatchPoint = dataPoints.indexOf(foundPoints[i]); //index of on references
 
-        //remove related error line first
+        //remove related error line before removing the data point
         removeErrorLine(dataPoints[firstMatchPoint], sampleHypothesisLineBad);
 
         console.log("Removing point at : " + printPoint(dataPoints[firstMatchPoint]));
@@ -572,6 +612,35 @@ function findClosestDataPoints(targetGraphPosition, accuracyDistance) {
     });
 
     return foundPoints;
+}
+
+function addHighlightPoints (sourceArray, targetArray) {
+    addArrayToArrayOnce(sourceArray, targetArray);
+}
+
+function addArrayToArrayOnce(sourceArray, targetArray) {
+    for (let i = 0; i < sourceArray.length; i++) {
+        if (!targetArray.includes(sourceArray[i])) {
+            targetArray.push(sourceArray[i]);
+        }
+    }
+}
+
+function removeHighlightPoints (sourceArray, targetArray) {
+    removeArrayFromArrayOnce(sourceArray, targetArray);
+} 
+
+function removeArrayFromArrayOnce(sourceArray, targetArray) {
+    for (let i = 0; i < sourceArray.length; i++) {
+        if (targetArray.includes(sourceArray[i])) {
+            targetArray.splice(sourceArray[i], 1);
+        }
+    }
+}
+
+function arrayDifference (arrayA, arrayB) {
+    let diff = arrayA.filter(function(x) { return arrayB.indexOf(x) < 0; });
+    return diff;
 }
 
 
