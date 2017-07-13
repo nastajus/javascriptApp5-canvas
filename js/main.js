@@ -12,11 +12,13 @@ const CANVAS_SCALE = 30;
 const POINT_RADIUS = 5;
 const CANVAS_TEXT_OFFSET_COORD = 10;
 const CANVAS_TEXT_OFFSET_MAGNI = 5;
+const GRAPH_DECIMALS_ACCURACY = 1;
+const CLOSEST_ACCURACY_DISTANCE = 1/2;
 
 const cartesianAxes = [];
 const cartesianAxesArrowHeads = [];
 const cartesianGraphPoints = [];
-const dataPoints = [];
+let dataPoints = [];
 let sampleHypothesisLineGood;
 let sampleHypothesisLineBad;
 
@@ -43,7 +45,7 @@ function Point(x, y) {
 }
 
 Point.prototype.toString = function () {
-    const result = (this.customString === undefined) ? "(" + this.x + ", " + this.y + ")" : this.customString;
+    const result = (this.customString === undefined) ? printPoint(this) : this.customString;
     return result;
 };
 
@@ -64,6 +66,7 @@ function initCanvas() {
     canvas.oncontextmenu = (e) => e.preventDefault();
     //canvas.onclick = onClick;
     canvas.onmouseup = onClick;
+    canvas.onmouseover = onOver;
 
 }
 
@@ -130,7 +133,7 @@ function renderCanvas() {
     drawEachLineText(sampleHypothesisLineBad.errorLines, "forestgreen");
 
     drawEachLine(cartesianAxes, "black", 5);
-    drawArrowHeads(cartesianAxesArrowHeads, "black", 5);
+    //drawArrowHeads(cartesianAxesArrowHeads, "black", 5);
 
     //drawPoints(errorLines.endPoints(), "forestgreen");
 }
@@ -261,7 +264,6 @@ function StraightLine(b0, b1) {
     this.p2 = new Point(x_max, y_at_x_max);
 
     Line.call(this, this.p1, this.p2);
-
 }
 
 StraightLine.prototype.endPoints = function () {
@@ -337,7 +339,7 @@ function AxisArrows(point, arrowDirection) {
  * @param p2
  * @constructor
  */
-function ErrorLine(p1, p2) {
+function ErrorLine(p1, p2, dataPoint) {
     this.p1 = p1;
     this.p2 = p2;
 
@@ -347,10 +349,12 @@ function ErrorLine(p1, p2) {
     this.midpoint = new Point(x, y);
     this.magnitude = (p1.y < p2.y) ? round(p2.y - p1.y, 2) : round(p1.y - p2.y, 2);
 
-    // ErrorLine.prototype.toString = function() {
-    //     return this.magnitude;
-    // }
+    this.dataPoint = dataPoint;
 }
+
+ErrorLine.prototype.toString = function() {
+    return printPoint(this.dataPoint) + " with size: " + this.magnitude;
+};
 
 ErrorLine.prototype.endPoints = function () {
     return [this.p1, this.p2];
@@ -377,7 +381,7 @@ function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
         const p1 = additionalSamplePoints[p];
         const p2 = new Point(x, y);
 
-        const errorLine = new ErrorLine(p1, p2);
+        const errorLine = new ErrorLine(p1, p2, additionalSamplePoints[p]);
         errorLine.midpoint.setString(errorLine.magnitude);
         errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
 
@@ -438,42 +442,31 @@ function onClick(e) {
 
     let pageX = e.pageX - offsetX;
     let pageY = e.pageY - offsetY;
-    console.log("  " + pageX + " " + pageY);
 
     let btnCode = e.button;
 
     switch (btnCode) {
         case 0:
-            console.log('Left button clicked.');
+            console.log('Left button clicked, Adding point, at (pageX: ' + pageX + ", pageY: " + pageY + ").");
+            addPoint(pageX, pageY);
             break;
 
         case 1:
-            console.log('Middle button clicked.');
+            console.log('Middle button clicked, unimplemented');
             break;
 
         case 2:
-            console.log('Right button clicked.');
+            console.log('Right button clicked, Removing point, at (pageX: ' + pageX + ", pageY: " + pageY + ").");
+            removePoint(pageX, pageY);
             break;
 
         default:
             console.log('Unexpected code: ' + btnCode);
     }
 
-    let graphPosition = convertCanvasToGraph(pageX, pageY);
-    //graphPosition = {cartesianX: round(graphPosition.cartesianX, 0), cartesianY: round(graphPosition.cartesianY, 0)};
-    let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
-
-    dataPoints.push(clickPoint);
-    //buildErrorLinesBetween([clickPoint], sampleHypothesisLineGood);
-    buildErrorLinesBetween([clickPoint], sampleHypothesisLineBad);
-    //buildCanvasContent();
-    renderCanvas();
 
     //tasks
     /*
-     - make a pixels to ___ conversion function
-     - add points (lclick)
-     - delete points (rclick)
      - 2 html sliders(b0, b1) to control the (line).
      - add a second canvas to plot b0, b1
      - move axes to show negatives plz (at least some way to scale)
@@ -483,16 +476,102 @@ function onClick(e) {
      */
 }
 
+function onOver() {
+
+}
+
 /**
  * Converts X and Y page positions, into the graphing cartesian system.
  * Note these are already offset by the canvas' position within the page.
  *
  * @param {Number} pageX
  * @param {Number} pageY
- * @returns {{cartesianX: {Number} number, cartesianY: {Number} number}}
+ * @param {Number} graphDecimalsAccuracy
+ * @returns {{cartesianX: {Number}, cartesianY: {Number}}}
  */
-function convertCanvasToGraph(pageX, pageY) {
-    return {cartesianX: (pageX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - pageY) / CANVAS_SCALE)}
+function convertCanvasToGraph(pageX, pageY, graphDecimalsAccuracy) {
+
+    let graphPosition = {cartesianX: (pageX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - pageY) / CANVAS_SCALE)};
+
+    graphPosition = (graphDecimalsAccuracy) ? {
+        cartesianX: round(graphPosition.cartesianX, graphDecimalsAccuracy),
+        cartesianY: round(graphPosition.cartesianY, graphDecimalsAccuracy)
+    } : graphPosition;
+
+    return graphPosition;
+}
+
+function printPoint(point) {
+    return "(" + point.x + ", " + point.y + ")";
+}
+
+/**
+ * Add point by
+ *      (A) adapting click position to cartesian system
+ *      (B) adding to array
+ *      (C) triggering redraw of canvas
+ * @param pageX
+ * @param pageY
+ */
+function addPoint(pageX, pageY) {
+    let graphPosition = convertCanvasToGraph(pageX, pageY, GRAPH_DECIMALS_ACCURACY);
+    let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
+
+    dataPoints.push(clickPoint);
+    //buildErrorLinesBetween([clickPoint], sampleHypothesisLineGood);
+    buildErrorLinesBetween([clickPoint], sampleHypothesisLineBad);
+    //buildCanvasContent();
+    renderCanvas();
+}
+
+/**
+ * Remove point by
+ *      (A) finding nearby point to click position
+ *      (B) removing from array
+ *      (C) triggering redraw of canvas
+ * @param pageX
+ * @param pageY
+ */
+function removePoint(pageX, pageY) {
+    let graphPosition = convertCanvasToGraph(pageX, pageY, GRAPH_DECIMALS_ACCURACY);
+    let foundPoints = findClosestDataPoints(graphPosition, CLOSEST_ACCURACY_DISTANCE);
+    for (let i = 0; i < foundPoints.length; i++) {
+        let firstMatchPoint = dataPoints.indexOf(foundPoints[i]); //index of on references
+
+        //remove related error line first
+        removeErrorLine(dataPoints[firstMatchPoint], sampleHypothesisLineBad);
+
+        console.log("Removing point at : " + printPoint(dataPoints[firstMatchPoint]));
+        let removedPoint = dataPoints.splice(firstMatchPoint, 1);
+    }
+    renderCanvas();
+}
+
+function removeErrorLine(dataPoint, hypothesisLine) {
+
+    for (let i = 0; i < hypothesisLine.errorLines.length; i++) {
+        if (dataPoint === hypothesisLine.errorLines[i].dataPoint) {
+            console.log("Removing error line at: " + hypothesisLine.errorLines[i]);
+            let removedErrorLine = hypothesisLine.errorLines.splice(i, 1);
+        }
+    }
+}
+
+/**
+ * Find nearest element (for now just data points) within a range of 1 cartesian unit, based on mouse hover position.
+ * @param {{cartesianX: {Number}, cartesianY: {Number}}} targetGraphPosition
+ * @param {Number} accuracyDistance
+ * @returns {Array.<*>} foundPoints
+ */
+function findClosestDataPoints(targetGraphPosition, accuracyDistance) {
+
+    let foundPoints = dataPoints.filter(function (entry) {
+        let foo = targetGraphPosition.cartesianX > entry.x + - accuracyDistance && targetGraphPosition.cartesianX < entry.x + accuracyDistance &&
+            targetGraphPosition.cartesianY > entry.y + - accuracyDistance && targetGraphPosition.cartesianY < entry.y + accuracyDistance;
+        return foo;
+    });
+
+    return foundPoints;
 }
 
 
