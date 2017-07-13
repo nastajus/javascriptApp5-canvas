@@ -6,8 +6,8 @@
 
 const canvas = document.getElementById("canvas");
 let context;
-const CANVAS_WIDTH = 1200;
-const CANVAS_HEIGHT = 900;
+const CANVAS_WIDTH = 500;
+const CANVAS_HEIGHT = 500;
 const CANVAS_SCALE = 30;
 const POINT_RADIUS = 5;
 const CANVAS_TEXT_OFFSET_COORD = 10;
@@ -20,8 +20,7 @@ const cartesianAxesArrowHeads = [];
 const cartesianGraphPoints = [];
 let dataPoints = [];
 let highlightPoints = [];
-let sampleHypothesisLineGood;
-let sampleHypothesisLineBad;
+let hypothesisLine;
 
 
 /**
@@ -81,8 +80,7 @@ function buildCanvasContent() {
 
     buildSampleHypothesisLines();
 
-    //buildErrorLinesBetween(dataPoints, sampleHypothesisLineGood);
-    buildErrorLinesBetween(dataPoints, sampleHypothesisLineBad);
+    buildErrorLinesBetween(dataPoints, hypothesisLine);
 
 }
 
@@ -101,15 +99,12 @@ function buildSampleDataPoints() {
     dataPoints.push(new Point(12, 8));
     dataPoints.push(new Point(13, 9));
     dataPoints.push(new Point(14, 7));
-    dataPoints.push(new Point(18, 8));
+    //dataPoints.push(new Point(18, 8));
 }
 
 function buildSampleHypothesisLines() {
-    sampleHypothesisLineGood = new StraightLine(3, 1 / 2);
-    sampleHypothesisLineGood.name = "good line";
-
-    sampleHypothesisLineBad = new StraightLine(-2, 1 / 3);
-    sampleHypothesisLineBad.name = "bad line";
+    hypothesisLine = new StraightLine(0, 1);
+    hypothesisLine.name = "the hypothesis line";
 }
 
 function renderCanvas() {
@@ -124,14 +119,10 @@ function renderCanvas() {
 
     drawPoints(dataPoints, "darkred", true);
 
-    drawLinesBetweenPoints(sampleHypothesisLineGood.endPoints(), "darkred");
-    drawLinesBetweenPoints(sampleHypothesisLineBad.endPoints(), "black");
+    drawLinesBetweenPoints(hypothesisLine.endPoints(), "black");
 
-    drawEachLine(sampleHypothesisLineGood.errorLines, "forestgreen");
-    drawEachLineText(sampleHypothesisLineGood.errorLines, "forestgreen");
-
-    drawEachLine(sampleHypothesisLineBad.errorLines, "forestgreen");
-    drawEachLineText(sampleHypothesisLineBad.errorLines, "forestgreen");
+    drawEachLine(hypothesisLine.errorLines, "forestgreen");
+    drawEachLineText(hypothesisLine.errorLines, "forestgreen");
 
     drawEachLine(cartesianAxes, "black", 5);
     //drawArrowHeads(cartesianAxesArrowHeads, "black", 5);
@@ -558,8 +549,7 @@ function addPoint(pageX, pageY) {
     let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
 
     dataPoints.push(clickPoint);
-    //buildErrorLinesBetween([clickPoint], sampleHypothesisLineGood);
-    buildErrorLinesBetween([clickPoint], sampleHypothesisLineBad);
+    buildErrorLinesBetween([clickPoint], hypothesisLine);
     //buildCanvasContent();
     renderCanvas();
 }
@@ -579,7 +569,7 @@ function removePoint(pageX, pageY) {
         let firstMatchPoint = dataPoints.indexOf(foundPoints[i]); //index of on references
 
         //remove related error line before removing the data point
-        removeErrorLine(dataPoints[firstMatchPoint], sampleHypothesisLineBad);
+        removeErrorLine(dataPoints[firstMatchPoint], hypothesisLine);
 
         console.log("Removing point at : " + printPoint(dataPoints[firstMatchPoint]));
         let removedPoint = dataPoints.splice(firstMatchPoint, 1);
