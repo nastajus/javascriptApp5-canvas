@@ -71,7 +71,6 @@ function initGraphs() {
 /**
  *
  * @param canvasId
- * @returns {{canvas: (Element|*), context: (CanvasRenderingContext2D|WebGLRenderingContext|*)}}
  */
 function initGraph(canvasId) {
 
@@ -94,9 +93,9 @@ function buildCanvasContents() {
 
 function buildCanvasContent(graph) {
 
-    buildCartesianGraphPoints(cartesianGraphPoints);
+    buildCartesianGraphPoints(graph); //cartesianGraphPoints
 
-    buildAxes(cartesianAxes);
+    buildAxes(graph); //cartesianAxes
 
     buildSampleDataPoints(graph);
 
@@ -143,108 +142,108 @@ function renderCanvas(graph) {
     //works.
     graph.canvas.width = graph.canvas.width;
 
-    drawPoints(graph.cartesianGraphPoints, "lightgray");
+    drawPoints(graph, graph.cartesianGraphPoints, "lightgray");
 
-    drawPoints(graph.dataPoints, "darkred", true);
+    drawPoints(graph, graph.dataPoints, "darkred", true);
 
-    drawLinesBetweenPoints(graph.hypothesisLine.endPoints(), "black");
+    drawLinesBetweenPoints(graph, graph.hypothesisLine.endPoints(), "black");
 
-    drawEachLine(graph.hypothesisLine.errorLines, "forestgreen");
-    drawEachLineText(graph.hypothesisLine.errorLines, "forestgreen");
+    drawEachLine(graph, graph.hypothesisLine.errorLines, "forestgreen");
+    drawEachLineText(graph, graph.hypothesisLine.errorLines, "forestgreen");
 
-    drawEachLine(graph.cartesianAxes, "black", 5);
-    //drawArrowHeads(graph.cartesianAxesArrowHeads, "black", 5);
+    drawEachLine(graph, graph.cartesianAxes, "black", 5);
+    //drawArrowHeads(graph, graph.cartesianAxesArrowHeads, "black", 5);
 
-    //drawPoints(graph.errorLines.endPoints(), "forestgreen");
+    //drawPoints(graph, graph.errorLines.endPoints(), "forestgreen");
 
-    drawHighlightPoints(graph.highlightPoints);
-    removeHighlightPoints();
+    drawHighlightPoints(graph, graph.highlightPoints);
+    //removeHighlightPoints();
 }
 
-function drawLinesBetweenPoints(points, fillStyle) {
+function drawLinesBetweenPoints(graph, points, fillStyle) {
     let pNext;
     for (let p = 0; p < points.length; p++) {
         pNext = (p + 1) % points.length;
-        drawLine(points[p], points[pNext], fillStyle);
+        drawLine(graph, points[p], points[pNext], fillStyle);
     }
 }
 
-function drawEachLine(lines, fillStyle, lineWidth) {
+function drawEachLine(graph, lines, fillStyle, lineWidth) {
     if (lines === undefined) {
         throw new ReferenceError("Cannot draw lines, lines is undefined");
     }
     for (let l = 0; l < lines.length; l++) {
-        drawLine(lines[l].p1, lines[l].p2, fillStyle, lineWidth);
+        drawLine(graph, lines[l].p1, lines[l].p2, fillStyle, lineWidth);
     }
 }
 
-function drawEachLineText(lines, fillStyle) {
+function drawEachLineText(graph, lines, fillStyle) {
     if (lines === undefined) {
         throw new ReferenceError("Cannot draw line text, lines is undefined");
     }
     for (let l = 0; l < lines.length; l++) {
-        drawPointText(lines[l].midpoint, fillStyle);
+        drawPointText(graph, lines[l].midpoint, fillStyle);
     }
 }
 
-function drawLine(pointBegin, pointEnd, strokeStyle, lineWidth) {
-    const originalStrokeStyle = context.strokeStyle;
-    const originalLineWidth = context.lineWidth;
-    context.beginPath();
-    context.moveTo(pointBegin.canvasX, pointBegin.canvasY);
-    context.lineTo(pointEnd.canvasX, pointEnd.canvasY);
+function drawLine(graph, pointBegin, pointEnd, strokeStyle, lineWidth) {
+    const originalStrokeStyle = graph.context.strokeStyle;
+    const originalLineWidth = graph.context.lineWidth;
+    graph.context.beginPath();
+    graph.context.moveTo(pointBegin.canvasX, pointBegin.canvasY);
+    graph.context.lineTo(pointEnd.canvasX, pointEnd.canvasY);
 
     if (strokeStyle !== undefined) {
-        context.strokeStyle = strokeStyle;
+        graph.context.strokeStyle = strokeStyle;
     }
 
     if (lineWidth !== undefined) {
-        context.lineWidth = lineWidth;
+        graph.context.lineWidth = lineWidth;
     }
 
-    context.stroke();
-    context.strokeStyle = originalStrokeStyle;
-    context.lineWidth = originalLineWidth;
+    graph.context.stroke();
+    graph.context.strokeStyle = originalStrokeStyle;
+    graph.context.lineWidth = originalLineWidth;
 }
 
-function drawPoints(points, fillStyle, drawText) {
+function drawPoints(graph, points, fillStyle, drawText) {
     for (let p = 0; p < points.length; p++) {
-        drawPoint(points[p], fillStyle);
+        drawPoint(graph, points[p], fillStyle);
         if (drawText) {
-            drawPointText(points[p], fillStyle);
+            drawPointText(graph, points[p], fillStyle);
         }
     }
 }
 
-function drawPoint(point, fillStyle, pointRadius) {
-    const originalFillStyle = context.fillStyle;
-    context.beginPath();
-    context.arc(point.canvasX, point.canvasY, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
-    context.closePath();
-    context.fillStyle = fillStyle;
-    context.fill();
-    context.fillStyle = originalFillStyle;
+function drawPoint(graph, point, fillStyle, pointRadius) {
+    const originalFillStyle = graph.context.fillStyle;
+    graph.context.beginPath();
+    graph.context.arc(point.canvasX, point.canvasY, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
+    graph.context.closePath();
+    graph.context.fillStyle = fillStyle;
+    graph.context.fill();
+    graph.context.fillStyle = originalFillStyle;
 }
 
-function drawPointText(point, fillStyle) {
-    const originalFillStyle = context.fillStyle;
-    context.fillStyle = fillStyle;
-    context.fillText(point.toString(), point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
-    context.fillStyle = originalFillStyle;
+function drawPointText(graph, point, fillStyle) {
+    const originalFillStyle = graph.context.fillStyle;
+    graph.context.fillStyle = fillStyle;
+    graph.context.fillText(point.toString(), point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
+    graph.context.fillStyle = originalFillStyle;
 }
 
-function drawHighlightPoints(hightlightPoints) {
-    for (let i = 0; i < hightlightPoints.length; i++) {
-        drawHighlight(hightlightPoints[i]);
+function drawHighlightPoints(graph, highlightPoints) {
+    for (let i = 0; i < highlightPoints.length; i++) {
+        drawHighlight(graph, highlightPoints[i]);
     }
 }
 
-function drawHighlight(highlightPoint) {
-    drawFatterPoint(highlightPoint);
+function drawHighlight(graph, highlightPoint) {
+    drawFatterPoint(graph, highlightPoint);
 }
 
-function drawFatterPoint(point) {
-    drawPoint(point, "darkyellow", 10);
+function drawFatterPoint(graph, point) {
+    drawPoint(graph, point, "darkyellow", 10);
 }
 
 /**
@@ -252,8 +251,9 @@ function drawFatterPoint(point) {
  * @param {[Point]} graphPoints
  */
 
-function buildCartesianGraphPoints(graphPoints) {
+function buildCartesianGraphPoints(graph) {
 
+    let graphPoints = graph.cartesianGraphPoints;
     //this is not easy to read easily. refactor to be most readable possible:
     for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
         for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
@@ -262,7 +262,8 @@ function buildCartesianGraphPoints(graphPoints) {
     }
 }
 
-function buildAxes(graphLines) {
+function buildAxes(graph) {
+    let graphLines = graph.cartesianAxes;
     graphLines.push(new AxisLine("x"));
     graphLines.push(new AxisLine("y"));
 }
@@ -468,6 +469,7 @@ function round(value, decimals) {
 
 function onClick(e) {
     let element = graphs[0].canvas; //for now just hard-code
+    let graph = graphs[0];
     let offsetX = 0, offsetY = 0;
 
     if (element.offsetParent) {
@@ -485,7 +487,7 @@ function onClick(e) {
     switch (btnCode) {
         case 0:
             console.log('Left button clicked, Adding point, at (canvasX: ' + canvasX + ", canvasY: " + canvasY + ").");
-            addPoint(element, canvasX, canvasY);
+            addPoint(graph, canvasX, canvasY);
             break;
 
         case 1:
@@ -494,7 +496,7 @@ function onClick(e) {
 
         case 2:
             console.log('Right button clicked, Removing point, at (canvasX: ' + canvasX + ", canvasY: " + canvasY + ").");
-            removePoint(element, canvasX, canvasY);
+            removePoint(graph, canvasX, canvasY);
             break;
 
         default:
@@ -514,6 +516,7 @@ function onClick(e) {
 
 function onMove(e) {
     let element = graphs[0].canvas; //for now just hard-code
+    let graph = graphs[0];
     let offsetX = 0, offsetY = 0;
 
     if (element.offsetParent) {
@@ -528,15 +531,15 @@ function onMove(e) {
 
     let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
 
-    let closestDataPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT)
+    let closestDataPoints = findClosestDataPoints(graph, graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT)
 
-    addHighlightPoints(closestDataPoints, element.highlightPoints);
+    addHighlightPoints(closestDataPoints, graph.highlightPoints);
 
-    let diff = arrayDifference (element.dataPoints, closestDataPoints);
+    let diff = arrayDifference (graph.dataPoints, closestDataPoints);
 
-    removeHighlightPoints(diff, element.highlightPoints);
+    removeHighlightPoints(diff, graph.highlightPoints);
 
-    renderCanvas(element);
+    renderCanvas(graph);
 }
 
 /**
@@ -579,7 +582,7 @@ function addPoint(graph, canvasX, canvasY) {
     graph.dataPoints.push(clickPoint);
     buildErrorLinesBetween([clickPoint], graph.hypothesisLine);
     //buildCanvasContent();
-    renderCanvas();
+    renderCanvas(graph);
 }
 
 /**
@@ -621,9 +624,9 @@ function removeErrorLine(dataPoint, hypothesisLine) {
  * @param {Number} accuracyDistance
  * @returns {Array.<*>} foundPoints
  */
-function findClosestDataPoints(targetGraphPosition, accuracyDistance) {
+function findClosestDataPoints(graph, targetGraphPosition, accuracyDistance) {
 
-    let foundPoints = dataPoints.filter(function (entry) {
+    let foundPoints = graph.dataPoints.filter(function (entry) {
         let foo = targetGraphPosition.cartesianX > entry.x + - accuracyDistance && targetGraphPosition.cartesianX < entry.x + accuracyDistance &&
             targetGraphPosition.cartesianY > entry.y + - accuracyDistance && targetGraphPosition.cartesianY < entry.y + accuracyDistance;
         return foo;
