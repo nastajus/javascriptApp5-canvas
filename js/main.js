@@ -4,8 +4,8 @@
  *
  */
 
-const canvas = document.getElementById("canvas");
-let context;
+let graphs = [];
+
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 const CANVAS_SCALE = 30;
@@ -15,13 +15,17 @@ const CANVAS_TEXT_OFFSET_MAGNI = 5;
 const GRAPH_DECIMALS_ACCURACY = 1;
 const CLICK_DISTANCE_ACCURACY_TO_POINT = 1/2;
 
-const cartesianAxes = [];
-const cartesianAxesArrowHeads = [];
-const cartesianGraphPoints = [];
-let dataPoints = [];
-let highlightPoints = [];
-let hypothesisLine;
+function Graph(canvas) {
+    this.canvas = canvas;
+    this.context = canvas.getContext("2d");
 
+    this.cartesianAxes = [];
+    this.cartesianAxesArrowHeads = [];
+    this.cartesianGraphPoints = [];
+    this.dataPoints = [];
+    this.highlightPoints = [];
+    this.hypothesisLine = {};
+}
 
 /**
  * Creates new point for graphing.
@@ -59,77 +63,101 @@ Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
 };
 
 
-function initCanvas() {
-    canvas.width = CANVAS_WIDTH;
-    canvas.height = CANVAS_HEIGHT;
-    context = canvas.getContext("2d");
-    canvas.oncontextmenu = (e) => e.preventDefault();
-    //canvas.onclick = onClick;
-    canvas.onmouseup = onClick;
-    canvas.onmousemove = onMove;
-
+function initGraphs() {
+    graphs.push(initGraph("canvas1")); //regression line graph
+    graphs.push(initGraph("canvas2")); //contour plot graph
 }
 
-function buildCanvasContent() {
+/**
+ *
+ * @param canvasId
+ * @returns {{canvas: (Element|*), context: (CanvasRenderingContext2D|WebGLRenderingContext|*)}}
+ */
+function initGraph(canvasId) {
+
+    let canvas = document.getElementById(canvasId);
+    canvas.width = CANVAS_WIDTH;
+    canvas.height = CANVAS_HEIGHT;
+    canvas.oncontextmenu = (e) => e.preventDefault();
+    //canvas.onclick = onClick;
+    canvas.onmouseup = onClick;  //try passing variable here of `graph`
+    canvas.onmousemove = onMove; //try passing variable here of `graph`
+
+    return new Graph(canvas);
+}
+
+function buildCanvasContents() {
+    for (let i = 0; i < graphs.length; i++) {
+        buildCanvasContent(graphs[i]);
+    }
+}
+
+function buildCanvasContent(graph) {
 
     buildCartesianGraphPoints(cartesianGraphPoints);
 
     buildAxes(cartesianAxes);
 
-    buildSampleDataPoints();
+    buildSampleDataPoints(graph);
 
-    buildSampleHypothesisLines();
+    buildSampleHypothesisLines(graph); //if applicable
 
-    buildErrorLinesBetween(dataPoints, hypothesisLine);
+    buildErrorLinesBetween(graph.dataPoints, graph.hypothesisLine);
 
 }
 
-function buildSampleDataPoints() {
-    dataPoints.push(new Point(1, 1));
-    dataPoints.push(new Point(3, 4));
-    dataPoints.push(new Point(2, 5));
-    dataPoints.push(new Point(3, 6));
-    dataPoints.push(new Point(5, 5));
-    dataPoints.push(new Point(5, 9));
-    dataPoints.push(new Point(6, 4));
-    dataPoints.push(new Point(7, 7));
-    dataPoints.push(new Point(7, 8));
-    dataPoints.push(new Point(8, 7));
-    dataPoints.push(new Point(9, 9));
-    dataPoints.push(new Point(12, 8));
-    dataPoints.push(new Point(13, 9));
-    dataPoints.push(new Point(14, 7));
-    //dataPoints.push(new Point(18, 8));
+function buildSampleDataPoints(graph) {
+    graph.dataPoints.push(new Point(1, 1));
+    graph.dataPoints.push(new Point(3, 4));
+    graph.dataPoints.push(new Point(2, 5));
+    graph.dataPoints.push(new Point(3, 6));
+    graph.dataPoints.push(new Point(5, 5));
+    graph.dataPoints.push(new Point(5, 9));
+    graph.dataPoints.push(new Point(6, 4));
+    graph.dataPoints.push(new Point(7, 7));
+    graph.dataPoints.push(new Point(7, 8));
+    graph.dataPoints.push(new Point(8, 7));
+    graph.dataPoints.push(new Point(9, 9));
+    graph.dataPoints.push(new Point(12, 8));
+    graph.dataPoints.push(new Point(13, 9));
+    graph.dataPoints.push(new Point(14, 7));
+    //graph.dataPoints.push(new Point(18, 8));
 }
 
-function buildSampleHypothesisLines() {
-    hypothesisLine = new StraightLine(0, 1);
-    hypothesisLine.name = "the hypothesis line";
+function buildSampleHypothesisLines(graph) {
+    graph.hypothesisLine = new StraightLine(0, 1);
+    graph.hypothesisLine.name = "the hypothesis line";
 }
 
-function renderCanvas() {
+function renderCanvases(){
+    for (let i = 0; i < graphs.length; i++) {
+        renderCanvas(graphs[i]);
+    }
+}
+
+function renderCanvas(graph) {
 
     //doesn't work
-    context.clearRect(0, 0, canvas.width, canvas.height);
+    graph.context.clearRect(0, 0, graph.canvas.width, graph.canvas.height);
 
     //works.
-    canvas.width = canvas.width;
+    graph.canvas.width = graph.canvas.width;
 
-    drawPoints(cartesianGraphPoints, "lightgray");
+    drawPoints(graph.cartesianGraphPoints, "lightgray");
 
-    drawPoints(dataPoints, "darkred", true);
+    drawPoints(graph.dataPoints, "darkred", true);
 
-    drawLinesBetweenPoints(hypothesisLine.endPoints(), "black");
+    drawLinesBetweenPoints(graph.hypothesisLine.endPoints(), "black");
 
-    drawEachLine(hypothesisLine.errorLines, "forestgreen");
-    drawEachLineText(hypothesisLine.errorLines, "forestgreen");
+    drawEachLine(graph.hypothesisLine.errorLines, "forestgreen");
+    drawEachLineText(graph.hypothesisLine.errorLines, "forestgreen");
 
-    drawEachLine(cartesianAxes, "black", 5);
-    //drawArrowHeads(cartesianAxesArrowHeads, "black", 5);
+    drawEachLine(graph.cartesianAxes, "black", 5);
+    //drawArrowHeads(graph.cartesianAxesArrowHeads, "black", 5);
 
-    //drawPoints(errorLines.endPoints(), "forestgreen");
+    //drawPoints(graph.errorLines.endPoints(), "forestgreen");
 
-    drawHighlightPoints(highlightPoints);
+    drawHighlightPoints(graph.highlightPoints);
     removeHighlightPoints();
 }
 
@@ -439,7 +467,7 @@ function round(value, decimals) {
 }
 
 function onClick(e) {
-    let element = canvas;
+    let element = graphs[0].canvas; //for now just hard-code
     let offsetX = 0, offsetY = 0;
 
     if (element.offsetParent) {
@@ -457,7 +485,7 @@ function onClick(e) {
     switch (btnCode) {
         case 0:
             console.log('Left button clicked, Adding point, at (canvasX: ' + canvasX + ", canvasY: " + canvasY + ").");
-            addPoint(canvasX, canvasY);
+            addPoint(element, canvasX, canvasY);
             break;
 
         case 1:
@@ -466,7 +494,7 @@ function onClick(e) {
 
         case 2:
             console.log('Right button clicked, Removing point, at (canvasX: ' + canvasX + ", canvasY: " + canvasY + ").");
-            removePoint(canvasX, canvasY);
+            removePoint(element, canvasX, canvasY);
             break;
 
         default:
@@ -485,7 +513,7 @@ function onClick(e) {
 }
 
 function onMove(e) {
-    let element = canvas;
+    let element = graphs[0].canvas; //for now just hard-code
     let offsetX = 0, offsetY = 0;
 
     if (element.offsetParent) {
@@ -502,27 +530,27 @@ function onMove(e) {
 
     let closestDataPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT)
 
-    addHighlightPoints(closestDataPoints, highlightPoints);
+    addHighlightPoints(closestDataPoints, element.highlightPoints);
 
-    let diff = arrayDifference (dataPoints, closestDataPoints);
+    let diff = arrayDifference (element.dataPoints, closestDataPoints);
 
-    removeHighlightPoints(diff, highlightPoints);
+    removeHighlightPoints(diff, element.highlightPoints);
 
-    renderCanvas();
+    renderCanvas(element);
 }
 
 /**
  * Converts X and Y page positions, into the graphing cartesian system.
  * Note these are already offset by the canvas' position within the page.
  *
- * @param {Number} pageX
- * @param {Number} pageY
+ * @param {Number} canvasX
+ * @param {Number} canvasY
  * @param {Number} graphDecimalsAccuracy
  * @returns {{cartesianX: {Number}, cartesianY: {Number}}}
  */
-function convertCanvasToGraph(pageX, pageY, graphDecimalsAccuracy) {
+function convertCanvasToGraph(canvasX, canvasY, graphDecimalsAccuracy) {
 
-    let graphPosition = {cartesianX: (pageX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - pageY) / CANVAS_SCALE)};
+    let graphPosition = {cartesianX: (canvasX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - canvasY) / CANVAS_SCALE)};
 
     graphPosition = (graphDecimalsAccuracy) ? {
         cartesianX: round(graphPosition.cartesianX, graphDecimalsAccuracy),
@@ -541,15 +569,15 @@ function printPoint(point) {
  *      (A) adapting click position to cartesian system
  *      (B) adding to array
  *      (C) triggering redraw of canvas
- * @param pageX
- * @param pageY
+ * @param canvasX
+ * @param canvasY
  */
-function addPoint(pageX, pageY) {
-    let graphPosition = convertCanvasToGraph(pageX, pageY, GRAPH_DECIMALS_ACCURACY);
+function addPoint(graph, canvasX, canvasY) {
+    let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
     let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
 
-    dataPoints.push(clickPoint);
-    buildErrorLinesBetween([clickPoint], hypothesisLine);
+    graph.dataPoints.push(clickPoint);
+    buildErrorLinesBetween([clickPoint], graph.hypothesisLine);
     //buildCanvasContent();
     renderCanvas();
 }
@@ -559,20 +587,20 @@ function addPoint(pageX, pageY) {
  *      (A) finding nearby point to click position
  *      (B) removing from array
  *      (C) triggering redraw of canvas
- * @param pageX
- * @param pageY
+ * @param canvasX
+ * @param canvasY
  */
-function removePoint(pageX, pageY) {
-    let graphPosition = convertCanvasToGraph(pageX, pageY, GRAPH_DECIMALS_ACCURACY);
+function removePoint(graph, canvasX, canvasY) {
+    let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
     let foundPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT);
     for (let i = 0; i < foundPoints.length; i++) {
-        let firstMatchPoint = dataPoints.indexOf(foundPoints[i]); //index of on references
+        let firstMatchPoint = graph.dataPoints.indexOf(foundPoints[i]); //index of on references
 
         //remove related error line before removing the data point
-        removeErrorLine(dataPoints[firstMatchPoint], hypothesisLine);
+        removeErrorLine(graph.dataPoints[firstMatchPoint], graph.hypothesisLine);
 
-        console.log("Removing point at : " + printPoint(dataPoints[firstMatchPoint]));
-        let removedPoint = dataPoints.splice(firstMatchPoint, 1);
+        console.log("Removing point at : " + printPoint(graph.dataPoints[firstMatchPoint]));
+        let removedPoint = graph.dataPoints.splice(firstMatchPoint, 1);
     }
     renderCanvas();
 }
@@ -634,9 +662,9 @@ function arrayDifference (arrayA, arrayB) {
 }
 
 
-initCanvas();
-buildCanvasContent();
-renderCanvas();
+initGraphs();
+buildCanvasContents();
+renderCanvases();
 
 
 // setTimeout(() => {
