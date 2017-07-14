@@ -18,9 +18,9 @@ const POINT_RADIUS = 5;
 const CANVAS_TEXT_OFFSET_COORD = 10;
 const CANVAS_TEXT_OFFSET_MAGNI = 5;
 const GRAPH_DECIMALS_ACCURACY = 1;
-const CLICK_DISTANCE_ACCURACY_TO_POINT = 1/2;
+const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 
-function Graph(canvasId, graphType) {
+function Graph(canvasId, graphType, controls) {
 
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
@@ -36,37 +36,26 @@ function Graph(canvasId, graphType) {
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
     this.canvas.oncontextmenu = (e) => e.preventDefault();
-    //this.canvas.onclick = onClick;
-    this.canvas.onmouseup = onClick;  //try passing variable here of `graph`
-    this.canvas.onmousemove = onMove; //try passing variable here of `graph`
+    //this.canvas.onclick = onClickCanvas;
+    this.canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
+    this.canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
 
+    this.sliderVertical = controls.sliderVertical;
+    this.sliderHorizontal = controls.sliderHorizontal;
+    this.textboxVertical = controls.textboxVertical;
+    this.textboxHorizontal = controls.textboxHorizontal
 
-    //and here's where i tried getting the reference to the slider via the parent drilling down to the child,
-    //  but these calls convert the object from an HTML DOM element list to javascript Object NodeList, which is no longer simple
-    //  for accessing children without parsing the entire HTML result set. Yeesh.
+    this.sliderVertical.oninput = onChangeSlider;
+    this.sliderHorizontal.oninput = onChangeSlider;
+    this.sliderVertical.onchange = onChangeSlider;
+    this.sliderHorizontal.onchange = onChangeSlider;
+    this.textboxVertical.onchange = onChangeTextbox;
+    this.textboxHorizontal.onchange = onChangeTextbox;
 
-    //this.sliderVertical = document.getElementById(canvasId).parentNode.childNodes.getElementsByClassName("controls-vertical").getElementsByClassName("axis-slider-vertical");
-    let javascriptObjectChildNodes = document.getElementById(canvasId).parentNode.childNodes;
-    //let temp = getKeyByValue(javascriptObjectChildNodes, "div.controls-vertical");
-    for (let i = 0; i < javascriptObjectChildNodes.length; i++) {
-        console.log(javascriptObjectChildNodes[i]);
-    }
-
-    //let temp2 = temp.getElementsByClassName("controls-vertical");
-    //this.sliderVertical;
-    //document.querySelectorAll(canvasId + '#channels .date');
-
-    console.log(javascriptObjectChildNodes[1]);
-
+    //min=10 max=30 value=10 step=1
 }
 
-function getKeyByValue(object, value) {
-    return Object.keys(object).find(key => object[key] === value);
-}
-
-
-
-Graph.prototype.toString = function() {
+Graph.prototype.toString = function () {
     return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
 };
 
@@ -110,8 +99,9 @@ Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
 };
 
 function initGraphs() {
-    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION ));
-    graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR ));
+    let controls = initControls();
+    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, controls.regression));
+    graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR, controls.contour));
 }
 
 function buildCanvasContents() {
@@ -167,7 +157,7 @@ function buildContourRing(graph) {
 
 }
 
-function renderCanvases(){
+function renderCanvases() {
     for (let i = 0; i < graphs.length; i++) {
         renderCanvas(graphs[i]);
     }
@@ -431,7 +421,7 @@ function ErrorLine(p1, p2, dataPoint) {
     this.dataPoint = dataPoint;
 }
 
-ErrorLine.prototype.toString = function() {
+ErrorLine.prototype.toString = function () {
     return "data point: " + printPoint(this.dataPoint) + " with size: " + this.magnitude;
 };
 
@@ -508,7 +498,7 @@ function round(value, decimals) {
     return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
 }
 
-function onClick(e) {
+function onClickCanvas(e) {
     let element = graphs[0].canvas; //for now just hard-code
     let graph = graphs[0];
     let offsetX = 0, offsetY = 0;
@@ -555,7 +545,7 @@ function onClick(e) {
      */
 }
 
-function onMove(e) {
+function onMoveCanvas(e) {
     let element = graphs[0].canvas; //for now just hard-code
     let graph = graphs[0];
     let offsetX = 0, offsetY = 0;
@@ -576,11 +566,19 @@ function onMove(e) {
 
     addHighlightPoints(closestDataPoints, graph.highlightPoints);
 
-    let diff = arrayDifference (graph.dataPoints, closestDataPoints);
+    let diff = arrayDifference(graph.dataPoints, closestDataPoints);
 
     removeHighlightPoints(diff, graph.highlightPoints);
 
     renderCanvas(graph);
+}
+
+function onChangeSlider(e) {
+    console.log(this.value);
+}
+
+function onChangeTextbox(e) {
+    console.log(this.value);
 }
 
 /**
@@ -682,15 +680,15 @@ function removeErrorLine(graph, matchingDataPoint) {
 function findClosestDataPoints(graph, targetGraphPosition, accuracyDistance) {
 
     let foundPoints = graph.dataPoints.filter(function (entry) {
-        let foo = targetGraphPosition.cartesianX > entry.x + - accuracyDistance && targetGraphPosition.cartesianX < entry.x + accuracyDistance &&
-            targetGraphPosition.cartesianY > entry.y + - accuracyDistance && targetGraphPosition.cartesianY < entry.y + accuracyDistance;
+        let foo = targetGraphPosition.cartesianX > entry.x + -accuracyDistance && targetGraphPosition.cartesianX < entry.x + accuracyDistance &&
+            targetGraphPosition.cartesianY > entry.y + -accuracyDistance && targetGraphPosition.cartesianY < entry.y + accuracyDistance;
         return foo;
     });
 
     return foundPoints;
 }
 
-function addHighlightPoints (sourceArray, targetArray) {
+function addHighlightPoints(sourceArray, targetArray) {
     addArrayToArrayOnce(sourceArray, targetArray);
 }
 
@@ -702,9 +700,9 @@ function addArrayToArrayOnce(sourceArray, targetArray) {
     }
 }
 
-function removeHighlightPoints (sourceArray, targetArray) {
+function removeHighlightPoints(sourceArray, targetArray) {
     removeArrayFromArrayOnce(sourceArray, targetArray);
-} 
+}
 
 function removeArrayFromArrayOnce(sourceArray, targetArray) {
     for (let i = 0; i < sourceArray.length; i++) {
@@ -714,29 +712,37 @@ function removeArrayFromArrayOnce(sourceArray, targetArray) {
     }
 }
 
-function arrayDifference (arrayA, arrayB) {
-    let diff = arrayA.filter(function(x) { return arrayB.indexOf(x) < 0; });
+function arrayDifference(arrayA, arrayB) {
+    let diff = arrayA.filter(function (x) {
+        return arrayB.indexOf(x) < 0;
+    });
     return diff;
 }
 
 function initControls() {
-    //too much hard-coding. it's ugly. i'd rather get the reference via an expected dependency
-    // let adsf = document.getElementById("regression-slider1");
-    // let adsf = document.getElementById("regression-slider2");
-    // let adsf = document.getElementById("contour-slider1");
-    // let adsf = document.getElementById("contour-slider2");
-    // let adsf = document.getElementById("regression-textbox1");
-    // let adsf = document.getElementById("regression-textbox2");
-    // let adsf = document.getElementById("contour-textbox1");
-    // let adsf = document.getElementById("contour-textbox2");
 
+    let controls = {};
+
+    controls.regression = {
+        sliderVertical: document.getElementById("regression-slider1"),
+        sliderHorizontal: document.getElementById("regression-slider2"),
+        textboxVertical: document.getElementById("regression-textbox1"),
+        textboxHorizontal: document.getElementById("regression-textbox2"),
+    };
+
+    controls.contour = {
+        sliderVertical: document.getElementById("contour-slider1"),
+        sliderHorizontal: document.getElementById("contour-slider1"),
+        textboxVertical: document.getElementById("contour-textbox1"),
+        textboxHorizontal: document.getElementById("contour-textbox2"),
+    };
+
+    return controls;
 }
-
 
 initGraphs();
 buildCanvasContents();
 renderCanvases();
-initControls();
 
 
 // setTimeout(() => {
