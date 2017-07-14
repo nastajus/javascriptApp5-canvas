@@ -21,28 +21,105 @@ const GRAPH_DECIMALS_ACCURACY = 1;
 const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 
 
-function Control(controlSet) {
+function getSliderValue(realValue, min, max) {
+    //assumption:
+    //min is negative... gracefully revert when not negative
+
+    //min -10, max 50, realValue: 10.
+    //how do? range = 60. desired result is 20
+
+    //input is negative..
+    //output is positive equivalent
+
+    let range = Math.abs(min) + Math.abs(max);
+    let sliderValue;
+
+    if (min >= 0 && max < 0) {
+        sliderValue = realValue;
+    }
+    else if (min < 0 && max > 0) {
+        sliderValue = range - (range - (Math.abs(realValue) + Math.abs(min)));
+        //e.g. 60 - (60 - (10 + 10)) = 20
+    }
+    else if (max < 0 && min > 0) {
+        sliderValue = range - (range - (Math.abs(realValue) + Math.abs(max)));
+    }
+    else {
+        throw new RangeError("Unexpected range error in getSliderValue().");
+    }
+
+    return sliderValue;
+}
+
+function getRealValue(sliderValue, min, max) {
+    //sliderValue: 20, min: -10, max: 50
+    //realValue: 10
+
+    let range = Math.abs(min) + Math.abs(max);
+    let realValue;
+
+    // if (min >= 0 && max < 0) {
+    //     realValue = sliderValue;
+    // }
+    //else if (min < 0 && max > 0) {
+    realValue = -range + Math.abs(min) + parseInt(sliderValue);
+    //e.g. 60 - 10 + 20 = 10
+    // }
+    // else if (max < 0 && min > 0) {
+    //     realValue = range - (range -(Math.abs(sliderValue) + Math.abs(max)));
+    // }
+    // else {
+    //     throw new RangeError("Unexpected range error in getRealValue().");
+    // }
+
+    return realValue;
+
+}
+
+function ControlSet(controlSet) {
     this.slider = {};
-    this.slider.vertical = controlSet.slider.vertical;
-    this.slider.horizontal = controlSet.slider.horizontal;
-    this.slider.min = controlSet.slider.min;
-    this.slider.max = controlSet.slider.max;
-    this.slider.step = controlSet.slider.step;
-    this.slider.value = controlSet.slider.value;
+    this.slider.vertical = {};
+    this.slider.vertical.element = controlSet.slider.vertical.element;
     this.textbox = {};
-    this.textbox.vertical = controlSet.textbox.vertical;
-    this.textbox.horizontal = controlSet.textbox.horizontal;
+    this.textbox.vertical = {};
+    this.textbox.vertical.element = controlSet.textbox.vertical.element;
+
+    //actual "math" values, includes negatives (negative numbers aren't supported by input range html5 element)
+    this.slider.vertical.realMin = controlSet.slider.vertical.realMin;
+    this.slider.vertical.realMax = controlSet.slider.vertical.realMax;
+    this.slider.vertical.realValue = controlSet.slider.vertical.realValue; // 1 in (-100 to 100), we want to track the "1", or "real realValue"
+
+    //actual "slider" values (converted)
+    this.slider.vertical.element.min = 0;
+    this.slider.vertical.element.max = Math.abs(controlSet.slider.vertical.realMin) + Math.abs(controlSet.slider.vertical.realMax);
+    this.slider.vertical.element.value = getSliderValue(this.slider.vertical.realValue, this.slider.vertical.realMin, this.slider.vertical.realMax);
+    this.slider.vertical.element.step = controlSet.slider.vertical.step;
 
 
-    this.slider.vertical.oninput = onChangeSlider;
-    this.textbox.horizontal.oninput = onChangeSlider;
-    this.textbox.vertical.onchange = onChangeSlider;
-    this.textbox.horizontal.onchange = onChangeSlider;
+    // this.slider.horizontal.element.min = 0;
+    // this.slider.horizontal.element.max = Math.abs(this.min) + Math.abs(this.max);
+    // this.slider.horizontal.element.value = getSliderValue(this.realValue, this.min, this.max);
+    // this.slider.horizontal.element.step = controlSet.slider.step;
+    ////// this.slider.horizontal.element = controlSet.slider.horizontal.element;
 
-    this.textbox.vertical.onchange = onChangeTextbox;
-    this.textbox.horizontal.onchange = onChangeTextbox;
 
-    //min=10 max=30 value=10 step=1
+
+
+    this.slider.vertical.element.oninput = onChangeSlider;
+    this.textbox.vertical.element.onchange = onChangeSlider;
+    this.textbox.vertical.element.onchange = onChangeTextbox;
+
+
+
+    // this.textbox.horizontal = controlSet.textbox.horizontal;
+    // this.textbox.horizontal.value = this.realValue; //show real only
+
+    // this.textbox.horizontal.oninput = onChangeSlider;
+    // this.textbox.horizontal.onchange = onChangeSlider;
+    // this.textbox.horizontal.onchange = onChangeTextbox;
+
+
+    //min=10 max=30 realValue=10 step=1
 
 }
 
@@ -66,7 +143,9 @@ function Graph(canvasId, graphType, controlSet) {
     this.canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
     this.canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
 
-    Control.call(this, controlSet);
+
+    this.controlSet = controlSet; //TODO: replace with accessing from parent directly
+    ControlSet.call(this, controlSet);
 
 }
 
@@ -501,7 +580,7 @@ function getTotalError(hypothesisLine) {
 }
 
 /**
- * Limit number of decimal places for a float value
+ * Limit number of decimal places for a float realValue
  * @param {Number} value
  * @param {Integer} decimals
  * @returns {number}
@@ -589,7 +668,33 @@ function onMoveCanvas(e) {
 }
 
 function onChangeSlider(e) {
-    console.log(this.value);
+
+    // let range;
+    //
+    // if (this.id === this.slider.vertical.element.id) {
+    //     range = { realMin: this.slider.vertical.realMin,  realMax: this.slider.vertical.realMax };
+    // }
+    // else if (this.id === this.slider.horizontal.element.id) {
+    //     range = { realMin: this.slider.horizontal.realMin,  realMax: this.slider.horizontal.realMax };
+    // }
+    // else {
+    //     throw new RangeError("Cannot determine correct slider being referenced.");
+    // }
+
+    // this.value = getRealValue(this.slider.value, this.min, this.max);
+    // this.textbox.realValue = this.realValue;
+
+
+    let range;
+    for (let i = 0; i < graphs.length; i++) {
+        if (this.id === graphs[i].controlSet.slider.vertical.element.id) {
+            range = {realMin: graphs[i].controlSet.slider.vertical.realMin, realMax: graphs[i].controlSet.slider.vertical.realMax};
+            break;
+        }
+    }
+
+    console.log("Slider value (positive only): " + this.value + " , Mathematical value (- to +): " + getRealValue(this.value, range.realMin, range.realMax));
+
 }
 
 function onChangeTextbox(e) {
@@ -740,31 +845,37 @@ function initControls() {
 
     controls.regression = {
         slider: {
-            vertical: document.getElementById("regression-slider1"),
-            horizontal: document.getElementById("regression-slider2"),
-            min: -100,
-            max: 100,
-            step: 1,
-            value: 1
+            vertical: {
+                element: document.getElementById("regression-slider1"),
+                realMin: -100,
+                realMax: 100,
+                realValue: 1,
+                step: 1
+            },
+            horizontal: {
+                element: document.getElementById("regression-slider2")
+            }
         },
         textbox: {
-            vertical: document.getElementById("regression-textbox1"),
-            horizontal: document.getElementById("regression-textbox2")
+            vertical: {element: document.getElementById("regression-textbox1")},
+            horizontal: {element: document.getElementById("regression-textbox2")}
         }
     };
 
     controls.contour = {
         slider: {
-            vertical: document.getElementById("contour-slider1"),
-            horizontal: document.getElementById("contour-slider1"),
-            min: -100,
-            max: 100,
-            step: 1,
-            value: 1
+            vertical: {
+                element: document.getElementById("contour-slider1"),
+                realMin: -100,
+                realMax: 100,
+                realValue: 1,
+                step: 1
+            },
+            horizontal: {element: document.getElementById("contour-slider1")}
         },
         textbox: {
-            vertical: document.getElementById("contour-textbox1"),
-            horizontal: document.getElementById("contour-textbox2")
+            vertical: {element: document.getElementById("contour-textbox1")},
+            horizontal: {element: document.getElementById("contour-textbox2")}
         }
     };
 
