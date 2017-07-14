@@ -62,7 +62,7 @@ function getRealValue(sliderValue, min, max) {
     //     realValue = sliderValue;
     // }
     //else if (min < 0 && max > 0) {
-    realValue = -range + Math.abs(min) + parseInt(sliderValue);
+    realValue = -range + Math.abs(min) + parseFloat(sliderValue);
     //e.g. 60 - 10 + 20 = 10
     // }
     // else if (max < 0 && min > 0) {
@@ -74,6 +74,30 @@ function getRealValue(sliderValue, min, max) {
 
     return realValue;
 
+}
+
+function getAdjustedStepValue(stepValue, sliderValue, min, max) {
+
+    // stepValue = parseFloat(stepValue);
+    sliderValue = round(parseFloat(sliderValue), 2);
+
+    let adj;
+
+    //tread lightly
+    if (sliderValue < 5 && stepValue >= 0.01) {
+        adj = round(stepValue - 0.01, 2);
+        console.log("LOW) adj: " + adj + ", sliderValue: " + sliderValue);
+    }
+    else if (sliderValue < 50 && stepValue >= 0.1) {
+        adj = round(stepValue - 0.1, 2);
+        console.log("MED) adj: " + adj + ", sliderValue: " + sliderValue);
+    }
+    else {
+        adj = 1;
+        console.log("HIGH) adj: " + adj + ", sliderValue: " + sliderValue);
+    }
+
+    return adj;
 }
 
 function ControlSet(controlSet) {
@@ -103,12 +127,9 @@ function ControlSet(controlSet) {
     ////// this.slider.horizontal.element = controlSet.slider.horizontal.element;
 
 
-
-
     this.slider.vertical.element.oninput = onChangeSlider;
     this.textbox.vertical.element.onchange = onChangeSlider;
     this.textbox.vertical.element.onchange = onChangeTextbox;
-
 
 
     // this.textbox.horizontal = controlSet.textbox.horizontal;
@@ -631,7 +652,6 @@ function onClickCanvas(e) {
     //tasks
     /*
      - 2 html sliders(b0, b1) to control the (line).
-     - add a second canvas to plot b0, b1
      - move axes to show negatives plz (at least some way to scale)
      - as you modify b0,b1 (with a button), plot a point a point on the second canvas
      where it's color represents the total error (lerp).
@@ -669,31 +689,28 @@ function onMoveCanvas(e) {
 
 function onChangeSlider(e) {
 
-    // let range;
-    //
-    // if (this.id === this.slider.vertical.element.id) {
-    //     range = { realMin: this.slider.vertical.realMin,  realMax: this.slider.vertical.realMax };
-    // }
-    // else if (this.id === this.slider.horizontal.element.id) {
-    //     range = { realMin: this.slider.horizontal.realMin,  realMax: this.slider.horizontal.realMax };
-    // }
-    // else {
-    //     throw new RangeError("Cannot determine correct slider being referenced.");
-    // }
-
-    // this.value = getRealValue(this.slider.value, this.min, this.max);
-    // this.textbox.realValue = this.realValue;
-
-
-    let range;
+    let match;
     for (let i = 0; i < graphs.length; i++) {
         if (this.id === graphs[i].controlSet.slider.vertical.element.id) {
-            range = {realMin: graphs[i].controlSet.slider.vertical.realMin, realMax: graphs[i].controlSet.slider.vertical.realMax};
+            match = {
+                realMin: graphs[i].controlSet.slider.vertical.realMin,
+                realMax: graphs[i].controlSet.slider.vertical.realMax,
+                textboxElement: graphs[i].controlSet.textbox.vertical.element,
+                sliderElement: graphs[i].controlSet.slider.vertical.element
+            };
             break;
         }
     }
 
-    console.log("Slider value (positive only): " + this.value + " , Mathematical value (- to +): " + getRealValue(this.value, range.realMin, range.realMax));
+    let realValue = getRealValue(this.value, match.realMin, match.realMax);
+
+    //console.log("Slider value (positive only): " + this.value + " , Mathematical value (- to +): " + realValue);
+
+    match.textboxElement.value = realValue;
+
+    match.sliderElement.step = getAdjustedStepValue(match.sliderElement.step, realValue, match.realMin, match.realMax);
+
+    updateLine( null, realValue);
 
 }
 
@@ -850,7 +867,7 @@ function initControls() {
                 realMin: -100,
                 realMax: 100,
                 realValue: 1,
-                step: 1
+                step: 0.1
             },
             horizontal: {
                 element: document.getElementById("regression-slider2")
@@ -869,7 +886,7 @@ function initControls() {
                 realMin: -100,
                 realMax: 100,
                 realValue: 1,
-                step: 1
+                step: 0.1
             },
             horizontal: {element: document.getElementById("contour-slider1")}
         },
@@ -882,9 +899,20 @@ function initControls() {
     return controls;
 }
 
+function updateControls() {
+
+}
+
+function updateLine(b0, b1) {
+    let hyp = graphs[0].hypothesisLine;
+    graphs[0].hypothesisLine = new StraightLine(hyp.y_intercept_y_value, b1);
+    renderCanvases()
+}
+
 initGraphs();
 buildCanvasContents();
 renderCanvases();
+updateControls();
 
 
 // setTimeout(() => {
