@@ -17,26 +17,45 @@
             <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
+        <!--design methodology: i want the canvas element size to dictate the size of everything else on the page.-->
+        <!-- container >> container_column >> container_row -->
         <section class="container">
-            <section class="graphs">
-                <div class="graph">
-                    <div class="corner"></div>
-                    <div class="title"><span>linear regression graph</span></div>
+            <section class="container_column">
+                <section class="container_row">
+                    <div class="corner">c</div>
+                    <div class="title">linear regression graph</div>
+                    <div class="corner">c</div>
+                    <div class="title">contour graph</div>
+                </section>
+                <section class="container_row">
                     <div class="controls-vertical">
-                        <input type=range min=10 max=30 value=10 step=1>
+                        <h1 class="axis-label">m</h1>
+                        <input class="axis-slider-vertical" type=range min=10 max=30 value=10 step=1 >
+                        <input class="axis-textbox">
                     </div>
                     <canvas id="canvas1"></canvas>
-                    <div class="controls-horizontal"></div>
-                </div>
-                <div class="graph">
-                    <div class="corner"></div>
-                    <div class="title"><span>contour plot graph</span></div>
                     <div class="controls-vertical">
-                        <input type=range multiple min=0 max=10 step="0.2" value="3,5">
+                        <h1 class="axis-label">&theta;<sub>0</sub></h1>
+                        <input class="axis-slider-vertical" type=range min=10 max=30 value=10 step=1>
+                        <input class="axis-textbox">
+                        <!--<h1>&theta;<sub>1</sub></h1>-->
                     </div>
                     <canvas id="canvas2"></canvas>
-                    <div class="controls-horizontal"></div>
-                </div>
+                </section>
+                <section class="container_row">
+                    <div class="controls-horizontal">
+                        <div class="corner">c</div>
+                        <h1 class="axis-label">b</h1>
+                        <input class="axis-slider-horizontal" type=range min=10 max=30 value=10 step=1>
+                        <input class="axis-textbox">
+                    </div>
+                    <div class="controls-horizontal">
+                        <div class="corner">c</div>
+                        <h1 class="axis-label">&theta;<sub>1</sub></h1>
+                        <input class="axis-slider-horizontal" type=range min=10 max=30 value=10 step=1>
+                        <input class="axis-textbox">
+                    </div>
+                </section>
             </section>
         </section>
 
