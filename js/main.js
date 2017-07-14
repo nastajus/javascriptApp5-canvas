@@ -20,7 +20,33 @@ const CANVAS_TEXT_OFFSET_MAGNI = 5;
 const GRAPH_DECIMALS_ACCURACY = 1;
 const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 
-function Graph(canvasId, graphType, controls) {
+
+function Control(controlSet) {
+    this.slider = {};
+    this.slider.vertical = controlSet.slider.vertical;
+    this.slider.horizontal = controlSet.slider.horizontal;
+    this.slider.min = controlSet.slider.min;
+    this.slider.max = controlSet.slider.max;
+    this.slider.step = controlSet.slider.step;
+    this.slider.value = controlSet.slider.value;
+    this.textbox = {};
+    this.textbox.vertical = controlSet.textbox.vertical;
+    this.textbox.horizontal = controlSet.textbox.horizontal;
+
+
+    this.slider.vertical.oninput = onChangeSlider;
+    this.textbox.horizontal.oninput = onChangeSlider;
+    this.textbox.vertical.onchange = onChangeSlider;
+    this.textbox.horizontal.onchange = onChangeSlider;
+
+    this.textbox.vertical.onchange = onChangeTextbox;
+    this.textbox.horizontal.onchange = onChangeTextbox;
+
+    //min=10 max=30 value=10 step=1
+
+}
+
+function Graph(canvasId, graphType, controlSet) {
 
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
@@ -40,19 +66,8 @@ function Graph(canvasId, graphType, controls) {
     this.canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
     this.canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
 
-    this.sliderVertical = controls.sliderVertical;
-    this.sliderHorizontal = controls.sliderHorizontal;
-    this.textboxVertical = controls.textboxVertical;
-    this.textboxHorizontal = controls.textboxHorizontal
+    Control.call(this, controlSet);
 
-    this.sliderVertical.oninput = onChangeSlider;
-    this.sliderHorizontal.oninput = onChangeSlider;
-    this.sliderVertical.onchange = onChangeSlider;
-    this.sliderHorizontal.onchange = onChangeSlider;
-    this.textboxVertical.onchange = onChangeTextbox;
-    this.textboxHorizontal.onchange = onChangeTextbox;
-
-    //min=10 max=30 value=10 step=1
 }
 
 Graph.prototype.toString = function () {
@@ -724,17 +739,33 @@ function initControls() {
     let controls = {};
 
     controls.regression = {
-        sliderVertical: document.getElementById("regression-slider1"),
-        sliderHorizontal: document.getElementById("regression-slider2"),
-        textboxVertical: document.getElementById("regression-textbox1"),
-        textboxHorizontal: document.getElementById("regression-textbox2"),
+        slider: {
+            vertical: document.getElementById("regression-slider1"),
+            horizontal: document.getElementById("regression-slider2"),
+            min: -100,
+            max: 100,
+            step: 1,
+            value: 1
+        },
+        textbox: {
+            vertical: document.getElementById("regression-textbox1"),
+            horizontal: document.getElementById("regression-textbox2")
+        }
     };
 
     controls.contour = {
-        sliderVertical: document.getElementById("contour-slider1"),
-        sliderHorizontal: document.getElementById("contour-slider1"),
-        textboxVertical: document.getElementById("contour-textbox1"),
-        textboxHorizontal: document.getElementById("contour-textbox2"),
+        slider: {
+            vertical: document.getElementById("contour-slider1"),
+            horizontal: document.getElementById("contour-slider1"),
+            min: -100,
+            max: 100,
+            step: 1,
+            value: 1
+        },
+        textbox: {
+            vertical: document.getElementById("contour-textbox1"),
+            horizontal: document.getElementById("contour-textbox2")
+        }
     };
 
     return controls;
