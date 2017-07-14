@@ -40,7 +40,31 @@ function Graph(canvasId, graphType) {
     this.canvas.onmouseup = onClick;  //try passing variable here of `graph`
     this.canvas.onmousemove = onMove; //try passing variable here of `graph`
 
+
+    //and here's where i tried getting the reference to the slider via the parent drilling down to the child,
+    //  but these calls convert the object from an HTML DOM element list to javascript Object NodeList, which is no longer simple
+    //  for accessing children without parsing the entire HTML result set. Yeesh.
+
+    //this.sliderVertical = document.getElementById(canvasId).parentNode.childNodes.getElementsByClassName("controls-vertical").getElementsByClassName("axis-slider-vertical");
+    let javascriptObjectChildNodes = document.getElementById(canvasId).parentNode.childNodes;
+    //let temp = getKeyByValue(javascriptObjectChildNodes, "div.controls-vertical");
+    for (let i = 0; i < javascriptObjectChildNodes.length; i++) {
+        console.log(javascriptObjectChildNodes[i]);
+    }
+
+    //let temp2 = temp.getElementsByClassName("controls-vertical");
+    //this.sliderVertical;
+    //document.querySelectorAll(canvasId + '#channels .date');
+
+    console.log(javascriptObjectChildNodes[1]);
+
 }
+
+function getKeyByValue(object, value) {
+    return Object.keys(object).find(key => object[key] === value);
+}
+
+
 
 Graph.prototype.toString = function() {
     return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
@@ -695,10 +719,24 @@ function arrayDifference (arrayA, arrayB) {
     return diff;
 }
 
+function initControls() {
+    //too much hard-coding. it's ugly. i'd rather get the reference via an expected dependency
+    // let adsf = document.getElementById("regression-slider1");
+    // let adsf = document.getElementById("regression-slider2");
+    // let adsf = document.getElementById("contour-slider1");
+    // let adsf = document.getElementById("contour-slider2");
+    // let adsf = document.getElementById("regression-textbox1");
+    // let adsf = document.getElementById("regression-textbox2");
+    // let adsf = document.getElementById("contour-textbox1");
+    // let adsf = document.getElementById("contour-textbox2");
+
+}
+
 
 initGraphs();
 buildCanvasContents();
 renderCanvases();
+initControls();
 
 
 // setTimeout(() => {
