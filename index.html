@@ -11,6 +11,7 @@
 
         <link rel="stylesheet" href="css/normalize.css">
         <link rel="stylesheet" href="css/main.css">
+
     </head>
     <body>
         <!--[if lt IE 8]>
@@ -22,39 +23,34 @@
         <section class="container">
             <section class="container_column">
                 <section class="container_row">
-                    <div class="corner">c</div>
+                    <div class="pad">p</div>
                     <div class="title">linear regression graph</div>
-                    <div class="corner">c</div>
+                    <div class="pad">p</div>
                     <div class="title">contour graph</div>
                 </section>
                 <section class="container_row">
-                    <div class="controls-vertical">
-                        <h1 class="axis-label">m</h1>
-                        <input class="axis-slider-vertical" id="regression-slider1" type=range>
-                        <input class="axis-textbox" id="regression-textbox1">
-                    </div>
                     <canvas id="canvas1"></canvas>
-                    <div class="controls-vertical">
-                        <h1 class="axis-label">&theta;<sub>0</sub></h1>
-                        <input class="axis-slider-vertical" id="regression-slider2" type=range>
-                        <input class="axis-textbox" id="regression-textbox2">
-                        <!--<h1>&theta;<sub>1</sub></h1>-->
-                    </div>
                     <canvas id="canvas2"></canvas>
                 </section>
-                <section class="container_row">
-                    <div class="controls-horizontal">
-                        <div class="corner">c</div>
-                        <h1 class="axis-label">b</h1>
-                        <input class="axis-slider-horizontal" id="contour-slider1" type=range>
-                        <input class="axis-textbox" id="contour-textbox1">
-                    </div>
-                    <div class="controls-horizontal">
-                        <div class="corner">c</div>
-                        <h1 class="axis-label">&theta;<sub>1</sub></h1>
-                        <input class="axis-slider-horizontal" id="contour-slider2" type=range>
-                        <input class="axis-textbox" id="contour-textbox2">
-                    </div>
+                <section class="container_row" id="controls">
+                    <template id="control-template">
+                        <div class="control-row">
+                            <div class="pad">p</div>
+                            <input class="control-checkbox" type="checkbox" />
+                            <div class="pad">p</div>
+                            <h1 class="control-symbol">&theta;<sub>0</sub></h1>
+                            <div class="pad">p</div>
+                            <h1 class="control-title">theta zero title</h1>
+                            <div class="pad">p</div>
+                            <button class="control-lt-large">&lt; LRG</button>
+                            <button class="control-lt-medium">&lt; MED</button>
+                            <button class="control-lt-small">&lt; SML</button>
+                            <input class="control-textbox" value="0" />
+                            <button class="control-gt-small">&gt; SML</button>
+                            <button class="control-gt-medium">&gt; MED</button>
+                            <button class="control-gt-large">&gt; LRG</button>
+                        </div>
+                    </template>
                 </section>
             </section>
         </section>

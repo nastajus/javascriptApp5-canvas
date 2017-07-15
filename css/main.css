@@ -110,7 +110,7 @@ textarea {
     display: flex;
 }
 
-.corner {
+.pad {
     flex: 0.1;
     background-color: mediumpurple;
 }
@@ -130,7 +130,7 @@ textarea {
 
 }
 
-.controls-horizontal { /* also a third nested flexbox, but a row  */
+.control-row { /* also a third nested flexbox, but a row  */
     flex: 1;
     background-color: royalblue;
     display: flex;
@@ -156,9 +156,9 @@ canvas {
     text-align: center;
 }
 
-.axis-textbox {
+.control-textbox {
     flex: 0.1;
-    width: 70px;
+    width: 150px;
     margin: 0.67em;
     font-size: 2em;
     font-weight: bold;

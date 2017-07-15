@@ -100,51 +100,51 @@ function getAdjustedStepValue(stepValue, sliderValue, min, max) {
     return adj;
 }
 
-function ControlSet(controlSet) {
-    this.slider = {};
-    this.slider.vertical = {};
-    this.slider.vertical.element = controlSet.slider.vertical.element;
-    this.textbox = {};
-    this.textbox.vertical = {};
-    this.textbox.vertical.element = controlSet.textbox.vertical.element;
-
-    //actual "math" values, includes negatives (negative numbers aren't supported by input range html5 element)
-    this.slider.vertical.realMin = controlSet.slider.vertical.realMin;
-    this.slider.vertical.realMax = controlSet.slider.vertical.realMax;
-    this.slider.vertical.realValue = controlSet.slider.vertical.realValue; // 1 in (-100 to 100), we want to track the "1", or "real realValue"
-
-    //actual "slider" values (converted)
-    this.slider.vertical.element.min = 0;
-    this.slider.vertical.element.max = Math.abs(controlSet.slider.vertical.realMin) + Math.abs(controlSet.slider.vertical.realMax);
-    this.slider.vertical.element.value = getSliderValue(this.slider.vertical.realValue, this.slider.vertical.realMin, this.slider.vertical.realMax);
-    this.slider.vertical.element.step = controlSet.slider.vertical.step;
+function ControlRow(template) {
 
 
-    // this.slider.horizontal.element.min = 0;
-    // this.slider.horizontal.element.max = Math.abs(this.min) + Math.abs(this.max);
-    // this.slider.horizontal.element.value = getSliderValue(this.realValue, this.min, this.max);
-    // this.slider.horizontal.element.step = controlSet.slider.step;
-    ////// this.slider.horizontal.element = controlSet.slider.horizontal.element;
+    this.OnControlChange = null;
+
+    this.element =  document.importNode(template, true);
+    this.checkbox = this.element.querySelector(".control-checkbox");
+    this.symbol = this.element.querySelector(".control-symbol");
+    this.title = this.element.querySelector(".control-title");
+    this.buttonDecrementSmall = this.element.querySelector(".control-lt-small");
+    this.buttonDecrementMedium = this.element.querySelector(".control-lt-medium");
+    this.buttonDecrementLarge = this.element.querySelector(".control-lt-large");
+    this.buttonIncrementSmall = this.element.querySelector(".control-gt-small");
+    this.buttonIncrementMedium = this.element.querySelector(".control-gt-medium");
+    this.buttonIncrementLarge = this.element.querySelector(".control-gt-large");
+    this.textbox = this.element.querySelector(".control-textbox");
+
+    
+    let invokeChanged = () => this.OnControlChange || this.OnControlChange();
+
+    this.GetValue = () => parseFloat(this.textbox.value);
+
+    this.checkbox.onchange = invokeChanged;
+    this.textbox.onchange = invokeChanged;
+
+    const incrementValue = (delta) =>
+    {
+        this.textbox.value = this.GetValue() + delta;
+        invokeChanged();
+    };
 
 
-    this.slider.vertical.element.oninput = onChangeSlider;
-    this.textbox.vertical.element.onchange = onChangeSlider;
-    this.textbox.vertical.element.onchange = onChangeTextbox;
+    this.buttonDecrementSmall.onclick = () => incrementValue(-.1);
+    this.buttonDecrementMedium.onclick = () => incrementValue(-1);
+    this.buttonDecrementLarge.onclick = () => incrementValue(-10);
 
+    this.buttonIncrementSmall.onclick = () => incrementValue(.1);
+    this.buttonIncrementMedium.onclick = () => incrementValue(1);
+    this.buttonIncrementLarge.onclick = () => incrementValue(10);
 
-    // this.textbox.horizontal = controlSet.textbox.horizontal;
-    // this.textbox.horizontal.value = this.realValue; //show real only
-
-    // this.textbox.horizontal.oninput = onChangeSlider;
-    // this.textbox.horizontal.onchange = onChangeSlider;
-    // this.textbox.horizontal.onchange = onChangeTextbox;
-
-
-    //min=10 max=30 realValue=10 step=1
-
+    return this;
 }
 
-function Graph(canvasId, graphType, controlSet) {
+
+function Graph(canvasId, graphType) {
 
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
@@ -163,10 +163,6 @@ function Graph(canvasId, graphType, controlSet) {
     //this.canvas.onclick = onClickCanvas;
     this.canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
     this.canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
-
-
-    this.controlSet = controlSet; //TODO: replace with accessing from parent directly
-    ControlSet.call(this, controlSet);
 
 }
 
@@ -214,9 +210,9 @@ Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
 };
 
 function initGraphs() {
-    let controls = initControls();
-    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, controls.regression));
-    graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR, controls.contour));
+    //let controls = injectTemplateControls();
+    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION));
+    graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR));
 }
 
 function buildCanvasContents() {
@@ -689,18 +685,12 @@ function onMoveCanvas(e) {
 
 function onChangeSlider(e) {
 
-    let match;
-    for (let i = 0; i < graphs.length; i++) {
-        if (this.id === graphs[i].controlSet.slider.vertical.element.id) {
-            match = {
-                realMin: graphs[i].controlSet.slider.vertical.realMin,
-                realMax: graphs[i].controlSet.slider.vertical.realMax,
-                textboxElement: graphs[i].controlSet.textbox.vertical.element,
-                sliderElement: graphs[i].controlSet.slider.vertical.element
-            };
-            break;
-        }
-    }
+    let match = {
+        realMin: e.srcElement.realMin,
+        realMax: e.srcElement.realMax,
+        textboxElement: e.srcElement.element,
+        sliderElement: e.srcElement.element
+    };
 
     let realValue = getRealValue(this.value, match.realMin, match.realMax);
 
@@ -856,52 +846,45 @@ function arrayDifference(arrayA, arrayB) {
     return diff;
 }
 
-function initControls() {
+function injectTemplateControls() {
 
-    let controls = {};
+    let controlRows = [];
 
-    controls.regression = {
-        slider: {
-            vertical: {
-                element: document.getElementById("regression-slider1"),
-                realMin: -100,
-                realMax: 100,
-                realValue: 1,
-                step: 0.1
-            },
-            horizontal: {
-                element: document.getElementById("regression-slider2")
-            }
-        },
-        textbox: {
-            vertical: {element: document.getElementById("regression-textbox1")},
-            horizontal: {element: document.getElementById("regression-textbox2")}
-        }
-    };
+    let controlTemplateElementContent = document.querySelector("#control-template");
+    controlTemplateElementContent = controlTemplateElementContent.content;
 
-    controls.contour = {
-        slider: {
-            vertical: {
-                element: document.getElementById("contour-slider1"),
-                realMin: -100,
-                realMax: 100,
-                realValue: 1,
-                step: 0.1
-            },
-            horizontal: {element: document.getElementById("contour-slider1")}
-        },
-        textbox: {
-            vertical: {element: document.getElementById("contour-textbox1")},
-            horizontal: {element: document.getElementById("contour-textbox2")}
-        }
-    };
+    controlRows.push(new ControlRow(controlTemplateElementContent));
 
-    return controls;
+
+    let targetContainer = document.querySelector('#controls');
+    targetContainer.appendChild(controlRows[0].element);
+
+
+
+    // let controls = {};
+    //
+    //  controls.regression = {};
+    //  controls.regression.slider = document.getElementById("regression-slider2");
+    //  controls.regression.slider.realMin = -100;
+    //  controls.regression.slider.realMax = 100;
+    //  controls.regression.slider.realValue = 1;
+    //  controls.regression.slider.step = 0.1;
+    //  controls.regression.textbox = document.getElementById("regression-textbox2");
+    //
+    //  controls.contour = {};
+    //  controls.contour.slider = document.getElementById("contour-slider1");
+    //  controls.contour.slider.realMin= -100;
+    //  controls.contour.slider.realMax= 100;
+    //  controls.contour.slider.realValue= 1;
+    //  controls.contour.slider.step= 0.1;
+    //  controls.contour.textbox = document.getElementById("contour-textbox2");
+    //
+    // return controls;
 }
 
-function updateControls() {
-
-}
+// function updateControls() {
+//
+// }
 
 function updateLine(b0, b1) {
     let hyp = graphs[0].hypothesisLine;
@@ -912,7 +895,8 @@ function updateLine(b0, b1) {
 initGraphs();
 buildCanvasContents();
 renderCanvases();
-updateControls();
+// updateControls();
+injectTemplateControls();
 
 
 // setTimeout(() => {
