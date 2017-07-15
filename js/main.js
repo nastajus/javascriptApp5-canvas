@@ -100,9 +100,21 @@ function getAdjustedStepValue(stepValue, sliderValue, min, max) {
     return adj;
 }
 
+let exampleobj = {
+
+    data1: "val1",
+    giveme: () => {
+        console.log("sup dude");
+        return "something";
+    }
+}
+
+
+
+
 function ControlRow(template) {
 
-
+    // Callback called when control changes
     this.OnControlChange = null;
 
     this.element =  document.importNode(template, true);
@@ -117,20 +129,35 @@ function ControlRow(template) {
     this.buttonIncrementLarge = this.element.querySelector(".control-gt-large");
     this.textbox = this.element.querySelector(".control-textbox");
 
-    
-    let invokeChanged = () => this.OnControlChange || this.OnControlChange();
 
-    this.GetValue = () => parseFloat(this.textbox.value);
+    //for subscribers (utility function so we don'thave to check for null everytime)
+    let invokeChanged = () => {
+        if(this.OnControlChange)
+            this.OnControlChange();
+    };
+
+    this.GetValue = () => value;
+
+    this.SetValue = (newValue) => {
+        let parsedValue = parseFloat(newValue);
+        value = (isNaN(parsedValue) ? value : parsedValue) ;
+        this.textbox.value = round(value, 2);
+
+    };
+
+    let value = 0;
 
     this.checkbox.onchange = invokeChanged;
-    this.textbox.onchange = invokeChanged;
-
-    const incrementValue = (delta) =>
-    {
-        this.textbox.value = this.GetValue() + delta;
+    this.textbox.onchange = ()=> {
+        this.SetValue(this.textbox.value);
         invokeChanged();
     };
 
+    const incrementValue = (delta) =>
+    {
+        this.SetValue(this.GetValue() + delta);
+        invokeChanged();
+    };
 
     this.buttonDecrementSmall.onclick = () => incrementValue(-.1);
     this.buttonDecrementMedium.onclick = () => incrementValue(-1);
@@ -845,15 +872,15 @@ function arrayDifference(arrayA, arrayB) {
     });
     return diff;
 }
-
+let controlRows = [];
 function injectTemplateControls() {
-
-    let controlRows = [];
 
     let controlTemplateElementContent = document.querySelector("#control-template");
     controlTemplateElementContent = controlTemplateElementContent.content;
 
-    controlRows.push(new ControlRow(controlTemplateElementContent));
+    let newRow = new ControlRow(controlTemplateElementContent);
+    newRow.OnControlChange = () => console.log("Sup dawg");
+    controlRows.push(newRow);
 
 
     let targetContainer = document.querySelector('#controls');
