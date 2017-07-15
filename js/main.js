@@ -113,44 +113,53 @@ let exampleobj = {
 
 
 function ControlRow(template) {
+    
+    //external variable
+    this.element =  document.importNode(template, true);
 
+    //external methods
     // Callback called when control changes
     this.OnControlChange = null;
-
-    this.element =  document.importNode(template, true);
-    this.checkbox = this.element.querySelector(".control-checkbox");
-    this.symbol = this.element.querySelector(".control-symbol");
-    this.title = this.element.querySelector(".control-title");
-    this.buttonDecrementSmall = this.element.querySelector(".control-lt-small");
-    this.buttonDecrementMedium = this.element.querySelector(".control-lt-medium");
-    this.buttonDecrementLarge = this.element.querySelector(".control-lt-large");
-    this.buttonIncrementSmall = this.element.querySelector(".control-gt-small");
-    this.buttonIncrementMedium = this.element.querySelector(".control-gt-medium");
-    this.buttonIncrementLarge = this.element.querySelector(".control-gt-large");
-    this.textbox = this.element.querySelector(".control-textbox");
-
-
-    //for subscribers (utility function so we don'thave to check for null everytime)
-    let invokeChanged = () => {
-        if(this.OnControlChange)
-            this.OnControlChange();
-    };
 
     this.GetValue = () => value;
 
     this.SetValue = (newValue) => {
         let parsedValue = parseFloat(newValue);
         value = (isNaN(parsedValue) ? value : parsedValue) ;
-        this.textbox.value = round(value, 2);
+        textbox.value = round(value, 2);
 
     };
 
+    this.GetSymbol = () => symbol.textContent;
+    this.SetSymbol = (symbol) => {
+        symbol.textContent = symbol;
+    };
+
+    this.GetTitle = () => title.textContent;
+    this.SetTitle = (title) => {
+        title.textContent = title;
+    };
+
+    //internal state
     let value = 0;
 
-    this.checkbox.onchange = invokeChanged;
-    this.textbox.onchange = ()=> {
-        this.SetValue(this.textbox.value);
-        invokeChanged();
+    let checkbox = this.element.querySelector(".control-checkbox");
+    let symbol = this.element.querySelector(".control-symbol");
+    let title = this.element.querySelector(".control-title");
+    let buttonDecrementSmall = this.element.querySelector(".control-lt-small");
+    let buttonDecrementMedium = this.element.querySelector(".control-lt-medium");
+    let buttonDecrementLarge = this.element.querySelector(".control-lt-large");
+    let buttonIncrementSmall = this.element.querySelector(".control-gt-small");
+    let buttonIncrementMedium = this.element.querySelector(".control-gt-medium");
+    let buttonIncrementLarge = this.element.querySelector(".control-gt-large");
+    let textbox = this.element.querySelector(".control-textbox");
+
+
+    //internal methods
+    //for subscribers (utility function so we don'thave to check for null everytime)
+    const invokeChanged = () => {
+        if(this.OnControlChange)
+            this.OnControlChange();
     };
 
     const incrementValue = (delta) =>
@@ -159,13 +168,20 @@ function ControlRow(template) {
         invokeChanged();
     };
 
-    this.buttonDecrementSmall.onclick = () => incrementValue(-.1);
-    this.buttonDecrementMedium.onclick = () => incrementValue(-1);
-    this.buttonDecrementLarge.onclick = () => incrementValue(-10);
+    //init logic
+    buttonDecrementSmall.onclick = () => incrementValue(-.1);
+    buttonDecrementMedium.onclick = () => incrementValue(-1);
+    buttonDecrementLarge.onclick = () => incrementValue(-10);
 
-    this.buttonIncrementSmall.onclick = () => incrementValue(.1);
-    this.buttonIncrementMedium.onclick = () => incrementValue(1);
-    this.buttonIncrementLarge.onclick = () => incrementValue(10);
+    buttonIncrementSmall.onclick = () => incrementValue(.1);
+    buttonIncrementMedium.onclick = () => incrementValue(1);
+    buttonIncrementLarge.onclick = () => incrementValue(10);
+
+    checkbox.onchange = invokeChanged;
+    textbox.onchange = ()=> {
+        this.SetValue(textbox.value);
+        invokeChanged();
+    };
 
     return this;
 }
