@@ -187,31 +187,77 @@ function ControlRow(template) {
 }
 
 
-function Graph(canvasId, graphType) {
+function Graph(canvasId, graphType, getDataPointsCallback) {
 
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
     this.graphType = graphType;
-
     this.cartesianAxes = [];
     this.cartesianAxesArrowHeads = [];
     this.cartesianGraphPoints = [];
-    this.dataPoints = [];
     this.highlightPoints = [];
-    this.hypothesisLine = {};
-
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
     this.canvas.oncontextmenu = (e) => e.preventDefault();
-    //this.canvas.onclick = onClickCanvas;
-    this.canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
-    this.canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
 
+    Object.defineProperty(this, 'dataPoints', {
+        get: getDataPointsCallback
+    });
+    Object.defineProperty(this, 'hypothesisLine', {
+        get: () => model.hypothesisLine,
+        set: (newHypothesisLine) => model.hypothesisLine = newHypothesisLine
+    });
+
+
+    Graph.prototype.toString = function () {
+        return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
+    };
 }
 
-Graph.prototype.toString = function () {
-    return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
-};
+function Model() {
+
+    this.dataPoints = [];
+    this.hypothesisLine = {};
+    this.derivativePoints = [];
+
+    buildSampleDataPoints(this);
+    buildSampleHypothesisLines(this); //if applicable
+    //buildErrorLinesBetween(this.dataPoints, this.hypothesisLine);
+
+    this.CalculateShadowPoint = (p) => {
+        const m = this.hypothesisLine.slope;
+        const b = this.hypothesisLine.y_intercept_y_value;
+        const x = p.x;
+        const y = m * x + b;
+
+        const p1 = p;
+        const p2 = new Point(x, y);
+
+        return p2;
+
+        // const errorLine = new ErrorLine(p1, p2, p);
+        // errorLine.midpoint.setString(errorLine.magnitude);
+        // errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
+    }
+
+    /**
+     * Display scalar amount of error.
+     * @param {StraightLine} hypothesisLine
+     * @returns {Number} {number}
+     */
+    this.GetTotalError = () => {
+
+        let totalError = 0;
+
+        for(let point of this.dataPoints){
+            let shadow = this.CalculateShadowPoint(point);
+            let magnitude = Math.abs(shadow.y-point.y);
+            totalError += magnitude;
+        }
+        return totalError;
+    }
+
+}
 
 /**
  * Creates new point for graphing.
@@ -242,10 +288,10 @@ Point.prototype.toString = function () {
     const result = (this.customString === undefined) ? printPoint(this) : this.customString;
     return /*"[" + this.count + "] " + */ result;
 };
-
-Point.prototype.setString = function (customString) {
-    this.customString = customString;
-};
+//
+// Point.prototype.setString = function (customString) {
+//     this.customString = customString;
+// };
 
 Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
     this.textOffsetX = textOffsetX;
@@ -254,8 +300,15 @@ Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
 
 function initGraphs() {
     //let controls = injectTemplateControls();
-    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION));
-    graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR));
+    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, () => model.dataPoints));
+    graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR, () => model.derivativePoints));
+
+    //graphs[0].canvas.onclick = onClickCanvas;
+    graphs[0].canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
+    graphs[0].canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
+    
+    
+
 }
 
 function buildCanvasContents() {
@@ -270,9 +323,6 @@ function buildCanvasContent(graph) {
     buildAxes(graph);
 
     if (graph.graphType === GRAPH_TYPES.REGRESSION) {
-        buildSampleDataPoints(graph);
-        buildSampleHypothesisLines(graph); //if applicable
-        buildErrorLinesBetween(graph.dataPoints, graph.hypothesisLine);
         //appendSlider(graph);
     }
     else if (graph.graphType === GRAPH_TYPES.CONTOUR) {
@@ -284,27 +334,27 @@ function buildCanvasContent(graph) {
 
 }
 
-function buildSampleDataPoints(graph) {
-    graph.dataPoints.push(new Point(1, 1));
-    graph.dataPoints.push(new Point(3, 4));
-    graph.dataPoints.push(new Point(2, 5));
-    graph.dataPoints.push(new Point(3, 6));
-    graph.dataPoints.push(new Point(5, 5));
-    graph.dataPoints.push(new Point(5, 9));
-    graph.dataPoints.push(new Point(6, 4));
-    graph.dataPoints.push(new Point(7, 7));
-    graph.dataPoints.push(new Point(7, 8));
-    graph.dataPoints.push(new Point(8, 7));
-    graph.dataPoints.push(new Point(9, 9));
-    graph.dataPoints.push(new Point(12, 8));
-    graph.dataPoints.push(new Point(13, 9));
-    graph.dataPoints.push(new Point(14, 7));
-    //graph.dataPoints.push(new Point(18, 8));
+function buildSampleDataPoints(model) {
+    model.dataPoints.push(new Point(1, 1));
+    model.dataPoints.push(new Point(3, 4));
+    model.dataPoints.push(new Point(2, 5));
+    model.dataPoints.push(new Point(3, 6));
+    model.dataPoints.push(new Point(5, 5));
+    model.dataPoints.push(new Point(5, 9));
+    model.dataPoints.push(new Point(6, 4));
+    model.dataPoints.push(new Point(7, 7));
+    model.dataPoints.push(new Point(7, 8));
+    model.dataPoints.push(new Point(8, 7));
+    model.dataPoints.push(new Point(9, 9));
+    model.dataPoints.push(new Point(12, 8));
+    model.dataPoints.push(new Point(13, 9));
+    model.dataPoints.push(new Point(14, 7));
+    //model.dataPoints.push(new Point(18, 8));
 }
 
-function buildSampleHypothesisLines(graph) {
-    graph.hypothesisLine = new StraightLine(0, 1);
-    graph.hypothesisLine.name = "the hypothesis line";
+function buildSampleHypothesisLines(model) {
+    model.hypothesisLine = new StraightLine(0, 1);
+    model.hypothesisLine.name = "the hypothesis line";
 }
 
 function buildContourRing(graph) {
@@ -325,10 +375,16 @@ function renderCanvas(graph) {
     //works.
     graph.canvas.width = graph.canvas.width;
 
-    drawPoints(graph, graph.cartesianGraphPoints, "lightgray");
-    drawPoints(graph, graph.dataPoints, "darkred", true);
 
-    drawEachLine(graph, graph.cartesianAxes, "black", 5);
+    for(let p of graph.cartesianGraphPoints){
+        drawPoint(graph,p,"lightgray")
+    }
+
+    drawDataPoints(graph, graph.dataPoints, "darkred", true);
+
+    drawLine(graph, graph.cartesianAxes[0].p1, graph.cartesianAxes[0].p2, "black", 5);
+    drawLine(graph, graph.cartesianAxes[1].p1, graph.cartesianAxes[1].p2, "black", 5);
+
     //drawArrowHeads(graph, graph.cartesianAxesArrowHeads, "black", 5);
     //drawPoints(graph, graph.errorLines.endPoints(), "forestgreen");
 
@@ -337,8 +393,9 @@ function renderCanvas(graph) {
 
     if (graph.graphType === GRAPH_TYPES.REGRESSION) {
         drawLinesBetweenPoints(graph, graph.hypothesisLine.endPoints(), "black");
-        drawEachLine(graph, graph.hypothesisLine.errorLines, "forestgreen");
-        drawEachLineText(graph, graph.hypothesisLine.errorLines, "forestgreen");
+
+        //drawEachLine(graph, graph.hypothesisLine.errorLines, "forestgreen");
+        //drawEachLineText(graph, graph.hypothesisLine.errorLines, "forestgreen");
     }
 
 }
@@ -351,23 +408,23 @@ function drawLinesBetweenPoints(graph, points, fillStyle) {
     }
 }
 
-function drawEachLine(graph, lines, fillStyle, lineWidth) {
-    if (lines === undefined) {
-        throw new ReferenceError("Cannot draw lines, lines is undefined");
-    }
-    for (let l = 0; l < lines.length; l++) {
-        drawLine(graph, lines[l].p1, lines[l].p2, fillStyle, lineWidth);
-    }
-}
+// function drawEachLine(graph, lines, fillStyle, lineWidth) {
+//     if (lines === undefined) {
+//         throw new ReferenceError("Cannot draw lines, lines is undefined");
+//     }
+//     for (let l = 0; l < lines.length; l++) {
+//         drawLine(graph, lines[l].p1, lines[l].p2, fillStyle, lineWidth);
+//     }
+// }
 
-function drawEachLineText(graph, lines, fillStyle) {
-    if (lines === undefined) {
-        throw new ReferenceError("Cannot draw line text, lines is undefined");
-    }
-    for (let l = 0; l < lines.length; l++) {
-        drawPointText(graph, lines[l].midpoint, fillStyle);
-    }
-}
+// function drawEachLineText(graph, lines, fillStyle) {
+//     if (lines === undefined) {
+//         throw new ReferenceError("Cannot draw line text, lines is undefined");
+//     }
+//     for (let l = 0; l < lines.length; l++) {
+//         drawPointText(graph, lines[l].midpoint, fillStyle);
+//     }
+// }
 
 function drawLine(graph, pointBegin, pointEnd, strokeStyle, lineWidth) {
     const originalStrokeStyle = graph.context.strokeStyle;
@@ -389,11 +446,27 @@ function drawLine(graph, pointBegin, pointEnd, strokeStyle, lineWidth) {
     graph.context.lineWidth = originalLineWidth;
 }
 
-function drawPoints(graph, points, fillStyle, drawText) {
+function drawDataPoints(graph, points, fillStyle, drawText) {
     for (let p = 0; p < points.length; p++) {
-        drawPoint(graph, points[p], fillStyle);
+
+
+        let p1 = points[p];
+        let p2 = model.CalculateShadowPoint(points[p]);
+
+        drawPoint(graph, p1, fillStyle);
+
+        // draw error line
+        drawLine(graph, p1, p2, fillStyle);
+
+        // draw error text.... or somethign
+        let diff = p2.y - p1.y;
+        let magnitude = Math.abs(diff);
+        let midpoint = new Point(p1.x, p1.y + diff/2);
+
         if (drawText) {
-            drawPointText(graph, points[p], fillStyle);
+
+            drawPointText(graph, midpoint, magnitude, fillStyle);
+            drawPointText(graph, p1, p1.toString(), fillStyle);
         }
     }
 }
@@ -408,10 +481,10 @@ function drawPoint(graph, point, fillStyle, pointRadius) {
     graph.context.fillStyle = originalFillStyle;
 }
 
-function drawPointText(graph, point, fillStyle) {
+function drawPointText(graph, point, text, fillStyle) {
     const originalFillStyle = graph.context.fillStyle;
     graph.context.fillStyle = fillStyle;
-    graph.context.fillText(point.toString(), point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
+    graph.context.fillText(text, point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
     graph.context.fillStyle = originalFillStyle;
 }
 
@@ -476,8 +549,6 @@ function StraightLine(b0, b1) {
     this.y_intercept_y_value = b0;
     this.slope = b1;
     this.name = "";
-    this.errorLines = [];
-    this.totalError = [];
 
     const x_max = CANVAS_WIDTH / CANVAS_SCALE;
     const y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
@@ -589,55 +660,20 @@ ErrorLine.prototype.endPoints = function () {
  * @param {[Point]} additionalSamplePoints
  * @param {StraightLine} hypothesisLine
  */
-function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
+// function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
+//
+//     //find a point on a line
+//     //y = mx + b
+//
+//
+//     for (let p = 0; p < additionalSamplePoints.length; p++) {
+//         calculateShadowPoint();
+//         hypothesisLine.errorLines.push(errorLine);
+//     }
+//     getTotalError(hypothesisLine);
+// }
 
-    //find a point on a line
-    //y = mx + b
 
-    const m = hypothesisLine.slope;
-    const b = hypothesisLine.y_intercept_y_value;
-
-    for (let p = 0; p < additionalSamplePoints.length; p++) {
-        const x = additionalSamplePoints[p].x;
-        const y = m * x + b;
-
-        const p1 = additionalSamplePoints[p];
-        const p2 = new Point(x, y);
-
-        const errorLine = new ErrorLine(p1, p2, additionalSamplePoints[p]);
-        errorLine.midpoint.setString(errorLine.magnitude);
-        errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
-
-        hypothesisLine.errorLines.push(errorLine);
-    }
-    getTotalError(hypothesisLine);
-}
-
-/**
- * Display scalar amount of error.
- * @param {StraightLine} hypothesisLine
- * @returns {Number} {number}
- */
-function getTotalError(hypothesisLine) {
-    const errorLines = hypothesisLine.errorLines;
-    let totalError = 0;
-    const magnitudes = [];
-
-    if (errorLines === undefined) {
-        throw new Error("Cannot get total error, errorLines is undefined in " + hypothesisLine.name);
-    }
-
-    for (let i = 0; i < errorLines.length; i++) {
-        totalError += errorLines[i].magnitude;
-        magnitudes.push(" " + errorLines[i].magnitude);
-    }
-    totalError = round(totalError, 2);
-    hypothesisLine.totalError = totalError;
-    // console.log(hypothesisLine.name);
-    // console.log("Each error: " + magnitudes.toString());
-    // console.log("Total error: " + totalError);
-    return totalError;
-}
 
 /**
  * Limit number of decimal places for a float realValue
@@ -794,7 +830,7 @@ function addPoint(graph, canvasX, canvasY) {
     console.log("In graph: " + graph + ", Added point, at (cartesianX: " + graphPosition.cartesianX + ", cartesianY: " + graphPosition.cartesianY + ").");
 
     if (graph.graphType === GRAPH_TYPES.REGRESSION) {
-        buildErrorLinesBetween([clickPoint], graph.hypothesisLine);
+        //buildErrorLinesBetween([clickPoint], graph.hypothesisLine);
         //buildCanvasContent();
     }
     renderCanvas(graph);
@@ -903,26 +939,6 @@ function injectTemplateControls() {
     targetContainer.appendChild(controlRows[0].element);
 
 
-
-    // let controls = {};
-    //
-    //  controls.regression = {};
-    //  controls.regression.slider = document.getElementById("regression-slider2");
-    //  controls.regression.slider.realMin = -100;
-    //  controls.regression.slider.realMax = 100;
-    //  controls.regression.slider.realValue = 1;
-    //  controls.regression.slider.step = 0.1;
-    //  controls.regression.textbox = document.getElementById("regression-textbox2");
-    //
-    //  controls.contour = {};
-    //  controls.contour.slider = document.getElementById("contour-slider1");
-    //  controls.contour.slider.realMin= -100;
-    //  controls.contour.slider.realMax= 100;
-    //  controls.contour.slider.realValue= 1;
-    //  controls.contour.slider.step= 0.1;
-    //  controls.contour.textbox = document.getElementById("contour-textbox2");
-    //
-    // return controls;
 }
 
 // function updateControls() {
@@ -935,12 +951,15 @@ function updateLine(b0, b1) {
     renderCanvases()
 }
 
+let model = new Model();
+
 initGraphs();
 buildCanvasContents();
 renderCanvases();
 // updateControls();
 injectTemplateControls();
 
+console.log(model.GetTotalError());
 
 // setTimeout(() => {
 //     const point = new Point(10, 10);
