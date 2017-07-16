@@ -192,7 +192,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.graphType = graphType;
     this.cartesianAxes = [];
     this.cartesianAxesArrowHeads = [];
-    this.cartesianGraphPoints = [];
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
@@ -215,7 +214,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * @returns {{x: number, y: number}}
      */
     this.canvasPoint = (point, dimension) => ({
-        x: point.x[dimension] * CANVAS_SCALE + CANVAS_TEXT_OFFSET_COORD,
+        x: point.xs[dimension] * CANVAS_SCALE,
         y: CANVAS_HEIGHT - (point.y * CANVAS_SCALE) + CANVAS_TEXT_OFFSET_COORD
     });
 
@@ -236,8 +235,8 @@ function Model() {
 
     this.CalculateShadowPoint = (p) => {
 
-        const y = this.hypothesisLine.Evaluate(p.x);
-        return new Point(p.x, y);
+        const y = this.hypothesisLine.Evaluate(p.xs);
+        return new Point(p.xs, y);
 
     };
 
@@ -263,15 +262,17 @@ function Model() {
 /**
  * Creates new point for graphing.
  *
- * @param {Number} x
+ * @param {[Number]} xs
  * @param {Number} y
  */
 function Point(xs, y) {
 
-    xs = Array.isArray(xs) ? xs : ( [].concat(1, xs) );
+    if (!Array.isArray(xs)) {
+        throw new TypeError("XS is not an array.");
+    }
 
-    this.x = round(xs, 1);
-    this.y = round(y, 1);
+    this.xs = xs;
+    this.y = y;
 
     this.customString;
 
@@ -317,7 +318,7 @@ function buildCanvasContents() {
 
 function buildCanvasContent(graph) {
 
-    buildCartesianGraphPoints(graph);
+    //drawCartesianGraphPoints(graph);
     buildAxes(graph);
 
     // if (graph.graphType === GRAPH_TYPES.REGRESSION) {
@@ -333,20 +334,20 @@ function buildCanvasContent(graph) {
 }
 
 function buildSampleDataPoints(model) {
-    model.dataPoints.push(new Point(1, 1));
-    model.dataPoints.push(new Point(3, 4));
-    model.dataPoints.push(new Point(2, 5));
-    model.dataPoints.push(new Point(3, 6));
-    model.dataPoints.push(new Point(5, 5));
-    model.dataPoints.push(new Point(5, 9));
-    model.dataPoints.push(new Point(6, 4));
-    model.dataPoints.push(new Point(7, 7));
-    model.dataPoints.push(new Point(7, 8));
-    model.dataPoints.push(new Point(8, 7));
-    model.dataPoints.push(new Point(9, 9));
-    model.dataPoints.push(new Point(12, 8));
-    model.dataPoints.push(new Point(13, 9));
-    model.dataPoints.push(new Point(14, 7));
+    model.dataPoints.push(new Point([0, 1], 1));
+    model.dataPoints.push(new Point([0, 3], 4));
+    model.dataPoints.push(new Point([0, 2], 5));
+    model.dataPoints.push(new Point([0, 3], 6));
+    model.dataPoints.push(new Point([0, 5], 5));
+    model.dataPoints.push(new Point([0, 5], 9));
+    model.dataPoints.push(new Point([0, 6], 4));
+    model.dataPoints.push(new Point([0, 7], 7));
+    model.dataPoints.push(new Point([0, 7], 8));
+    model.dataPoints.push(new Point([0, 8], 7));
+    model.dataPoints.push(new Point([0, 9], 9));
+    model.dataPoints.push(new Point([0, 12], 8));
+    model.dataPoints.push(new Point([0, 13], 9));
+    model.dataPoints.push(new Point([0, 14], 7));
     //model.dataPoints.push(new Point(18, 8));
 }
 
@@ -374,9 +375,8 @@ function renderCanvas(graph) {
     graph.canvas.width = graph.canvas.width;
 
 
-    for (let p of graph.cartesianGraphPoints) {
-        drawPoint(graph, p, 1, "lightgray")
-    }
+
+    drawCartesianGraphPoints(graph);
 
     drawDataPoints(graph, graph.dataPoints, 1, "darkred", true);
 
@@ -419,18 +419,19 @@ function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
 
     var dimension_n = graph.currentlySelectedDimension;
 
-
+    //would start at negative numbers later
+    xs_sample[dimension_n] = 0;
+    let prevPoint = new Point(xs_sample, complexLine.Evaluate(xs_sample));
 
     //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
     //except x_0 (which is 1) and x_n.
     for (let x_n_i = 0; x_n_i < CANVAS_WIDTH / CANVAS_SCALE; x_n_i += sampleRate) {
-        let nextX_N_I = (x_n_i + sampleRate);
-        xs_sample[dimension_n] = x_n_i;
         //sampling the line  at x_n = x_n_i
-        let p1 = new Point(x_n_i, complexLine.Evaluate(xs_sample));
-        xs_sample[dimension_n] = nextX_N_I;
-        let p2 = new Point(nextX_N_I, complexLine.Evaluate(xs_sample));
-        drawLine(graph, p1, p2, 1, fillStyle);
+        xs_sample[dimension_n] = x_n_i;
+        //Todo: I hate javascript
+        let newPoint = new Point(xs_sample.slice(), complexLine.Evaluate(xs_sample));
+        drawLine(graph, prevPoint, newPoint, 1, fillStyle);
+        prevPoint = newPoint;
     }
 }
 
@@ -489,7 +490,8 @@ function drawDataPoints(graph, points, dimensionX, fillStyle, drawText) {
         // draw error text.... or somethign
         let diff = p2.y - p1.y;
         let magnitude = round(Math.abs(diff), 2);
-        let midpoint = new Point(p1.x[dimensionX], p1.y + diff / 2);
+
+        let midpoint = new Point(p1.xs, p1.y + diff / 2);
 
         if (drawText) {
 
@@ -500,10 +502,14 @@ function drawDataPoints(graph, points, dimensionX, fillStyle, drawText) {
 }
 
 function drawPoint(graph, point, dimensionX, fillStyle, pointRadius) {
+    let canvasPoint = graph.canvasPoint(point, dimensionX);
+    drawCanvasPoint(graph, canvasPoint.x, canvasPoint.y, fillStyle, pointRadius);
+}
+
+function drawCanvasPoint(graph, x, y , fillStyle, pointRadius) {
     const originalFillStyle = graph.context.fillStyle;
     graph.context.beginPath();
-    let canvasPoint = graph.canvasPoint(point, dimensionX);
-    graph.context.arc(canvasPoint.x, canvasPoint.y, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
+    graph.context.arc(x, y, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
     graph.context.closePath();
     graph.context.fillStyle = fillStyle;
     graph.context.fill();
@@ -534,13 +540,14 @@ function drawFatterPoint(graph, point) {
  * @param {[Point]} graphPoints
  */
 
-function buildCartesianGraphPoints(graph) {
+function drawCartesianGraphPoints(graph) {
 
-    let graphPoints = graph.cartesianGraphPoints;
     //this is not easy to read easily. refactor to be most readable possible:
     for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
         for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
-            graphPoints.push(new Point(x / CANVAS_SCALE, y / CANVAS_SCALE));
+            //graphPoints.push();
+            drawCanvasPoint(graph, x , y , "lightgray")
+
         }
     }
 }
@@ -623,15 +630,15 @@ function AxisLine(graphDimension) {
     this.a2 = [];
 
     if (graphDimension === "x") {
-        this.p1 = new Point(0, 0);
-        this.p2 = new Point(Point.maxX, 0);
+        this.p1 = new Point([0, 0], 0);
+        this.p2 = new Point([0, Point.maxX], 0);
 
         this.a1.push(new AxisArrows(this.p1, "left"));
         this.a2.push(new AxisArrows(this.p2, "right"));
     }
     else if (graphDimension === "y") {
-        this.p1 = new Point(0, 0);
-        this.p2 = new Point(0, Point.maxY);
+        this.p1 = new Point([0, 0], 0);
+        this.p2 = new Point([0, 0], Point.maxY);
 
         this.a1.push(new AxisArrows(this.p1, "down"));
         this.a2.push(new AxisArrows(this.p2, "up"));
@@ -665,8 +672,8 @@ function AxisArrows(point, arrowDirection) {
 
 
     this.pTip = point;
-    this.p1 = new Point(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
-    this.p2 = new Point(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
+    this.p1 = new Point([0, point.x + off[0][0] * dir[0][0]], point.y + off[0][1] * dir[0][1]);
+    this.p2 = new Point([0, point.x + off[0][0] * dir[0][0]], point.y + off[0][1] * dir[0][1]);
 
     this.arrowTipBranch1 = new Line(this.pTip, this.p1);
 
@@ -888,7 +895,7 @@ function convertCanvasToGraph(canvasX, canvasY, graphDecimalsAccuracy) {
 }
 
 function printPoint(point) {
-    return "(" + point.x + ", " + point.y + ")";
+    return "(" + point.xs[graphs[0].currentlySelectedDimension] + ", " + point.y + ")";
 }
 
 /**
@@ -901,8 +908,19 @@ function printPoint(point) {
  * @param canvasY
  */
 function addPoint(graph, canvasX, canvasY) {
+
+
+    //Todo: Review semantics
+    let newXs = model.hypothesisLine.thetas.slice();
+    newXs[0]= 1;
+
+    for (let i = 1; i<newXs.length;i++){
+        newXs[i] = 0;
+    }
+
     let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
-    let clickPoint = new Point(graphPosition.cartesianX, graphPosition.cartesianY);
+    newXs[graph.currentlySelectedDimension] = graphPosition.cartesianX;
+    let clickPoint = new Point(newXs, graphPosition.cartesianY);
 
     graph.dataPoints.push(clickPoint);
     //console.log("In graph: " + graph + ", Added point at : " + printPoint(graph.dataPoints[clickPoint]));
@@ -1006,7 +1024,7 @@ function arrayDifference(arrayA, arrayB) {
 let controlRows = [];
 function injectTemplateControls() {
 
-    let numXparams = model.dataPoints[0].x.length;
+    let numXparams = model.dataPoints[0].xs.length;
     
 
     let controlTemplateElementContent = document.querySelector("#control-template");
@@ -1040,6 +1058,8 @@ function injectTemplateControls() {
 //     renderCanvases()
 // }
 
+
+derp();
 let model = new Model();
 
 initGraphs();
