@@ -11,6 +11,7 @@ const GRAPH_TYPES = {
     CONTOUR: "CONTOUR"
 };
 
+
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 const CANVAS_SCALE = 30;
@@ -242,7 +243,7 @@ function Model() {
 
     /**
      * Display scalar amount of error.
-     * @param {StraightLine} hypothesisLine
+     * @param {ComplexLine} hypothesisLine
      * @returns {Number} {number}
      */
     this.GetTotalError = () => {
@@ -353,7 +354,7 @@ function buildSampleDataPoints(model) {
 }
 
 function buildSampleHypothesisLines(model) {
-    model.hypothesisLine = new StraightLine(0, 1);
+    model.hypothesisLine = new ComplexLine(0, 1);
     model.hypothesisLine.name = "the hypothesis line";
 }
 
@@ -392,7 +393,7 @@ function renderCanvas(graph) {
     //removeHighlightPoints();
 
     if (graph.graphType === GRAPH_TYPES.REGRESSION) {
-        drawLinesBetweenPoints(graph, graph.hypothesisLine.endPoints(), "black");
+        drawComplexLine(graph, graph.hypothesisLine, 1, "black");
 
         //drawEachLine(graph, graph.hypothesisLine.errorLines, "forestgreen");
         //drawEachLineText(graph, graph.hypothesisLine.errorLines, "forestgreen");
@@ -400,11 +401,13 @@ function renderCanvas(graph) {
 
 }
 
-function drawLinesBetweenPoints(graph, points, fillStyle) {
-    let pNext;
-    for (let p = 0; p < points.length; p++) {
-        pNext = (p + 1) % points.length;
-        drawLine(graph, points[p], points[pNext], fillStyle);
+function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
+
+    for (let x = 0; x < CANVAS_WIDTH / CANVAS_SCALE; x += sampleRate) {
+        let nextX = (x + sampleRate);
+        let p1 = new Point(x, complexLine.Evaluate(x));
+        let p2 = new Point(nextX, complexLine.Evaluate(nextX));
+        drawLine(graph, p1, p2, fillStyle);
     }
 }
 
@@ -539,7 +542,7 @@ function Line(p1, p2) {
  * @param {Number} b1
  * @constructor
  */
-function StraightLine(b0, b1) {
+function ComplexLine(b0, b1) {
 
     //y=mx + b
     //y_hat = b0 + b1 * x;
@@ -550,16 +553,13 @@ function StraightLine(b0, b1) {
     this.slope = b1;
     this.name = "";
 
-    const x_max = CANVAS_WIDTH / CANVAS_SCALE;
-    const y_at_x_max = this.y_intercept_y_value + this.slope * x_max;
 
-    this.p1 = new Point(0, this.y_intercept_y_value); //y-intercept
-    this.p2 = new Point(x_max, y_at_x_max);
-
-    Line.call(this, this.p1, this.p2);
+    this.Evaluate = (x) =>  {
+        return this.slope * x + this.y_intercept_y_value;
+    }
 }
 
-StraightLine.prototype.endPoints = function () {
+ComplexLine.prototype.endPoints = function () {
     return [this.p1, this.p2];
 };
 
@@ -658,7 +658,7 @@ ErrorLine.prototype.endPoints = function () {
  * Create error lines, going vertically from p1 (sample data point) and p2 (intersecting point on hypothesis line)
  *
  * @param {[Point]} additionalSamplePoints
- * @param {StraightLine} hypothesisLine
+ * @param {ComplexLine} hypothesisLine
  */
 // function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
 //
@@ -947,7 +947,7 @@ function injectTemplateControls() {
 
 function updateLine(b0, b1) {
     let hyp = graphs[0].hypothesisLine;
-    graphs[0].hypothesisLine = new StraightLine(hyp.y_intercept_y_value, b1);
+    graphs[0].hypothesisLine = new ComplexLine(hyp.y_intercept_y_value, b1);
     renderCanvases()
 }
 
