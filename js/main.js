@@ -197,6 +197,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
     this.canvas.oncontextmenu = (e) => e.preventDefault();
+    this.currentlySelectedDimension = 1;
 
     Object.defineProperty(this, 'dataPoints', {
         get: getDataPointsCallback
@@ -233,33 +234,12 @@ function Model() {
     buildSampleHypothesisLines(this); //if applicable
     //buildErrorLinesBetween(this.dataPoints, this.hypothesisLine);
 
-    this.CalculateShadowPoint = (p, dimensionX) => {
-        // const m = this.hypothesisLine.thetas[1];
-        // const b = this.hypothesisLine.thetas[0];
-        const x = p.x[dimensionX];
-        // const y = m * x + b;
-        //const y = p.Evaluate(p.x);    //Uncaught TypeError: p.Evaluate is not a function
-        //const y = p.Evaluate([0,1]);    //Uncaught TypeError: p.Evaluate is not a function
-        // const y = p.Evaluate(new Point([0,1], 123).x);    //Uncaught TypeError: p.Evaluate is not a function
+    this.CalculateShadowPoint = (p) => {
 
-        //I give up, reproducing Evaluate logic block here:
-        let hypothesis_cost_of_thetas = 0;
-        for (let i = 0; i < p.x.length; i++) {
-            let x = p.x[i];
-            let θ = this.hypothesisLine.thetas[i];
-            hypothesis_cost_of_thetas += x * θ;
-        }
-        const y = hypothesis_cost_of_thetas;
+        const y = this.hypothesisLine.Evaluate(p.x);
+        return new Point(p.x, y);
 
-        // const p1 = p;
-        const p2 = new Point(x, y);
-
-        return p2;
-
-        // const errorLine = new ErrorLine(p1, p2, p);
-        // errorLine.midpoint.setString(errorLine.magnitude);
-        // errorLine.midpoint.setTextOffset(CANVAS_TEXT_OFFSET_MAGNI, 0);
-    }
+    };
 
     /**
      * Display scalar amount of error.
@@ -288,7 +268,7 @@ function Model() {
  */
 function Point(xs, y) {
 
-    xs = Array.isArray(xs) ? xs : ( [].concat(0, xs) );
+    xs = Array.isArray(xs) ? xs : ( [].concat(1, xs) );
 
     this.x = round(xs, 1);
     this.y = round(y, 1);
@@ -418,12 +398,38 @@ function renderCanvas(graph) {
 
 }
 
+/**
+ * Draws over the graph's currently selected dimension of X.
+ *
+ * @param graph
+ * @param complexLine
+ * @param sampleRate
+ * @param fillStyle
+ */
 function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
 
-    for (let x = 0; x < CANVAS_WIDTH / CANVAS_SCALE; x += sampleRate) {
-        let nextX = (x + sampleRate);
-        let p1 = new Point(x, complexLine.Evaluate([0, x]));
-        let p2 = new Point(nextX, complexLine.Evaluate([0, nextX]));
+    let xs_sample = complexLine.thetas.slice();
+    xs_sample[0]= 1;
+
+    for (let i = 1; i<xs_sample.length;i++){
+        xs_sample[i] = 0;
+    }
+
+    //xs = [1 , 0]
+
+    var dimension_n = graph.currentlySelectedDimension;
+
+
+
+    //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
+    //except x_0 (which is 1) and x_n.
+    for (let x_n_i = 0; x_n_i < CANVAS_WIDTH / CANVAS_SCALE; x_n_i += sampleRate) {
+        let nextX_N_I = (x_n_i + sampleRate);
+        xs_sample[dimension_n] = x_n_i;
+        //sampling the line  at x_n = x_n_i
+        let p1 = new Point(x_n_i, complexLine.Evaluate(xs_sample));
+        xs_sample[dimension_n] = nextX_N_I;
+        let p2 = new Point(nextX_N_I, complexLine.Evaluate(xs_sample));
         drawLine(graph, p1, p2, 1, fillStyle);
     }
 }
@@ -482,7 +488,7 @@ function drawDataPoints(graph, points, dimensionX, fillStyle, drawText) {
 
         // draw error text.... or somethign
         let diff = p2.y - p1.y;
-        let magnitude = Math.abs(diff);
+        let magnitude = round(Math.abs(diff), 2);
         let midpoint = new Point(p1.x[dimensionX], p1.y + diff / 2);
 
         if (drawText) {
@@ -580,6 +586,12 @@ function ComplexLine(thetas) {
     //
     // };
 
+    /**
+     * Evaluate over all dimensions of x. y = x_0 * θ_0 + x_1 * θ_1 + ... x_n * θ_n
+     *
+     * @param xs Array of x values
+     * @returns {number} Value of y on line at given xs(x_0, x_1, x_2 ... x_n)
+     */
     this.Evaluate = (xs) => {
 
         if (this.thetas.length !== xs.length) {
@@ -846,7 +858,7 @@ function onChangeSlider(e) {
 
     match.sliderElement.step = getAdjustedStepValue(match.sliderElement.step, realValue, match.realMin, match.realMax);
 
-    updateLine(null, realValue);
+    // updateLine(null, realValue);
 
 }
 
@@ -994,16 +1006,26 @@ function arrayDifference(arrayA, arrayB) {
 let controlRows = [];
 function injectTemplateControls() {
 
+    let numXparams = model.dataPoints[0].x.length;
+    
+
     let controlTemplateElementContent = document.querySelector("#control-template");
     controlTemplateElementContent = controlTemplateElementContent.content;
 
-    let newRow = new ControlRow(controlTemplateElementContent);
-    newRow.OnControlChange = () => console.log("Sup dawg");
-    controlRows.push(newRow);
+    for (let i = 0; i < numXparams; i++) {
+        let newRow = new ControlRow(controlTemplateElementContent);
+        newRow.OnControlChange = () => {
+            model.hypothesisLine.thetas[i] = newRow.GetValue();
+            renderCanvases();
+        };
+        controlRows.push(newRow);
+        let targetContainer = document.querySelector('.container_column');
+        targetContainer.appendChild(newRow.element);
+        // newRow.element.attributes.id += i;
+        let controlSymbolSub = targetContainer.querySelector(".control-symbol").querySelector("sub");
+        console.log(controlSymbolSub);
+    }
 
-
-    let targetContainer = document.querySelector('#controls');
-    targetContainer.appendChild(controlRows[0].element);
 
 
 }
@@ -1012,11 +1034,11 @@ function injectTemplateControls() {
 //
 // }
 
-function updateLine(b0, b1) {
-    let hyp = graphs[0].hypothesisLine;
-    graphs[0].hypothesisLine = new ComplexLine(hyp.y_intercept_y_value, b1);
-    renderCanvases()
-}
+// function updateLine(b0, b1) {
+//     let hyp = graphs[0].hypothesisLine;
+//     graphs[0].hypothesisLine = new ComplexLine(hyp.y_intercept_y_value, b1);
+//     renderCanvases()
+// }
 
 let model = new Model();
 
