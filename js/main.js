@@ -111,12 +111,10 @@ let exampleobj = {
 }
 
 
-
-
 function ControlRow(template) {
-    
+
     //external variable
-    this.element =  document.importNode(template, true);
+    this.element = document.importNode(template, true);
 
     //external methods
     // Callback called when control changes
@@ -126,7 +124,7 @@ function ControlRow(template) {
 
     this.SetValue = (newValue) => {
         let parsedValue = parseFloat(newValue);
-        value = (isNaN(parsedValue) ? value : parsedValue) ;
+        value = (isNaN(parsedValue) ? value : parsedValue);
         textbox.value = round(value, 2);
 
     };
@@ -159,12 +157,11 @@ function ControlRow(template) {
     //internal methods
     //for subscribers (utility function so we don'thave to check for null everytime)
     const invokeChanged = () => {
-        if(this.OnControlChange)
+        if (this.OnControlChange)
             this.OnControlChange();
     };
 
-    const incrementValue = (delta) =>
-    {
+    const incrementValue = (delta) => {
         this.SetValue(this.GetValue() + delta);
         invokeChanged();
     };
@@ -179,7 +176,7 @@ function ControlRow(template) {
     buttonIncrementLarge.onclick = () => incrementValue(10);
 
     checkbox.onchange = invokeChanged;
-    textbox.onchange = ()=> {
+    textbox.onchange = () => {
         this.SetValue(textbox.value);
         invokeChanged();
     };
@@ -209,6 +206,17 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         set: (newHypothesisLine) => model.hypothesisLine = newHypothesisLine
     });
 
+    /**
+     * Convert from Cartesian point system to Canvas pixel system, and while incorporating which x dimension is used.
+     *
+     * @param point
+     * @param dimension
+     * @returns {{x: number, y: number}}
+     */
+    this.canvasPoint = (point, dimension) => ({
+        x: point.x[dimension] * CANVAS_SCALE + CANVAS_TEXT_OFFSET_COORD,
+        y: CANVAS_HEIGHT - (point.y * CANVAS_SCALE) + CANVAS_TEXT_OFFSET_COORD
+    });
 
     Graph.prototype.toString = function () {
         return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
@@ -225,13 +233,25 @@ function Model() {
     buildSampleHypothesisLines(this); //if applicable
     //buildErrorLinesBetween(this.dataPoints, this.hypothesisLine);
 
-    this.CalculateShadowPoint = (p) => {
-        const m = this.hypothesisLine.slope;
-        const b = this.hypothesisLine.y_intercept_y_value;
-        const x = p.x;
-        const y = m * x + b;
+    this.CalculateShadowPoint = (p, dimensionX) => {
+        // const m = this.hypothesisLine.thetas[1];
+        // const b = this.hypothesisLine.thetas[0];
+        const x = p.x[dimensionX];
+        // const y = m * x + b;
+        //const y = p.Evaluate(p.x);    //Uncaught TypeError: p.Evaluate is not a function
+        //const y = p.Evaluate([0,1]);    //Uncaught TypeError: p.Evaluate is not a function
+        // const y = p.Evaluate(new Point([0,1], 123).x);    //Uncaught TypeError: p.Evaluate is not a function
 
-        const p1 = p;
+        //I give up, reproducing Evaluate logic block here:
+        let hypothesis_cost_of_thetas = 0;
+        for (let i = 0; i < p.x.length; i++) {
+            let x = p.x[i];
+            let θ = this.hypothesisLine.thetas[i];
+            hypothesis_cost_of_thetas += x * θ;
+        }
+        const y = hypothesis_cost_of_thetas;
+
+        // const p1 = p;
         const p2 = new Point(x, y);
 
         return p2;
@@ -250,9 +270,9 @@ function Model() {
 
         let totalError = 0;
 
-        for(let point of this.dataPoints){
+        for (let point of this.dataPoints) {
             let shadow = this.CalculateShadowPoint(point);
-            let magnitude = Math.abs(shadow.y-point.y);
+            let magnitude = Math.abs(shadow.y - point.y);
             totalError += magnitude;
         }
         return totalError;
@@ -266,16 +286,14 @@ function Model() {
  * @param {Number} x
  * @param {Number} y
  */
-function Point(x, y) {
-    this.x = round(x, 1);
+function Point(xs, y) {
+
+    xs = Array.isArray(xs) ? xs : ( [].concat(0, xs) );
+
+    this.x = round(xs, 1);
     this.y = round(y, 1);
 
-    this.canvasX = x * CANVAS_SCALE;
-    this.canvasY = CANVAS_HEIGHT - (y * CANVAS_SCALE);
-
     this.customString;
-    this.textOffsetX = CANVAS_TEXT_OFFSET_COORD;
-    this.textOffsetY = CANVAS_TEXT_OFFSET_COORD;
 
     Point.maxX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
     Point.maxY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
@@ -294,10 +312,10 @@ Point.prototype.toString = function () {
 //     this.customString = customString;
 // };
 
-Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
-    this.textOffsetX = textOffsetX;
-    this.textOffsetY = textOffsetY;
-};
+// Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
+//     this.textOffsetX = textOffsetX;
+//     this.textOffsetY = textOffsetY;
+// };
 
 function initGraphs() {
     //let controls = injectTemplateControls();
@@ -307,8 +325,7 @@ function initGraphs() {
     //graphs[0].canvas.onclick = onClickCanvas;
     graphs[0].canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
     graphs[0].canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
-    
-    
+
 
 }
 
@@ -323,15 +340,15 @@ function buildCanvasContent(graph) {
     buildCartesianGraphPoints(graph);
     buildAxes(graph);
 
-    if (graph.graphType === GRAPH_TYPES.REGRESSION) {
-        //appendSlider(graph);
-    }
-    else if (graph.graphType === GRAPH_TYPES.CONTOUR) {
-        //buildContourRing(graph);
-    }
-    else {
-        throw new TypeError("Cannot build graph: " + graph + ", unknown GRAPH_TYPE: " + graph.graphType + ".");
-    }
+    // if (graph.graphType === GRAPH_TYPES.REGRESSION) {
+    //     //appendSlider(graph);
+    // }
+    // else if (graph.graphType === GRAPH_TYPES.CONTOUR) {
+    //     //buildContourRing(graph);
+    // }
+    // else {
+    //     throw new TypeError("Cannot build graph: " + graph + ", unknown GRAPH_TYPE: " + graph.graphType + ".");
+    // }
 
 }
 
@@ -354,7 +371,7 @@ function buildSampleDataPoints(model) {
 }
 
 function buildSampleHypothesisLines(model) {
-    model.hypothesisLine = new ComplexLine(0, 1);
+    model.hypothesisLine = new ComplexLine([0, 1]);
     model.hypothesisLine.name = "the hypothesis line";
 }
 
@@ -377,14 +394,14 @@ function renderCanvas(graph) {
     graph.canvas.width = graph.canvas.width;
 
 
-    for(let p of graph.cartesianGraphPoints){
-        drawPoint(graph,p,"lightgray")
+    for (let p of graph.cartesianGraphPoints) {
+        drawPoint(graph, p, 1, "lightgray")
     }
 
-    drawDataPoints(graph, graph.dataPoints, "darkred", true);
+    drawDataPoints(graph, graph.dataPoints, 1, "darkred", true);
 
-    drawLine(graph, graph.cartesianAxes[0].p1, graph.cartesianAxes[0].p2, "black", 5);
-    drawLine(graph, graph.cartesianAxes[1].p1, graph.cartesianAxes[1].p2, "black", 5);
+    drawLine(graph, graph.cartesianAxes[0].p1, graph.cartesianAxes[0].p2, 1, "black", 5);
+    drawLine(graph, graph.cartesianAxes[1].p1, graph.cartesianAxes[1].p2, 1, "black", 5);
 
     //drawArrowHeads(graph, graph.cartesianAxesArrowHeads, "black", 5);
     //drawPoints(graph, graph.errorLines.endPoints(), "forestgreen");
@@ -405,9 +422,9 @@ function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
 
     for (let x = 0; x < CANVAS_WIDTH / CANVAS_SCALE; x += sampleRate) {
         let nextX = (x + sampleRate);
-        let p1 = new Point(x, complexLine.Evaluate(x));
-        let p2 = new Point(nextX, complexLine.Evaluate(nextX));
-        drawLine(graph, p1, p2, fillStyle);
+        let p1 = new Point(x, complexLine.Evaluate([0, x]));
+        let p2 = new Point(nextX, complexLine.Evaluate([0, nextX]));
+        drawLine(graph, p1, p2, 1, fillStyle);
     }
 }
 
@@ -429,12 +446,14 @@ function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
 //     }
 // }
 
-function drawLine(graph, pointBegin, pointEnd, strokeStyle, lineWidth) {
+function drawLine(graph, pointBegin, pointEnd, dimensionX, strokeStyle, lineWidth) {
     const originalStrokeStyle = graph.context.strokeStyle;
     const originalLineWidth = graph.context.lineWidth;
     graph.context.beginPath();
-    graph.context.moveTo(pointBegin.canvasX, pointBegin.canvasY);
-    graph.context.lineTo(pointEnd.canvasX, pointEnd.canvasY);
+    let cp1 = graph.canvasPoint(pointBegin, dimensionX);
+    let cp2 = graph.canvasPoint(pointEnd, dimensionX);
+    graph.context.moveTo(cp1.x, cp1.y);
+    graph.context.lineTo(cp2.x, cp2.y);
 
     if (strokeStyle !== undefined) {
         graph.context.strokeStyle = strokeStyle;
@@ -449,60 +468,58 @@ function drawLine(graph, pointBegin, pointEnd, strokeStyle, lineWidth) {
     graph.context.lineWidth = originalLineWidth;
 }
 
-function drawDataPoints(graph, points, fillStyle, drawText) {
+function drawDataPoints(graph, points, dimensionX, fillStyle, drawText) {
     for (let p = 0; p < points.length; p++) {
 
 
         let p1 = points[p];
-        let p2 = model.CalculateShadowPoint(points[p]);
+        let p2 = model.CalculateShadowPoint(points[p], 1);
 
-        drawPoint(graph, p1, fillStyle);
+        drawPoint(graph, p1, dimensionX, fillStyle);
 
         // draw error line
-        drawLine(graph, p1, p2, fillStyle);
+        drawLine(graph, p1, p2, dimensionX, fillStyle);
 
         // draw error text.... or somethign
         let diff = p2.y - p1.y;
         let magnitude = Math.abs(diff);
-        let midpoint = new Point(p1.x, p1.y + diff/2);
+        let midpoint = new Point(p1.x[dimensionX], p1.y + diff / 2);
 
         if (drawText) {
 
-            drawPointText(graph, midpoint, magnitude, fillStyle);
-            drawPointText(graph, p1, p1.toString(), fillStyle);
+            drawPointText(graph, midpoint, dimensionX, magnitude, fillStyle);
+            drawPointText(graph, p1, dimensionX, p1.toString(), fillStyle);
         }
     }
 }
 
-function drawPoint(graph, point, fillStyle, pointRadius) {
+function drawPoint(graph, point, dimensionX, fillStyle, pointRadius) {
     const originalFillStyle = graph.context.fillStyle;
     graph.context.beginPath();
-    graph.context.arc(point.canvasX, point.canvasY, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
+    let canvasPoint = graph.canvasPoint(point, dimensionX);
+    graph.context.arc(canvasPoint.x, canvasPoint.y, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
     graph.context.closePath();
     graph.context.fillStyle = fillStyle;
     graph.context.fill();
     graph.context.fillStyle = originalFillStyle;
 }
 
-function drawPointText(graph, point, text, fillStyle) {
+function drawPointText(graph, point, dimensionX, text, fillStyle) {
     const originalFillStyle = graph.context.fillStyle;
     graph.context.fillStyle = fillStyle;
-    graph.context.fillText(text, point.canvasX + point.textOffsetX, point.canvasY + point.textOffsetY);
+    let canvasPoint = graph.canvasPoint(point, dimensionX);
+    graph.context.fillText(text, canvasPoint.x, canvasPoint.y);
     graph.context.fillStyle = originalFillStyle;
 }
 
 function drawHighlightPoints(graph, highlightPoints) {
     for (let i = 0; i < highlightPoints.length; i++) {
-        drawHighlight(graph, highlightPoints[i]);
+        drawFatterPoint(graph, highlightPoints[i]);
     }
 }
 
-function drawHighlight(graph, highlightPoint) {
-    drawFatterPoint(graph, highlightPoint);
-}
-
 function drawFatterPoint(graph, point) {
-    drawPoint(graph, point, "darkyellow", 10);
+    drawPoint(graph, point, 1, "darkyellow", 10);
 }
 
 /**
@@ -534,28 +551,52 @@ function buildAxes(graph) {
 function Line(p1, p2) {
     this.p1 = p1;
     this.p2 = p2;
+
 }
 
 /**
  * Create a straight line, according to math formula y = mx + b, also known as y = b1x + b0.
- * @param {Number} b0
- * @param {Number} b1
+ * @param {[Number]} thetas
  * @constructor
  */
-function ComplexLine(b0, b1) {
+function ComplexLine(thetas) {
 
     //y=mx + b
     //y_hat = b0 + b1 * x;
     //y_hat = y_intercept + slope * (x);
     // y = 3 + 1/2 * x;
 
-    this.y_intercept_y_value = b0;
-    this.slope = b1;
+    //hθ(x) = θ_0 + θ_1 * x
+    //y_intercept = θ_0, thus θ_0 = 0
+    //slope = θ_1
+
+    //hθ(x) = θ_0 * x_0 + θ_1 * x_1 + ... + θ_n * x_n
+
+
+    this.thetas = thetas;
     this.name = "";
 
+    // this.Thetas = () => {
+    //
+    // };
 
-    this.Evaluate = (x) =>  {
-        return this.slope * x + this.y_intercept_y_value;
+    this.Evaluate = (xs) => {
+
+        if (this.thetas.length !== xs.length) {
+            throw new RangeError("Amount of θ (thetas) does not match amount of X parameters. Cannot evaluate.")
+        }
+
+        let hypothesis_cost_of_thetas = 0;
+
+        for (let i = 0; i < xs.length; i++) {
+            let x = xs[i];
+            let θ = this.thetas[i];
+            hypothesis_cost_of_thetas += x * θ;
+        }
+
+        return hypothesis_cost_of_thetas;
+
+        //return this.slope * x + this.y_intercept_y_value;
     }
 }
 
@@ -674,7 +715,6 @@ ErrorLine.prototype.endPoints = function () {
 // }
 
 
-
 /**
  * Limit number of decimal places for a float realValue
  * @param {Number} value
@@ -685,7 +725,22 @@ function round(value, decimals) {
     if (decimals === undefined) {
         throw new TypeError("Cannot round to nearest decimal, as number of decimal places isn't specified.");
     }
-    return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+
+    //assumes 1d array
+    if (Array.isArray(value)) {
+        let result = [];
+        for (let x of value) {
+            result.push(Number(Math.round(x + 'e' + decimals) + 'e-' + decimals));
+        }
+        return result;
+    }
+    else if (!isNaN(value)) {
+        return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+    }
+    else {
+        throw new TypeError("Cannot round, not a number, for value: " + value);
+    }
+
 }
 
 function onClickCanvas(e) {
@@ -726,11 +781,23 @@ function onClickCanvas(e) {
 
     //tasks
     /*
-     - 2 html sliders(b0, b1) to control the (line).
      - move axes to show negatives plz (at least some way to scale)
      - as you modify b0,b1 (with a button), plot a point a point on the second canvas
      where it's color represents the total error (lerp).
      (ties nicely into gradient descent as is).
+     */
+
+    //tasks redux
+    /*
+     - create DataPoints with an array of x's and separate my concerns with drawing and data points.
+     - refactor existing sample points to accept arrays of data points, e.g. 1x2 arrays, where every x0=0, and x1=
+     (before value).
+     - .toCanvas or  Graph.drawPoint  can be made, which can accept a dimension parameter
+     - make more control rows appear, at least 2.
+     - bind the controls so they actually affect the line. (fix bitch)    in injectTemplateControls in the call to
+     "newRow.OnControlChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
+     (and rerender the canvas)
+     - all my *graph* functions can be refactored to operate from the Graph function... emphasizing the MVC model mroe.
      */
 }
 
@@ -779,7 +846,7 @@ function onChangeSlider(e) {
 
     match.sliderElement.step = getAdjustedStepValue(match.sliderElement.step, realValue, match.realMin, match.realMax);
 
-    updateLine( null, realValue);
+    updateLine(null, realValue);
 
 }
 
