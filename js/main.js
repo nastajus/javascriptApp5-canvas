@@ -6,11 +6,12 @@
  */
 
 let graphs = [];
+let controlRows = [];
+
 const GRAPH_TYPES = {
     REGRESSION: "REGRESSION",
     CONTOUR: "CONTOUR"
 };
-
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
@@ -22,95 +23,12 @@ const GRAPH_DECIMALS_ACCURACY = 1;
 const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 
 
-function getSliderValue(realValue, min, max) {
-    //assumption:
-    //min is negative... gracefully revert when not negative
-
-    //min -10, max 50, realValue: 10.
-    //how do? range = 60. desired result is 20
-
-    //input is negative..
-    //output is positive equivalent
-
-    let range = Math.abs(min) + Math.abs(max);
-    let sliderValue;
-
-    if (min >= 0 && max < 0) {
-        sliderValue = realValue;
-    }
-    else if (min < 0 && max > 0) {
-        sliderValue = range - (range - (Math.abs(realValue) + Math.abs(min)));
-        //e.g. 60 - (60 - (10 + 10)) = 20
-    }
-    else if (max < 0 && min > 0) {
-        sliderValue = range - (range - (Math.abs(realValue) + Math.abs(max)));
-    }
-    else {
-        throw new RangeError("Unexpected range error in getSliderValue().");
-    }
-
-    return sliderValue;
-}
-
-function getRealValue(sliderValue, min, max) {
-    //sliderValue: 20, min: -10, max: 50
-    //realValue: 10
-
-    let range = Math.abs(min) + Math.abs(max);
-    let realValue;
-
-    // if (min >= 0 && max < 0) {
-    //     realValue = sliderValue;
-    // }
-    //else if (min < 0 && max > 0) {
-    realValue = -range + Math.abs(min) + parseFloat(sliderValue);
-    //e.g. 60 - 10 + 20 = 10
-    // }
-    // else if (max < 0 && min > 0) {
-    //     realValue = range - (range -(Math.abs(sliderValue) + Math.abs(max)));
-    // }
-    // else {
-    //     throw new RangeError("Unexpected range error in getRealValue().");
-    // }
-
-    return realValue;
-
-}
-
-function getAdjustedStepValue(stepValue, sliderValue, min, max) {
-
-    // stepValue = parseFloat(stepValue);
-    sliderValue = round(parseFloat(sliderValue), 2);
-
-    let adj;
-
-    //tread lightly
-    if (sliderValue < 5 && stepValue >= 0.01) {
-        adj = round(stepValue - 0.01, 2);
-        console.log("LOW) adj: " + adj + ", sliderValue: " + sliderValue);
-    }
-    else if (sliderValue < 50 && stepValue >= 0.1) {
-        adj = round(stepValue - 0.1, 2);
-        console.log("MED) adj: " + adj + ", sliderValue: " + sliderValue);
-    }
-    else {
-        adj = 1;
-        console.log("HIGH) adj: " + adj + ", sliderValue: " + sliderValue);
-    }
-
-    return adj;
-}
-
-let exampleobj = {
-
-    data1: "val1",
-    giveme: () => {
-        console.log("sup dude");
-        return "something";
-    }
-}
-
-
+/**
+ * MVC = View
+ *
+ * @param template
+ * @returns {ControlRow}
+ */
 function ControlRow(template) {
 
     //external variable
@@ -184,7 +102,13 @@ function ControlRow(template) {
     return this;
 }
 
-
+/**
+ * MVC = View
+ *
+ * @param canvasId
+ * @param graphType
+ * @param getDataPointsCallback
+ */
 function Graph(canvasId, graphType, getDataPointsCallback) {
 
     this.canvas = document.getElementById(canvasId);
@@ -230,20 +154,22 @@ function Model() {
     this.derivativePoints = [];
 
     buildSampleDataPoints(this);
-    buildSampleHypothesisLines(this); //if applicable
-    //buildErrorLinesBetween(this.dataPoints, this.hypothesisLine);
+    buildSampleHypothesisLines(this);
 
-    this.CalculateShadowPoint = (p) => {
-
-        const y = this.hypothesisLine.Evaluate(p.xs);
-        return new Point(p.xs, y);
-
+    /**
+     * Determine secondary point on same y coordinate
+     *
+     * @param {Point} point
+     * @returns {Point} point
+     */
+    this.CalculateShadowPoint = (point) => {
+        const y = this.hypothesisLine.Evaluate(point.xs);
+        return new Point(point.xs, y);
     };
 
     /**
      * Display scalar amount of error.
-     * @param {ComplexLine} hypothesisLine
-     * @returns {Number} {number}
+     * @returns {number} totalError
      */
     this.GetTotalError = () => {
 
@@ -256,7 +182,6 @@ function Model() {
         }
         return totalError;
     }
-
 }
 
 /**
@@ -288,49 +213,14 @@ Point.prototype.toString = function () {
     const result = (this.customString === undefined) ? printPoint(this) : this.customString;
     return /*"[" + this.count + "] " + */ result;
 };
-//
-// Point.prototype.setString = function (customString) {
-//     this.customString = customString;
-// };
-
-// Point.prototype.setTextOffset = function (textOffsetX, textOffsetY) {
-//     this.textOffsetX = textOffsetX;
-//     this.textOffsetY = textOffsetY;
-// };
 
 function initGraphs() {
-    //let controls = injectTemplateControls();
     graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, () => model.dataPoints));
     graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR, () => model.derivativePoints));
 
     //graphs[0].canvas.onclick = onClickCanvas;
     graphs[0].canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
     graphs[0].canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
-
-
-}
-
-function buildCanvasContents() {
-    for (let i = 0; i < graphs.length; i++) {
-        buildCanvasContent(graphs[i]);
-    }
-}
-
-function buildCanvasContent(graph) {
-
-    //drawCartesianGraphPoints(graph);
-    buildAxes(graph);
-
-    // if (graph.graphType === GRAPH_TYPES.REGRESSION) {
-    //     //appendSlider(graph);
-    // }
-    // else if (graph.graphType === GRAPH_TYPES.CONTOUR) {
-    //     //buildContourRing(graph);
-    // }
-    // else {
-    //     throw new TypeError("Cannot build graph: " + graph + ", unknown GRAPH_TYPE: " + graph.graphType + ".");
-    // }
-
 }
 
 function buildSampleDataPoints(model) {
@@ -348,7 +238,6 @@ function buildSampleDataPoints(model) {
     model.dataPoints.push(new Point([0, 12], 8));
     model.dataPoints.push(new Point([0, 13], 9));
     model.dataPoints.push(new Point([0, 14], 7));
-    //model.dataPoints.push(new Point(18, 8));
 }
 
 function buildSampleHypothesisLines(model) {
@@ -362,40 +251,37 @@ function buildContourRing(graph) {
 
 function renderCanvases() {
     for (let i = 0; i < graphs.length; i++) {
-        renderCanvas(graphs[i]);
+        renderCanvas(graphs[i])
     }
 }
 
 function renderCanvas(graph) {
+    
+    //doesn't work
+    graph.context.clearRect(0, 0, graph.canvas.width, graph.canvas.height);
 
+    //works.
+    graph.canvas.width = graph.canvas.width;
     //doesn't work
     graph.context.clearRect(0, 0, graph.canvas.width, graph.canvas.height);
 
     //works.
     graph.canvas.width = graph.canvas.width;
 
-
-
     drawCartesianGraphPoints(graph);
-
     drawDataPoints(graph, graph.dataPoints, 1, "darkred", true);
-
     drawLine(graph, graph.cartesianAxes[0].p1, graph.cartesianAxes[0].p2, 1, "black", 5);
     drawLine(graph, graph.cartesianAxes[1].p1, graph.cartesianAxes[1].p2, 1, "black", 5);
 
     //drawArrowHeads(graph, graph.cartesianAxesArrowHeads, "black", 5);
-    //drawPoints(graph, graph.errorLines.endPoints(), "forestgreen");
 
     drawHighlightPoints(graph, graph.highlightPoints);
     //removeHighlightPoints();
 
-    if (graph.graphType === GRAPH_TYPES.REGRESSION) {
-        drawComplexLine(graph, graph.hypothesisLine, 1, "black");
+    drawComplexLine(graph, graph.hypothesisLine, 1, "black");
 
-        //drawEachLine(graph, graph.hypothesisLine.errorLines, "forestgreen");
-        //drawEachLineText(graph, graph.hypothesisLine.errorLines, "forestgreen");
-    }
-
+    //drawEachLine(graph, graph.hypothesisLine.errorLines, "forestgreen");
+    //drawEachLineText(graph, graph.hypothesisLine.errorLines, "forestgreen");
 }
 
 /**
@@ -417,7 +303,7 @@ function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
 
     //xs = [1 , 0]
 
-    var dimension_n = graph.currentlySelectedDimension;
+    let dimension_n = graph.currentlySelectedDimension;
 
     //would start at negative numbers later
     xs_sample[dimension_n] = 0;
@@ -434,24 +320,6 @@ function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
         prevPoint = newPoint;
     }
 }
-
-// function drawEachLine(graph, lines, fillStyle, lineWidth) {
-//     if (lines === undefined) {
-//         throw new ReferenceError("Cannot draw lines, lines is undefined");
-//     }
-//     for (let l = 0; l < lines.length; l++) {
-//         drawLine(graph, lines[l].p1, lines[l].p2, fillStyle, lineWidth);
-//     }
-// }
-
-// function drawEachLineText(graph, lines, fillStyle) {
-//     if (lines === undefined) {
-//         throw new ReferenceError("Cannot draw line text, lines is undefined");
-//     }
-//     for (let l = 0; l < lines.length; l++) {
-//         drawPointText(graph, lines[l].midpoint, fillStyle);
-//     }
-// }
 
 function drawLine(graph, pointBegin, pointEnd, dimensionX, strokeStyle, lineWidth) {
     const originalStrokeStyle = graph.context.strokeStyle;
@@ -478,23 +346,21 @@ function drawLine(graph, pointBegin, pointEnd, dimensionX, strokeStyle, lineWidt
 function drawDataPoints(graph, points, dimensionX, fillStyle, drawText) {
     for (let p = 0; p < points.length; p++) {
 
-
         let p1 = points[p];
-        let p2 = model.CalculateShadowPoint(points[p], 1);
+        let p2 = model.CalculateShadowPoint(points[p]);
 
         drawPoint(graph, p1, dimensionX, fillStyle);
 
         // draw error line
         drawLine(graph, p1, p2, dimensionX, fillStyle);
 
-        // draw error text.... or somethign
+        // draw error text.... or something
         let diff = p2.y - p1.y;
         let magnitude = round(Math.abs(diff), 2);
 
         let midpoint = new Point(p1.xs, p1.y + diff / 2);
 
         if (drawText) {
-
             drawPointText(graph, midpoint, dimensionX, magnitude, fillStyle);
             drawPointText(graph, p1, dimensionX, p1.toString(), fillStyle);
         }
@@ -535,27 +401,24 @@ function drawFatterPoint(graph, point) {
 }
 
 /**
- * Create cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
+ * Draw cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
  * @param graph
- * @param {[Point]} graphPoints
  */
-
 function drawCartesianGraphPoints(graph) {
 
     //this is not easy to read easily. refactor to be most readable possible:
     for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
         for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
-            //graphPoints.push();
-            drawCanvasPoint(graph, x , y , "lightgray")
-
+            drawCanvasPoint(graph, x, y, "lightgray")
         }
     }
 }
 
-function buildAxes(graph) {
-    let graphLines = graph.cartesianAxes;
-    graphLines.push(new AxisLine("x"));
-    graphLines.push(new AxisLine("y"));
+function buildAxes() {
+    for (let i = 0; i < graphs.length; i++) {
+        graphs[i].cartesianAxes.push(new AxisLine("x"));
+        graphs[i].cartesianAxes.push(new AxisLine("y"));
+    }
 }
 
 /**
@@ -564,13 +427,11 @@ function buildAxes(graph) {
 function Line(p1, p2) {
     this.p1 = p1;
     this.p2 = p2;
-
 }
 
 /**
- * Create a straight line, according to math formula y = mx + b, also known as y = b1x + b0.
+ * Create a line, using an array of parameters of θ (thetas), e.g. y = θ_0 * x_0 + θ_1 * x_1
  * @param {[Number]} thetas
- * @constructor
  */
 function ComplexLine(thetas) {
 
@@ -589,12 +450,8 @@ function ComplexLine(thetas) {
     this.thetas = thetas;
     this.name = "";
 
-    // this.Thetas = () => {
-    //
-    // };
-
     /**
-     * Evaluate over all dimensions of x. y = x_0 * θ_0 + x_1 * θ_1 + ... x_n * θ_n
+     * Evaluate y over all dimensions of x.  e.g. y = x_0 * θ_0 + x_1 * θ_1 + ... + x_n * θ_n
      *
      * @param xs Array of x values
      * @returns {number} Value of y on line at given xs(x_0, x_1, x_2 ... x_n)
@@ -605,23 +462,19 @@ function ComplexLine(thetas) {
             throw new RangeError("Amount of θ (thetas) does not match amount of X parameters. Cannot evaluate.")
         }
 
-        let hypothesis_cost_of_thetas = 0;
+        let hypo_y = 0;
 
         for (let i = 0; i < xs.length; i++) {
             let x = xs[i];
             let θ = this.thetas[i];
-            hypothesis_cost_of_thetas += x * θ;
+            hypo_y += x * θ;
         }
 
-        return hypothesis_cost_of_thetas;
+        return hypo_y;
 
         //return this.slope * x + this.y_intercept_y_value;
     }
 }
-
-ComplexLine.prototype.endPoints = function () {
-    return [this.p1, this.p2];
-};
 
 function AxisLine(graphDimension) {
     this.p1 = {};
@@ -670,7 +523,6 @@ function AxisArrows(point, arrowDirection) {
             break;
     }
 
-
     this.pTip = point;
     this.p1 = new Point([0, point.x + off[0][0] * dir[0][0]], point.y + off[0][1] * dir[0][1]);
     this.p2 = new Point([0, point.x + off[0][0] * dir[0][0]], point.y + off[0][1] * dir[0][1]);
@@ -685,54 +537,6 @@ function AxisArrows(point, arrowDirection) {
 
     //if (arrowDirection === "")
 }
-
-/**
- * An error line goes between 2 points.
- * @param p1
- * @param p2
- * @param dataPoint
- * @constructor
- */
-function ErrorLine(p1, p2, dataPoint) {
-    this.p1 = p1;
-    this.p2 = p2;
-
-    const x = (p1.x + p2.x) / 2;
-    const y = (p1.y + p2.y) / 2;
-
-    this.midpoint = new Point(x, y);
-    this.magnitude = (p1.y < p2.y) ? round(p2.y - p1.y, 2) : round(p1.y - p2.y, 2);
-
-    this.dataPoint = dataPoint;
-}
-
-ErrorLine.prototype.toString = function () {
-    return "data point: " + printPoint(this.dataPoint) + " with size: " + this.magnitude;
-};
-
-ErrorLine.prototype.endPoints = function () {
-    return [this.p1, this.p2];
-};
-
-/**
- * Create error lines, going vertically from p1 (sample data point) and p2 (intersecting point on hypothesis line)
- *
- * @param {[Point]} additionalSamplePoints
- * @param {ComplexLine} hypothesisLine
- */
-// function buildErrorLinesBetween(additionalSamplePoints, hypothesisLine) {
-//
-//     //find a point on a line
-//     //y = mx + b
-//
-//
-//     for (let p = 0; p < additionalSamplePoints.length; p++) {
-//         calculateShadowPoint();
-//         hypothesisLine.errorLines.push(errorLine);
-//     }
-//     getTotalError(hypothesisLine);
-// }
-
 
 /**
  * Limit number of decimal places for a float realValue
@@ -797,27 +601,6 @@ function onClickCanvas(e) {
         default:
             console.log('Unexpected button code from click: ' + btnCode);
     }
-
-    //tasks
-    /*
-     - move axes to show negatives plz (at least some way to scale)
-     - as you modify b0,b1 (with a button), plot a point a point on the second canvas
-     where it's color represents the total error (lerp).
-     (ties nicely into gradient descent as is).
-     */
-
-    //tasks redux
-    /*
-     - create DataPoints with an array of x's and separate my concerns with drawing and data points.
-     - refactor existing sample points to accept arrays of data points, e.g. 1x2 arrays, where every x0=0, and x1=
-     (before value).
-     - .toCanvas or  Graph.drawPoint  can be made, which can accept a dimension parameter
-     - make more control rows appear, at least 2.
-     - bind the controls so they actually affect the line. (fix bitch)    in injectTemplateControls in the call to
-     "newRow.OnControlChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
-     (and rerender the canvas)
-     - all my *graph* functions can be refactored to operate from the Graph function... emphasizing the MVC model mroe.
-     */
 }
 
 function onMoveCanvas(e) {
@@ -846,31 +629,6 @@ function onMoveCanvas(e) {
     removeHighlightPoints(diff, graph.highlightPoints);
 
     renderCanvas(graph);
-}
-
-function onChangeSlider(e) {
-
-    let match = {
-        realMin: e.srcElement.realMin,
-        realMax: e.srcElement.realMax,
-        textboxElement: e.srcElement.element,
-        sliderElement: e.srcElement.element
-    };
-
-    let realValue = getRealValue(this.value, match.realMin, match.realMax);
-
-    //console.log("Slider value (positive only): " + this.value + " , Mathematical value (- to +): " + realValue);
-
-    match.textboxElement.value = realValue;
-
-    match.sliderElement.step = getAdjustedStepValue(match.sliderElement.step, realValue, match.realMin, match.realMax);
-
-    // updateLine(null, realValue);
-
-}
-
-function onChangeTextbox(e) {
-    console.log(this.value);
 }
 
 /**
@@ -908,7 +666,6 @@ function printPoint(point) {
  * @param canvasY
  */
 function addPoint(graph, canvasX, canvasY) {
-
 
     //Todo: Review semantics
     let newXs = model.hypothesisLine.thetas.slice();
@@ -948,29 +705,12 @@ function removePoint(graph, canvasX, canvasY) {
     for (let i = 0; i < foundPoints.length; i++) {
         let firstMatchPointIndex = graph.dataPoints.indexOf(foundPoints[i]); //index of on references
 
-        //remove related error line before removing the data point
-        removeErrorLine(graph, graph.dataPoints[firstMatchPointIndex]);
-
         let removedPoints = graph.dataPoints.splice(firstMatchPointIndex, 1);
         let removedPoint = removedPoints[0];
 
         console.log("In graph: " + graph + ", Removed point at : " + printPoint(removedPoint));
-        //console.log("In graph: " + graph + ", Removed point at : " + printPoint(firstMatchPointIndex));
-        //console.log("In graph: " + graph + ", Removed point at : " + printPoint(removedErrorLine.dataPoint));
-        //console.log("In graph: " + graph + ", Removed point, at (cartesianX: " + graphPosition.cartesianX + ", cartesianY: " + graphPosition.cartesianY + ").");
     }
     renderCanvas(graph);
-}
-
-function removeErrorLine(graph, matchingDataPoint) {
-
-    for (let i = 0; i < graph.hypothesisLine.errorLines.length; i++) {
-        if (matchingDataPoint === graph.hypothesisLine.errorLines[i].dataPoint) {
-            let removedErrorLine = graph.hypothesisLine.errorLines.splice(i, 1);
-            console.log("In graph: " + graph + ", Removed error line at: " + removedErrorLine);
-            return removedErrorLine;
-        }
-    }
 }
 
 /**
@@ -1021,12 +761,11 @@ function arrayDifference(arrayA, arrayB) {
     });
     return diff;
 }
-let controlRows = [];
+
 function injectTemplateControls() {
 
     let numXparams = model.dataPoints[0].xs.length;
     
-
     let controlTemplateElementContent = document.querySelector("#control-template");
     controlTemplateElementContent = controlTemplateElementContent.content;
 
@@ -1043,40 +782,35 @@ function injectTemplateControls() {
         let controlSymbolSub = targetContainer.querySelector(".control-symbol").querySelector("sub");
         console.log(controlSymbolSub);
     }
-
-
-
 }
 
-// function updateControls() {
-//
-// }
-
-// function updateLine(b0, b1) {
-//     let hyp = graphs[0].hypothesisLine;
-//     graphs[0].hypothesisLine = new ComplexLine(hyp.y_intercept_y_value, b1);
-//     renderCanvases()
-// }
-
-
-derp();
 let model = new Model();
 
 initGraphs();
-buildCanvasContents();
+buildAxes();
 renderCanvases();
-// updateControls();
 injectTemplateControls();
 
 console.log(model.GetTotalError());
 
-// setTimeout(() => {
-//     const point = new Point(10, 10);
-//     dataPoints.push(point);
-//     buildCanvasContent();
-//     renderCanvas();
-// }, 3000);
 
+//tasks
+/*
+ - move axes to show negatives plz (at least some way to scale)
+ - as you modify b0,b1 (with a button), plot a point a point on the second canvas
+ where it's color represents the total error (lerp).
+ (ties nicely into gradient descent as is).
+ */
 
-//window.onload = renderCanvas;
-
+//tasks redux
+/*
+ - create DataPoints with an array of x's and separate my concerns with drawing and data points.
+ - refactor existing sample points to accept arrays of data points, e.g. 1x2 arrays, where every x0=0, and x1=
+ (before value).
+ - .toCanvas or  Graph.drawPoint  can be made, which can accept a dimension parameter
+ - make more control rows appear, at least 2.
+ - bind the controls so they actually affect the line. (fix bitch)    in injectTemplateControls in the call to
+ "newRow.OnControlChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
+ (and rerender the canvas)
+ - all my *graph* functions can be refactored to operate from the Graph function... emphasizing the MVC model mroe.
+ */
