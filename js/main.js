@@ -142,19 +142,147 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         y: CANVAS_HEIGHT - (point.y * CANVAS_SCALE) + CANVAS_TEXT_OFFSET_COORD
     });
 
+    this.drawLine = (pointBegin, pointEnd, dimensionX, strokeStyle, lineWidth) => {
+        const originalStrokeStyle = this.context.strokeStyle;
+        const originalLineWidth = this.context.lineWidth;
+        this.context.beginPath();
+        let cp1 = this.canvasPoint(pointBegin, dimensionX);
+        let cp2 = this.canvasPoint(pointEnd, dimensionX);
+        this.context.moveTo(cp1.x, cp1.y);
+        this.context.lineTo(cp2.x, cp2.y);
+
+        if (strokeStyle !== undefined) {
+            this.context.strokeStyle = strokeStyle;
+        }
+
+        if (lineWidth !== undefined) {
+            this.context.lineWidth = lineWidth;
+        }
+
+        this.context.stroke();
+        this.context.strokeStyle = originalStrokeStyle;
+        this.context.lineWidth = originalLineWidth;
+    };
+
+    this.drawDataPoints = (points, dimensionX, fillStyle, drawText) => {
+        for (let p = 0; p < points.length; p++) {
+
+            let p1 = points[p];
+            let p2 = model.CalculateShadowPoint(points[p]);
+
+            this.drawPoint(p1, dimensionX, fillStyle);
+
+            // draw error line
+            this.drawLine(p1, p2, dimensionX, fillStyle);
+
+            // draw error text.... or something
+            let diff = p2.y - p1.y;
+            let magnitude = round(Math.abs(diff), 2);
+
+            let midpoint = new Point(p1.xs, p1.y + diff / 2);
+
+            if (drawText) {
+                this.drawPointText(midpoint, dimensionX, magnitude, fillStyle);
+                this.drawPointText(p1, dimensionX, p1.toString(), fillStyle);
+            }
+        }
+    };
+
+    this.drawPoint = (point, dimensionX, fillStyle, pointRadius) => {
+        let canvasPoint = this.canvasPoint(point, dimensionX);
+        this.drawCanvasPoint(canvasPoint.x, canvasPoint.y, fillStyle, pointRadius);
+    };
+
+    this.drawCanvasPoint = (x, y, fillStyle, pointRadius) => {
+        const originalFillStyle = this.context.fillStyle;
+        this.context.beginPath();
+        this.context.arc(x, y, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
+        this.context.closePath();
+        this.context.fillStyle = fillStyle;
+        this.context.fill();
+        this.context.fillStyle = originalFillStyle;
+    };
+
+    this.drawPointText = (point, dimensionX, text, fillStyle) => {
+        const originalFillStyle = this.context.fillStyle;
+        this.context.fillStyle = fillStyle;
+        let canvasPoint = this.canvasPoint(point, dimensionX);
+        this.context.fillText(text, canvasPoint.x, canvasPoint.y);
+        this.context.fillStyle = originalFillStyle;
+    };
+
+    this.drawHighlightPoints = (highlightPoints) => {
+        for (let i = 0; i < highlightPoints.length; i++) {
+            this.drawFatterPoint(highlightPoints[i]);
+        }
+    };
+
+    this.drawFatterPoint = (point) => {
+        this.drawPoint(point, 1, "darkyellow", 10);
+    };
+
+    /**
+     * Draws over the graph's currently selected dimension of X.
+     *
+     * @param complexLine
+     * @param sampleRate
+     * @param fillStyle
+     */
+    this.drawComplexLine = (complexLine, sampleRate, fillStyle) => {
+
+        let xs_sample = complexLine.thetas.slice();
+        xs_sample[0]= 1;
+
+        for (let i = 1; i<xs_sample.length;i++){
+            xs_sample[i] = 0;
+        }
+
+        //xs = [1 , 0]
+
+        let dimension_n = this.currentlySelectedDimension;
+
+        //would start at negative numbers later
+        xs_sample[dimension_n] = 0;
+        let prevPoint = new Point(xs_sample, complexLine.Evaluate(xs_sample));
+
+        //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
+        //except x_0 (which is 1) and x_n.
+        for (let x_n_i = 0; x_n_i < CANVAS_WIDTH / CANVAS_SCALE; x_n_i += sampleRate) {
+            //sampling the line  at x_n = x_n_i
+            xs_sample[dimension_n] = x_n_i;
+            //Todo: I hate javascript
+            let newPoint = new Point(xs_sample.slice(), complexLine.Evaluate(xs_sample));
+            this.drawLine(prevPoint, newPoint, 1, fillStyle);
+            prevPoint = newPoint;
+        }
+    };
+
+    /**
+     * Draw cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
+     */
+    this.drawCartesianGraphPoints = () => {
+
+        //this is not easy to read easily. refactor to be most readable possible:
+        for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
+            for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
+                this.drawCanvasPoint(x, y, "lightgray")
+            }
+        }
+    };
+
     Graph.prototype.toString = function () {
         return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
     };
 }
 
+/**
+ * MVC = Model
+ */
 function Model() {
 
     this.dataPoints = [];
     this.hypothesisLine = {};
     this.derivativePoints = [];
-
-    buildSampleDataPoints(this);
-    buildSampleHypothesisLines(this);
 
     /**
      * Determine secondary point on same y coordinate
@@ -181,7 +309,33 @@ function Model() {
             totalError += magnitude;
         }
         return totalError;
-    }
+    };
+
+    this.buildSampleDataPoints = () => {
+        this.dataPoints.push(new Point([0, 1], 1));
+        this.dataPoints.push(new Point([0, 3], 4));
+        this.dataPoints.push(new Point([0, 2], 5));
+        this.dataPoints.push(new Point([0, 3], 6));
+        this.dataPoints.push(new Point([0, 5], 5));
+        this.dataPoints.push(new Point([0, 5], 9));
+        this.dataPoints.push(new Point([0, 6], 4));
+        this.dataPoints.push(new Point([0, 7], 7));
+        this.dataPoints.push(new Point([0, 7], 8));
+        this.dataPoints.push(new Point([0, 8], 7));
+        this.dataPoints.push(new Point([0, 9], 9));
+        this.dataPoints.push(new Point([0, 12], 8));
+        this.dataPoints.push(new Point([0, 13], 9));
+        this.dataPoints.push(new Point([0, 14], 7));
+    };
+
+    this.buildSampleHypothesisLines = () => {
+        this.hypothesisLine = new ComplexLine([0, 1]);
+        this.hypothesisLine.name = "the hypothesis line";
+    };
+
+    this.buildContourRing = () => {
+
+    };
 }
 
 /**
@@ -223,32 +377,6 @@ function initGraphs() {
     graphs[0].canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
 }
 
-function buildSampleDataPoints(model) {
-    model.dataPoints.push(new Point([0, 1], 1));
-    model.dataPoints.push(new Point([0, 3], 4));
-    model.dataPoints.push(new Point([0, 2], 5));
-    model.dataPoints.push(new Point([0, 3], 6));
-    model.dataPoints.push(new Point([0, 5], 5));
-    model.dataPoints.push(new Point([0, 5], 9));
-    model.dataPoints.push(new Point([0, 6], 4));
-    model.dataPoints.push(new Point([0, 7], 7));
-    model.dataPoints.push(new Point([0, 7], 8));
-    model.dataPoints.push(new Point([0, 8], 7));
-    model.dataPoints.push(new Point([0, 9], 9));
-    model.dataPoints.push(new Point([0, 12], 8));
-    model.dataPoints.push(new Point([0, 13], 9));
-    model.dataPoints.push(new Point([0, 14], 7));
-}
-
-function buildSampleHypothesisLines(model) {
-    model.hypothesisLine = new ComplexLine([0, 1]);
-    model.hypothesisLine.name = "the hypothesis line";
-}
-
-function buildContourRing(graph) {
-
-}
-
 function renderCanvases() {
     for (let i = 0; i < graphs.length; i++) {
         renderCanvas(graphs[i])
@@ -268,150 +396,20 @@ function renderCanvas(graph) {
     //works.
     graph.canvas.width = graph.canvas.width;
 
-    drawCartesianGraphPoints(graph);
-    drawDataPoints(graph, graph.dataPoints, 1, "darkred", true);
-    drawLine(graph, graph.cartesianAxes[0].p1, graph.cartesianAxes[0].p2, 1, "black", 5);
-    drawLine(graph, graph.cartesianAxes[1].p1, graph.cartesianAxes[1].p2, 1, "black", 5);
+    graph.drawCartesianGraphPoints();
+    graph.drawDataPoints(graph.dataPoints, 1, "darkred", true);
+    graph.drawLine(graph.cartesianAxes[0].p1, graph.cartesianAxes[0].p2, 1, "black", 5);
+    graph.drawLine(graph.cartesianAxes[1].p1, graph.cartesianAxes[1].p2, 1, "black", 5);
 
     //drawArrowHeads(graph, graph.cartesianAxesArrowHeads, "black", 5);
 
-    drawHighlightPoints(graph, graph.highlightPoints);
+    graph.drawHighlightPoints(graph.highlightPoints);
     //removeHighlightPoints();
 
-    drawComplexLine(graph, graph.hypothesisLine, 1, "black");
+    graph.drawComplexLine(graph.hypothesisLine, 1, "black");
 
     //drawEachLine(graph, graph.hypothesisLine.errorLines, "forestgreen");
     //drawEachLineText(graph, graph.hypothesisLine.errorLines, "forestgreen");
-}
-
-/**
- * Draws over the graph's currently selected dimension of X.
- *
- * @param graph
- * @param complexLine
- * @param sampleRate
- * @param fillStyle
- */
-function drawComplexLine(graph, complexLine, sampleRate, fillStyle) {
-
-    let xs_sample = complexLine.thetas.slice();
-    xs_sample[0]= 1;
-
-    for (let i = 1; i<xs_sample.length;i++){
-        xs_sample[i] = 0;
-    }
-
-    //xs = [1 , 0]
-
-    let dimension_n = graph.currentlySelectedDimension;
-
-    //would start at negative numbers later
-    xs_sample[dimension_n] = 0;
-    let prevPoint = new Point(xs_sample, complexLine.Evaluate(xs_sample));
-
-    //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
-    //except x_0 (which is 1) and x_n.
-    for (let x_n_i = 0; x_n_i < CANVAS_WIDTH / CANVAS_SCALE; x_n_i += sampleRate) {
-        //sampling the line  at x_n = x_n_i
-        xs_sample[dimension_n] = x_n_i;
-        //Todo: I hate javascript
-        let newPoint = new Point(xs_sample.slice(), complexLine.Evaluate(xs_sample));
-        drawLine(graph, prevPoint, newPoint, 1, fillStyle);
-        prevPoint = newPoint;
-    }
-}
-
-function drawLine(graph, pointBegin, pointEnd, dimensionX, strokeStyle, lineWidth) {
-    const originalStrokeStyle = graph.context.strokeStyle;
-    const originalLineWidth = graph.context.lineWidth;
-    graph.context.beginPath();
-    let cp1 = graph.canvasPoint(pointBegin, dimensionX);
-    let cp2 = graph.canvasPoint(pointEnd, dimensionX);
-    graph.context.moveTo(cp1.x, cp1.y);
-    graph.context.lineTo(cp2.x, cp2.y);
-
-    if (strokeStyle !== undefined) {
-        graph.context.strokeStyle = strokeStyle;
-    }
-
-    if (lineWidth !== undefined) {
-        graph.context.lineWidth = lineWidth;
-    }
-
-    graph.context.stroke();
-    graph.context.strokeStyle = originalStrokeStyle;
-    graph.context.lineWidth = originalLineWidth;
-}
-
-function drawDataPoints(graph, points, dimensionX, fillStyle, drawText) {
-    for (let p = 0; p < points.length; p++) {
-
-        let p1 = points[p];
-        let p2 = model.CalculateShadowPoint(points[p]);
-
-        drawPoint(graph, p1, dimensionX, fillStyle);
-
-        // draw error line
-        drawLine(graph, p1, p2, dimensionX, fillStyle);
-
-        // draw error text.... or something
-        let diff = p2.y - p1.y;
-        let magnitude = round(Math.abs(diff), 2);
-
-        let midpoint = new Point(p1.xs, p1.y + diff / 2);
-
-        if (drawText) {
-            drawPointText(graph, midpoint, dimensionX, magnitude, fillStyle);
-            drawPointText(graph, p1, dimensionX, p1.toString(), fillStyle);
-        }
-    }
-}
-
-function drawPoint(graph, point, dimensionX, fillStyle, pointRadius) {
-    let canvasPoint = graph.canvasPoint(point, dimensionX);
-    drawCanvasPoint(graph, canvasPoint.x, canvasPoint.y, fillStyle, pointRadius);
-}
-
-function drawCanvasPoint(graph, x, y , fillStyle, pointRadius) {
-    const originalFillStyle = graph.context.fillStyle;
-    graph.context.beginPath();
-    graph.context.arc(x, y, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
-    graph.context.closePath();
-    graph.context.fillStyle = fillStyle;
-    graph.context.fill();
-    graph.context.fillStyle = originalFillStyle;
-}
-
-function drawPointText(graph, point, dimensionX, text, fillStyle) {
-    const originalFillStyle = graph.context.fillStyle;
-    graph.context.fillStyle = fillStyle;
-    let canvasPoint = graph.canvasPoint(point, dimensionX);
-    graph.context.fillText(text, canvasPoint.x, canvasPoint.y);
-    graph.context.fillStyle = originalFillStyle;
-}
-
-function drawHighlightPoints(graph, highlightPoints) {
-    for (let i = 0; i < highlightPoints.length; i++) {
-        drawFatterPoint(graph, highlightPoints[i]);
-    }
-}
-
-function drawFatterPoint(graph, point) {
-    drawPoint(graph, point, 1, "darkyellow", 10);
-}
-
-/**
- * Draw cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
- * @param graph
- */
-function drawCartesianGraphPoints(graph) {
-
-    //this is not easy to read easily. refactor to be most readable possible:
-    for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
-        for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
-            drawCanvasPoint(graph, x, y, "lightgray")
-        }
-    }
 }
 
 function buildAxes() {
@@ -785,6 +783,8 @@ function injectTemplateControls() {
 }
 
 let model = new Model();
+model.buildSampleDataPoints();
+model.buildSampleHypothesisLines();
 
 initGraphs();
 buildAxes();
