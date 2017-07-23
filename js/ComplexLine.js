@@ -5,7 +5,7 @@
 
 /**
  * Create a line, using an array of parameters of θ (thetas), e.g. y = θ_0 * x_0 + θ_1 * x_1
- * @param {[Number]} thetas
+ * @param {[Number]} thetas - the weighted parameters
  */
 function ComplexLine(thetas) {
 
@@ -47,5 +47,9 @@ function ComplexLine(thetas) {
         return hypo_y;
 
         //return this.slope * x + this.y_intercept_y_value;
-    }
+    };
+
+    // this.DoGradientDescentStep = () => {
+    //
+    // };
 }

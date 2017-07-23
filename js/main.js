@@ -6,7 +6,7 @@
  */
 
 let graphs = [];
-let controlRows = [];
+let controls = [];
 
 const GRAPH_TYPES = {
     REGRESSION: "REGRESSION",
@@ -25,6 +25,7 @@ const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 function initGraphs() {
     graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, () => model.dataPoints));
     graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR, () => model.derivativePoints));
+    Graph.InitShownDimensions();
 
     //graphs[0].canvas.onclick = onClickCanvas;
     graphs[0].canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
@@ -33,7 +34,7 @@ function initGraphs() {
 
 function renderCanvases() {
     for (let i = 0; i < graphs.length; i++) {
-        graphs[i].renderCanvas();
+        graphs[i].RenderCanvas();
     }
 }
 
@@ -64,7 +65,7 @@ function onClickCanvas(e) {
     switch (btnCode) {
         case 0:
             console.log("Left button clicked, in graph: " + graph + ", attempting To Add point, at (canvasX: " + canvasX + ", canvasY: " + canvasY + ").");
-            graph.addPoint(canvasX, canvasY);
+            graph.AddPoint(canvasX, canvasY);
             break;
 
         case 1:
@@ -73,7 +74,7 @@ function onClickCanvas(e) {
 
         case 2:
             console.log("Right button clicked, in graph: " + graph + ", attempting To Remove point, at (canvasX: " + canvasX + ", canvasY: " + canvasY + ").");
-            graph.removePoint(canvasX, canvasY);
+            graph.RemovePoint(canvasX, canvasY);
             //Todo: fix
             break;
 
@@ -108,7 +109,7 @@ function onMoveCanvas(e) {
     //remove highlight
     removeArrayFromArrayOnce(diff, graph.highlightPoints);
 
-    graph.renderCanvas();
+    graph.RenderCanvas();
 }
 
 /**
@@ -139,22 +140,28 @@ function injectTemplateControls() {
 
     for (let i = 0; i < model.numDimensions; i++) {
 
-        let newRow = new ControlRow();
-        newRow.OnRowChange = () => {
-            model.hypothesisLine.thetas[i] = newRow.GetValue();
+        let control = new ControlRow();
+        control.OnRowChange = () => {
+            //update the thetas in the ComplexLine
+            model.hypothesisLine.thetas[i] = control.GetValue();
             renderCanvases();
         };
-        controlRows.push(newRow);
-        newRow.SetSymbol("θ");
-        newRow.SetSymbolSubscript(i);
-        newRow.SetTitle("");
-        parentContainer.appendChild(newRow.element);
+        controls.push(control);
+        control.SetValue(model.hypothesisLine.thetas[i]);
+        control.SetDimension(i);
+        control.SetSymbol("θ");
+        control.SetSymbolSubscript(i);
+        control.SetTitle("sample test data");
+        parentContainer.appendChild(control.element);
     }
+
+    controls[0].SetEnabled(false);
+    controls[1].SetEnabled(true);
 }
 
 let model = new Model(2);
-model.buildSampleDataPoints();
-model.buildSampleHypothesisLines();
+model.BuildSampleDataPoints();
+model.BuildSampleHypothesisLines();
 
 initGraphs();
 buildAxes();
@@ -177,10 +184,18 @@ console.log(model.GetTotalError());
  - create DataPoints with an array of x's and separate my concerns with drawing and data points.
  - refactor existing sample points to accept arrays of data points, e.g. 1x2 arrays, where every x0=0, and x1=
  (before value).
- - .toCanvas or  Graph.drawPoint  can be made, which can accept a dimension parameter
- - make more control rows appear, at least 2.
  - bind the controls so they actually affect the line. (fix bitch)    in injectTemplateControls in the call to
  "newRow.OnRowChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
  (and rerender the canvas)
- - all my *graph* functions can be refactored to operate from the Graph function... emphasizing the MVC model mroe.
  */
+
+
+//tasks ++
+/*
+ - fix world offset bug on vertical axis.
+ - fix both offsets of printed descriptions, to A) to not collide coordinate text with large points, and B) not place
+   magnitude text so close to the line that it's touching.
+
+ - consider consolidation of model.currentlySelectedDimension vs. graphs[0].currentlySelectedDimension...
+ - consider refactoring to more carefully chosen public (this.foo) & private (let bar) designs in my original function 'classes', like Graph.
+*/

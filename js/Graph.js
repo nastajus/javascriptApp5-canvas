@@ -21,6 +21,68 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.canvas.height = CANVAS_HEIGHT;
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.currentlySelectedDimension = 1;
+    let shownDimensions = new Array(model.numDimensions);
+
+    Graph.InitShownDimensions = () => {
+        for (let i = 0; i < shownDimensions.length; i++){
+            shownDimensions[i] = false;
+        }
+    };
+
+    Graph.GetShownDimensions = () => shownDimensions;
+    Graph.SetShownDimensions = (dimension, attemptToggleValue) => {
+        if(Graph.IsValidDimensionChange(dimension, attemptToggleValue)){
+            shownDimensions[dimension] = attemptToggleValue;
+            return true;
+        }
+        return false;
+    };
+
+
+    /**
+     * Evaluates state of pending dimension change, determining whether new visualization is permitted or not.
+     *
+     * @param {Number} dimension
+     * @param {boolean} attemptToggleValue
+     * @returns {boolean} dimensionChangeValid
+     */
+    Graph.IsValidDimensionChange = (dimension, attemptToggleValue) => {
+
+        if (typeof dimension !== 'number') {
+            throw new TypeError ("Cannot validate dimension change, variable dimension: " + dimension + " is not a number as expected." );
+        }
+
+        if (typeof attemptToggleValue !== 'boolean') {
+            throw new TypeError ("Cannot validate dimension change, variable attemptToggleValue: " + attemptToggleValue + " is not a boolean as expected." );
+        }
+
+        if (dimension < 0 || dimension > shownDimensions.length) {
+            throw new RangeError ("Cannot validate dimension change, variable dimension: " + dimension + " is beyond range of initialized dimensions." );
+        }
+
+
+        /// ... actual logic goes here ...
+
+        let MAX_DIMENSIONS_VISIBLE = 1;
+
+        //rule draft attempt:
+        //max 1 dimension allowed at a time.
+        let dimensionChangeValid = true;
+        let countEnabled = 0;
+        for (let i = 0; i <= shownDimensions.length; i++) {
+            if (shownDimensions[i] === true){
+                countEnabled++;
+            }
+            if (attemptToggleValue === true && dimension !== i && countEnabled >= MAX_DIMENSIONS_VISIBLE) {
+                dimensionChangeValid = false;
+                console.log("Invalid to visualize dimension " + dimension + ", would exceed maximum of " + MAX_DIMENSIONS_VISIBLE + " dimensions that can be visualized.");
+                break;
+            }
+        }
+
+        return dimensionChangeValid;
+    };
+
 
     /**
      * Convert from Cartesian point system to Canvas pixel system, and while incorporating which x dimension is used.
@@ -29,16 +91,16 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * @param dimension
      * @returns {{x: number, y: number}}
      */
-    this.canvasPoint = (point, dimension) => ({
+    this.GetCanvasPoint = (point, dimension) => ({
         x: point.xs[dimension] * CANVAS_SCALE,
         y: CANVAS_HEIGHT - (point.y * CANVAS_SCALE) + CANVAS_TEXT_OFFSET_COORD
     });
 
-    this.renderCanvas = () => {
+    this.RenderCanvas = () => {
 
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.drawCartesianGraphPoints();
+        this.drawCartesianGraphPoints("lightgray");
         this.drawDataPoints(model.dataPoints, 1, "darkred", true);
         this.drawLine(this.cartesianAxes[0].p1, this.cartesianAxes[0].p2, 1, "black", 5);
         this.drawLine(this.cartesianAxes[1].p1, this.cartesianAxes[1].p2, 1, "black", 5);
@@ -59,11 +121,12 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      *      (A) adapting click position to cartesian system
      *      (B) adding to array
      *      (C) triggering redraw of canvas
-     * @param graph
      * @param canvasX
      * @param canvasY
      */
-    this.addPoint = (canvasX, canvasY) => {
+
+    //AddPoint(scalarX, xDimension, scalarY) //returns the new Point //These are in cartesianCoordinates
+    this.AddPoint = (canvasX, canvasY) => {
 
         //Todo: Review semantics
         let newXs = model.hypothesisLine.thetas.slice();
@@ -85,7 +148,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             //buildErrorLinesBetween([clickPoint], model.hypothesisLine);
             //buildCanvasContent();
         }
-        this.renderCanvas(this);
+        this.RenderCanvas(this);
     };
 
     /**
@@ -93,11 +156,11 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      *      (A) finding nearby point to click position
      *      (B) removing from array
      *      (C) triggering redraw of canvas
-     * @param graph
      * @param canvasX
      * @param canvasY
      */
-    this.removePoint = (canvasX, canvasY) => {
+    //RemovePoint(point)
+    this.RemovePoint = (canvasX, canvasY) => {
         let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
         let foundPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT);
         for (let i = 0; i < foundPoints.length; i++) {
@@ -108,15 +171,15 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
             console.log("In graph: " + this + ", Removed point at : " + printPoint(removedPoint));
         }
-        this.renderCanvas();
+        this.RenderCanvas();
     };
 
     this.drawLine = (pointBegin, pointEnd, dimensionX, strokeStyle, lineWidth) => {
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
         this.context.beginPath();
-        let cp1 = this.canvasPoint(pointBegin, dimensionX);
-        let cp2 = this.canvasPoint(pointEnd, dimensionX);
+        let cp1 = this.GetCanvasPoint(pointBegin, dimensionX);
+        let cp2 = this.GetCanvasPoint(pointEnd, dimensionX);
         this.context.moveTo(cp1.x, cp1.y);
         this.context.lineTo(cp2.x, cp2.y);
 
@@ -158,7 +221,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
     this.drawPoint = (point, dimensionX, fillStyle, pointRadius) => {
-        let canvasPoint = this.canvasPoint(point, dimensionX);
+        let canvasPoint = this.GetCanvasPoint(point, dimensionX);
         this.drawCanvasPoint(canvasPoint.x, canvasPoint.y, fillStyle, pointRadius);
     };
 
@@ -175,7 +238,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.drawPointText = (point, dimensionX, text, fillStyle) => {
         const originalFillStyle = this.context.fillStyle;
         this.context.fillStyle = fillStyle;
-        let canvasPoint = this.canvasPoint(point, dimensionX);
+        let canvasPoint = this.GetCanvasPoint(point, dimensionX);
         this.context.fillText(text, canvasPoint.x, canvasPoint.y);
         this.context.fillStyle = originalFillStyle;
     };
@@ -230,17 +293,18 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     /**
      * Draw cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
      */
-    this.drawCartesianGraphPoints = () => {
+    this.drawCartesianGraphPoints = (fillStyle) => {
 
         //this is not easy to read easily. refactor to be most readable possible:
         for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
             for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
-                this.drawCanvasPoint(x, y, "lightgray")
+                this.drawCanvasPoint(x, y, fillStyle);
+                this.drawPointText( new Point([1,x],y), model.currentlySelectedDimension, fillStyle);
             }
         }
     };
 
-    Graph.prototype.toString = function () {
+    Graph.prototype.toString = () => {
         return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
     };
 }

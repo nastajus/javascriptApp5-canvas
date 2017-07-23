@@ -39,7 +39,7 @@ function Model(numDimensions) {
         return totalError;
     };
 
-    this.buildSampleDataPoints = () => {
+    this.BuildSampleDataPoints = () => {
         this.dataPoints.push(new Point([1, 1], 1));
         this.dataPoints.push(new Point([1, 3], 4));
         this.dataPoints.push(new Point([1, 2], 5));
@@ -56,12 +56,14 @@ function Model(numDimensions) {
         this.dataPoints.push(new Point([1, 14], 7));
     };
 
-    this.buildSampleHypothesisLines = () => {
+    this.BuildSampleHypothesisLines = () => {
         this.hypothesisLine = new ComplexLine([0, 1]);
         this.hypothesisLine.name = "the hypothesis line";
     };
 
-    this.buildContourRing = () => {
+    this.BuildContourRing = () => {
 
     };
+
+
 }

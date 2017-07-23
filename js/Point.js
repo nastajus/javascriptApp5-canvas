@@ -5,19 +5,17 @@
 /**
  * Creates new point for graphing.
  *
- * @param {[Number]} xs
- * @param {Number} y
+ * @param {[Number]} xs - the features; independent variables
+ * @param {Number} y - the known cost; labeled variable;
  */
 function Point(xs, y) {
 
     if (!Array.isArray(xs)) {
-        throw new TypeError("XS is not an array.");
+        throw new TypeError("XS features is not an array.");
     }
 
     this.xs = xs;
     this.y = y;
-
-    this.customString;
 
     Point.maxX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
     Point.maxY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
@@ -28,6 +26,5 @@ function Point(xs, y) {
 }
 
 Point.prototype.toString = function () {
-    const result = (this.customString === undefined) ? printPoint(this) : this.customString;
-    return /*"[" + this.count + "] " + */ result;
+    return printPoint(this);
 };

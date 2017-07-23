@@ -5,7 +5,6 @@
 /**
  * MVC = View
  *
- * @param template
  * @returns {ControlRow}
  */
 function ControlRow() {
@@ -17,13 +16,16 @@ function ControlRow() {
     // Callback called when control changes
     this.OnRowChange = null;
 
-    this.GetValue = () => value;
+    this.GetDimension = () => dimension;
+    this.SetDimension = (_dimension) => {
+        dimension = _dimension;
+    };
 
+    this.GetValue = () => value;
     this.SetValue = (newValue) => {
         let parsedValue = parseFloat(newValue);
         value = (isNaN(parsedValue) ? value : parsedValue);
         textbox.value = round(value, 2);
-
     };
 
     this.GetSymbol = () => symbol.textContent;
@@ -41,11 +43,23 @@ function ControlRow() {
         title.textContent = _title;
     };
 
+    this.GetEnabled = () => checkbox.checked;
+    this.SetEnabled = (_enabled) => {
+        if (Graph.SetShownDimensions(dimension, _enabled)) {
+            checkbox.checked = _enabled;
+            //lighten control row colors
+        }
+        else {
+            //darken control row colors
+        }
+    };
+
     //internal state
 
     let template = document.querySelector("#control-template").content;
     this.element = document.importNode(template, true);
     let value = 0;
+    let dimension;
 
     let checkbox = this.element.querySelector(".control-checkbox");
     let symbol = this.element.querySelector(".control-symbol").querySelector("span");
@@ -81,7 +95,17 @@ function ControlRow() {
     buttonIncrementMedium.onclick = () => incrementValue(1);
     buttonIncrementLarge.onclick = () => incrementValue(10);
 
-    checkbox.onchange = invokeChanged;
+    checkbox.onchange = () => {
+         if (Graph.IsValidDimensionChange(dimension, checkbox.checked)) {
+            this.SetEnabled(checkbox.checked);
+            invokeChanged();
+         }
+         else {
+             //prevent change checkbox... perhaps ugly to reverse logic? maybe disable native checking instead?
+             checkbox.checked = false;
+             console.log("Invalid to enable checkbox for dimension " + dimension + "."); // " for " + this.GetSymbol() + "_" + this.GetSymbolSubscript());
+         }
+    };
     textbox.onchange = () => {
         this.SetValue(textbox.value);
         invokeChanged();
