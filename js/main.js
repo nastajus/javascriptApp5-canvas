@@ -6,7 +6,8 @@
  */
 
 let graphs = [];
-let controls = [];
+let featureControls = [];
+let axesControls = [];
 
 const GRAPH_TYPES = {
     REGRESSION: "REGRESSION",
@@ -115,7 +116,6 @@ function onMoveCanvas(e) {
 
 /**
  * Find nearest element (for now just data points) within a range of 1 cartesian unit, based on mouse hover position.
- * @param graph
  * @param {{cartesianX: Number, cartesianY: Number}} targetGraphPosition
  * @param {Number} accuracyDistance
  * @returns {Array.<*>} foundPoints
@@ -135,19 +135,19 @@ function addHighlightPoints(sourceArray, targetArray) {
     addArrayToArrayOnce(sourceArray, targetArray);
 }
 
-function injectTemplateControls() {
+function addFeatureControls() {
 
     let parentContainer = document.querySelector('.container-column');
 
     for (let i = 0; i < model.numDimensions; i++) {
 
-        let control = new ControlRow();
-        control.OnRowChange = () => {
+        let control = new FeatureControl();
+        control.OnControlChange = () => {
             //update the thetas in the ComplexLine
             model.hypothesisLine.thetas[i] = control.GetValue();
             renderCanvases();
         };
-        controls.push(control);
+        featureControls.push(control);
         control.SetValue(model.hypothesisLine.thetas[i]);
         control.SetDimension(i);
         control.SetSymbol("θ");
@@ -155,10 +155,22 @@ function injectTemplateControls() {
         parentContainer.appendChild(control.element);
     }
 
-    controls[0].SetEnabled(false);
-    controls[1].SetEnabled(true);
-    controls[0].SetTitle("hidden base cartesian value");
-    controls[1].SetTitle("cartesian values to ~" + round(CANVAS_WIDTH / CANVAS_SCALE, 0));
+    featureControls[0].SetEnabled(false);
+    featureControls[1].SetEnabled(true);
+    featureControls[0].SetTitle("hidden base cartesian value");
+    featureControls[1].SetTitle("cartesian values to ~" + round(CANVAS_WIDTH / CANVAS_SCALE, 0));
+}
+
+function bindAxesControls() {
+    let axesControl = new AxesControlPair(graphs[0]);
+    axesControls.push(axesControl);
+    axesControl.SetValue(graphs[0].canvasOriginShift);
+    axesControl.OnControlChange = () => {
+        graphs[0].canvasOriginShift = axesControl.GetValue();
+        renderCanvases();
+    };
+    axesControl.SetChangeSmall(CANVAS_SCALE/4);
+    axesControl.SetChangeLarge(CANVAS_SCALE);
 }
 
 let model = new Model(2);
@@ -168,8 +180,8 @@ model.BuildSampleHypothesisLines();
 initGraphs();
 buildAxes();
 renderCanvases();
-injectTemplateControls();
-
+addFeatureControls();
+bindAxesControls();
 
 
 //tasks
@@ -185,8 +197,8 @@ injectTemplateControls();
  - create DataPoints with an array of x's and separate my concerns with drawing and data points.
  - refactor existing sample points to accept arrays of data points, e.g. 1x2 arrays, where every x0=0, and x1=
  (before value).
- - bind the controls so they actually affect the line. (fix bitch)    in injectTemplateControls in the call to
- "newRow.OnRowChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
+ - bind the controls so they actually affect the line. (fix bitch)    in addFeatureControls in the call to
+ "newRow.OnControlChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
  (and rerender the canvas)
  */
 

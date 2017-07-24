@@ -5,16 +5,16 @@
 /**
  * MVC = View
  *
- * @returns {ControlRow}
+ * @returns {FeatureControl}
  */
-function ControlRow() {
+function FeatureControl() {
 
     //external variable
     this.element = null;
 
     //external methods
     // Callback called when control changes
-    this.OnRowChange = null;
+    this.OnControlChange = null;
 
     this.GetDimension = () => dimension;
     this.SetDimension = (_dimension) => {
@@ -77,23 +77,23 @@ function ControlRow() {
     //internal methods
     //for subscribers (utility function so we don'thave to check for null everytime)
     const invokeChanged = () => {
-        if (this.OnRowChange)
-            this.OnRowChange();
+        if (this.OnControlChange)
+            this.OnControlChange();
     };
 
-    const incrementValue = (delta) => {
+    const modifyValueBy = (delta) => {
         this.SetValue(this.GetValue() + delta);
         invokeChanged();
     };
 
     //init logic
-    buttonDecrementSmall.onclick = () => incrementValue(-.1);
-    buttonDecrementMedium.onclick = () => incrementValue(-1);
-    buttonDecrementLarge.onclick = () => incrementValue(-10);
+    buttonDecrementSmall.onclick = () => modifyValueBy(-.1);
+    buttonDecrementMedium.onclick = () => modifyValueBy(-1);
+    buttonDecrementLarge.onclick = () => modifyValueBy(-10);
 
-    buttonIncrementSmall.onclick = () => incrementValue(.1);
-    buttonIncrementMedium.onclick = () => incrementValue(1);
-    buttonIncrementLarge.onclick = () => incrementValue(10);
+    buttonIncrementSmall.onclick = () => modifyValueBy(.1);
+    buttonIncrementMedium.onclick = () => modifyValueBy(1);
+    buttonIncrementLarge.onclick = () => modifyValueBy(10);
 
     checkbox.onchange = () => {
          if (Graph.IsValidDimensionChange(dimension, checkbox.checked)) {
