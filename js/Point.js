@@ -38,20 +38,21 @@ function DataPoint(xs, y) {
      *
      * @param dimension
      * @returns {{x: number, y: number}}
+     * @param graph
      */
-    this.GetCanvasPoint = (dimension) => ({
-        x: this.xs[dimension] * CANVAS_SCALE,
-        y: CANVAS_HEIGHT - (this.y * CANVAS_SCALE)// + CANVAS_TEXT_OFFSET_COORD
+    this.GetCanvasPoint = (dimension, graph) => ({
+        x: this.xs[dimension] * CANVAS_SCALE + graph.canvasOriginShift.x,
+        y: CANVAS_HEIGHT - (this.y * CANVAS_SCALE) - graph.canvasOriginShift.y
     });
 }
 
 /**
- * Creates new simple grid point for graphing.
+ * Creates new simple point, e.g. for graphing.
  *
  * @param {Number} x - simple x scalar
  * @param {Number} y - simple y scalar
  */
-function CanvasPoint(x, y) {
+function SimplePoint(x, y) {
 
     if (Array.isArray(x)) {
         throw new TypeError("X cannot be an array.");
@@ -60,14 +61,14 @@ function CanvasPoint(x, y) {
     this.x = x;
     this.y = y;
 
-    CanvasPoint.maxX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
-    CanvasPoint.maxY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
+    SimplePoint.maxCanvasX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_WIDTH;
+    SimplePoint.maxCanvasY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_HEIGHT;
 
     // this.PrintPoint = () => {
     //     return "(" + this.x + ", " + this.y + ")";
     // };
 
-    CanvasPoint.prototype.toString = (decimals) => {
+    SimplePoint.prototype.toString = (decimals) => {
         if (decimals) {
             return "(" + round(this.x, decimals) + ", " + round(this.y, decimals) + ")";
         }
@@ -75,13 +76,17 @@ function CanvasPoint(x, y) {
     };
 
     /**
-     * Convert from Cartesian point system to Canvas pixel system, and while incorporating which x dimension is used.
+     * Convert from Simple point system to Canvas pixel system, and while incorporating which x dimension is used.
      * Reverses vertical dimension.
      *
      * @returns {{x: number, y: number}}
      */
-    this.GetCanvasPoint = () => ({
-        x: this.x * CANVAS_SCALE,
-        y: CANVAS_HEIGHT - (this.y * CANVAS_SCALE)// + CANVAS_TEXT_OFFSET_COORD
+    this.GetCanvasPoint = (graph) => ({
+        x: this.x * CANVAS_SCALE + graph.canvasOriginShift.x,
+        y: CANVAS_HEIGHT - (this.y * CANVAS_SCALE) - graph.canvasOriginShift.y
     });
+
+    SimplePoint.Add = (p1, p2) => {
+        return new SimplePoint(p1.x + p2.x, p1.y + p2.y);
+    };
 }

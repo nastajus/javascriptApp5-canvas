@@ -19,7 +19,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
-    this.origin ={x:0, y:0};
+    this.canvasOriginShift = {x:25, y:66};  // {x:1, y:0};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.currentlySelectedDimension = 1;
     let shownDimensions = new Array(model.numDimensions);
@@ -90,8 +90,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         this.drawCanvasPoints("lightgray", false);
         this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
-        this.drawAxisLine(this.axisLines[0].p1, this.axisLines[0].p2, "black", 5);
-        this.drawAxisLine(this.axisLines[1].p1, this.axisLines[1].p2, "black", 5);
+        this.drawAxisLines(this.axisLines, "black", 5);
         //drawArrowHeads(graph, graph.axisLinesArrows, "black", 5);
 
         this.drawHighlightPoints(this.highlightPoints);
@@ -171,8 +170,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
         this.context.beginPath();
-        let cp1 = pointBegin.GetCanvasPoint(dimensionX);
-        let cp2 = pointEnd.GetCanvasPoint(dimensionX);
+        let cp1 = pointBegin.GetCanvasPoint(dimensionX, this);
+        let cp2 = pointEnd.GetCanvasPoint(dimensionX, this);
         this.context.moveTo(cp1.x, cp1.y);
         this.context.lineTo(cp2.x, cp2.y);
 
@@ -190,31 +189,37 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
     /**
-     * Draws line based off CanvasPoint points
+     * Draws axis line based off SimplePoint points
      *
-     * @param {CanvasPoint} pointBegin
-     * @param {CanvasPoint} pointEnd
+     * @param {[AxisLine]} axisLines
      * @param strokeStyle
      * @param lineWidth
      */
-    this.drawAxisLine = (pointBegin, pointEnd, strokeStyle, lineWidth) => {
-        const originalStrokeStyle = this.context.strokeStyle;
-        const originalLineWidth = this.context.lineWidth;
-        this.context.beginPath();
-        this.context.moveTo(pointBegin.x, pointBegin.y);
-        this.context.lineTo(pointEnd.x, pointEnd.y);
+    this.drawAxisLines = (axisLines, strokeStyle, lineWidth) => {
+        for (let i = 0; i < axisLines.length; i++)
+        {
+            let pointBegin = axisLines[i].p1.GetCanvasPoint(this);
+            let pointEnd = axisLines[i].p2.GetCanvasPoint(this);
 
-        if (strokeStyle !== undefined) {
-            this.context.strokeStyle = strokeStyle;
+            const originalStrokeStyle = this.context.strokeStyle;
+            const originalLineWidth = this.context.lineWidth;
+            this.context.beginPath();
+            this.context.moveTo(pointBegin.x, pointBegin.y);
+            this.context.lineTo(pointEnd.x, pointEnd.y);
+
+            if (strokeStyle !== undefined) {
+                this.context.strokeStyle = strokeStyle;
+            }
+
+            if (lineWidth !== undefined) {
+                this.context.lineWidth = lineWidth;
+            }
+
+            this.context.stroke();
+            this.context.strokeStyle = originalStrokeStyle;
+            this.context.lineWidth = originalLineWidth;
         }
 
-        if (lineWidth !== undefined) {
-            this.context.lineWidth = lineWidth;
-        }
-
-        this.context.stroke();
-        this.context.strokeStyle = originalStrokeStyle;
-        this.context.lineWidth = originalLineWidth;
     };
 
     /**
@@ -249,7 +254,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
     this.drawPoint = (point, dimensionX, fillStyle, pointRadius) => {
-        let canvasPoint = point.GetCanvasPoint(dimensionX);
+        let canvasPoint = point.GetCanvasPoint(dimensionX, this);
         this.drawCanvasPoint(canvasPoint.x, canvasPoint.y, fillStyle, pointRadius);
     };
 
@@ -263,12 +268,12 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.context.fillStyle = originalFillStyle;
     };
 
-    this.drawDataPointText = (point, dimensionX, canvasOffset, text, fillStyle) => {
-        canvasOffset = (!canvasOffset) ? {x:0, y:0} : canvasOffset;
+    this.drawDataPointText = (point, dimensionX, textOffset, text, fillStyle) => {
+        textOffset = (!textOffset) ? {x:0, y:0} : textOffset;
         const originalFillStyle = this.context.fillStyle;
         this.context.fillStyle = fillStyle;
-        let canvasPoint = point.GetCanvasPoint(dimensionX);
-        this.context.fillText(text, canvasPoint.x + canvasOffset.x, canvasPoint.y + canvasOffset.y);
+        let canvasPoint = point.GetCanvasPoint(dimensionX, this);
+        this.context.fillText(text, canvasPoint.x + textOffset.x, canvasPoint.y + textOffset.y);
         this.context.fillStyle = originalFillStyle;
     };
 
@@ -331,11 +336,18 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawCanvasPoints = (fillStyle, drawText) => {
 
-        for (let canvasX = 0; canvasX <= CANVAS_WIDTH; canvasX += CANVAS_SCALE) {
-            for (let canvasY = CANVAS_HEIGHT; canvasY >= 0; canvasY -= CANVAS_SCALE) {
-                this.drawCanvasPoint(canvasX, canvasY, fillStyle);
+        let subOriginScaleShift = { x: this.canvasOriginShift.x % CANVAS_SCALE, y: this.canvasOriginShift.y % CANVAS_SCALE};
+
+        let startX = 0 - this.canvasOriginShift.x + subOriginScaleShift.x;
+        let endX = CANVAS_WIDTH + this.canvasOriginShift.x;
+        let startY = CANVAS_HEIGHT + this.canvasOriginShift.y - subOriginScaleShift.y;
+        let endY = 0 - this.canvasOriginShift.y;
+
+        for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
+            for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
+                this.drawCanvasPoint(canvasX + this.canvasOriginShift.x, canvasY - this.canvasOriginShift.y, fillStyle);
                 if (drawText) {
-                    let canvasPoint = new CanvasPoint(canvasX,canvasY);
+                    let canvasPoint = new SimplePoint(canvasX,canvasY);
                     this.drawCanvasPointText(canvasPoint, {x:5, y:15}, canvasPoint.toString(), fillStyle);
                 }
             }

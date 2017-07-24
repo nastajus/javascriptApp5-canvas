@@ -58,8 +58,8 @@ function onClickCanvas(e) {
         } while ((element = element.offsetParent));
     }
 
-    let canvasX = e.pageX - offsetX;
-    let canvasY = e.pageY - offsetY;
+    let canvasX = e.pageX - offsetX - graph.canvasOriginShift.x;
+    let canvasY = e.pageY - offsetY + graph.canvasOriginShift.y;
 
     let btnCode = e.button;
 
@@ -157,7 +157,7 @@ function injectTemplateControls() {
 
     controls[0].SetEnabled(false);
     controls[1].SetEnabled(true);
-    controls[0].SetTitle("whut whut whut whut");
+    controls[0].SetTitle("hidden base cartesian value");
     controls[1].SetTitle("cartesian values to ~" + round(CANVAS_WIDTH / CANVAS_SCALE, 0));
 }
 
@@ -193,10 +193,6 @@ injectTemplateControls();
 
 //tasks ++
 /*
- - fix world offset bug on vertical axis.
- - fix both offsets of printed descriptions, to A) to not collide coordinate text with large points, and B) not place
-   magnitude text so close to the line that it's touching.
-
  - consider consolidation of model.currentlySelectedDimension vs. graphs[0].currentlySelectedDimension...
  - consider refactoring to more carefully chosen public (this.foo) & private (let bar) designs in my original function 'classes', like Graph.
 */
