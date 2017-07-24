@@ -21,18 +21,50 @@
         <!--design methodology: i want the canvas element size to dictate the size of everything else on the page.-->
         <!-- container >> container_column >> container_row -->
         <section class="container">
-            <section class="container_column">
-                <section class="container_row">
+            <section class="container-column">
+                <section class="container-row">
                     <div class="pad">p</div>
                     <div class="title">linear regression graph</div>
                     <div class="pad">p</div>
                     <div class="title">contour graph</div>
                 </section>
-                <section class="container_row">
+                <section class="container-row">
+                    <div class="axis-vertical">
+                        <button class="axis-move vg-large">⇈<br>LRG</button>
+                        <button class="axis-move vg-small">↑<br>SML</button>
+                        <!--<input class="axis-textbox"/>-->
+                        <button class="axis-move vl-small">↓<br>SML</button>
+                        <button class="axis-move vl-large">⇊<br>LRG</button>
+                    </div>
                     <canvas id="canvas1"></canvas>
+                    <div class="axis-vertical">
+                        <button class="axis-move vg-large">⇈<br>LRG</button>
+                        <button class="axis-move vg-small">↑<br>SML</button>
+                        <!--<input class="axis-textbox"/>-->
+                        <button class="axis-move vl-small">↓<br>SML</button>
+                        <button class="axis-move vl-large">⇊<br>LRG</button>
+                    </div>
                     <canvas id="canvas2"></canvas>
                 </section>
-                <section class="container_row" id="controls">
+                <section class="container-row">
+                    <div class="pad">p</div>
+                    <div class="axis-horizontal">
+                        <button class="axis-move hg-large">⇇<br>LRG</button>
+                        <button class="axis-move hg-small">←<br>SML</button>
+                        <!--<input class="axis-textbox"/>-->
+                        <button class="axis-move hl-small">→<br>SML</button>
+                        <button class="axis-move hl-large">⇉<br>LRG</button>
+                    </div>
+                    <div class="pad">p</div>
+                    <div class="axis-horizontal">
+                        <button class="axis-move hg-large">⇇<br>LRG</button>
+                        <button class="axis-move hg-small">←<br>SML</button>
+                        <!--<input class="axis-textbox"/>-->
+                        <button class="axis-move hl-small">→<br>SML</button>
+                        <button class="axis-move hl-large">⇉<br>LRG</button>
+                    </div>
+                </section>
+                <section class="container-row" id="controls">
                     <template id="control-template">
                         <div class="control-row">
                             <div class="pad">p</div>

@@ -97,16 +97,16 @@ textarea {
 
 .container {
     display: inline-block;
+    padding: 15px;
 }
 
-.container_column {
+.container-column {
     display: flex;
     flex-direction: column;
 }
 
-.container_row {
+.container-row {
     flex: 1;
-    padding: 15px;
     display: flex;
 }
 
@@ -121,12 +121,23 @@ textarea {
     background-color: #b3d4fc;
 }
 
-.controls-vertical { /* third nested flexbox, another column again */
+.axis-vertical { /* third nested flexbox, another column again */
     flex: 0.1; /* not achieving desired result, due to vertical-slider width: 300px & rotation. rotation has no affect on DOM sizes. */
-    background-color: royalblue;
+    background-color: powderblue;
+
     display: flex;
     flex-direction: column;
-    align-items: center;
+    justify-content: center;
+}
+
+.axis-horizontal {
+    flex: 1;
+    background-color: powderblue;
+    display: flex;
+    justify-content: center;
+}
+
+.axis-move {
 
 }
 
@@ -142,12 +153,12 @@ canvas {
     flex: 1;
 }
 
-.axis-slider-vertical {
-    transform: rotate(270deg);
-    width: 300px;
-    flex: 1;
+/*.axis-slider-vertical {*/
+    /*transform: rotate(270deg);*/
+    /*width: 300px;*/
+    /*flex: 1;*/
 
-}
+/*}*/
 
 .axis-label {
     flex: 0.1;
@@ -165,10 +176,14 @@ canvas {
 
 }
 
-
-.axis-slider-horizontal {
-    width: 300px;
+.axis-textbox {
+    width: 50px;
+    height: 50px;
 }
+
+/*.axis-slider-horizontal {*/
+    /*width: 300px;*/
+/*}*/
 
 
 

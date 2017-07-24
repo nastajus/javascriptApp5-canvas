@@ -136,7 +136,7 @@ function addHighlightPoints(sourceArray, targetArray) {
 
 function injectTemplateControls() {
 
-    let parentContainer = document.querySelector('.container_column');
+    let parentContainer = document.querySelector('.container-column');
 
     for (let i = 0; i < model.numDimensions; i++) {
 
