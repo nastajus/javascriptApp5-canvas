@@ -36,12 +36,13 @@ function renderCanvases() {
     for (let i = 0; i < graphs.length; i++) {
         graphs[i].RenderCanvas();
     }
+    console.log("Total error: " + model.GetTotalError());
 }
 
 function buildAxes() {
     for (let i = 0; i < graphs.length; i++) {
-        graphs[i].cartesianAxes.push(new AxisLine("x"));
-        graphs[i].cartesianAxes.push(new AxisLine("y"));
+        graphs[i].axisLines.push(new AxisLine("x"));
+        graphs[i].axisLines.push(new AxisLine("y"));
     }
 }
 
@@ -168,7 +169,6 @@ buildAxes();
 renderCanvases();
 injectTemplateControls();
 
-console.log(model.GetTotalError());
 
 
 //tasks

@@ -74,7 +74,3 @@ function convertCanvasToGraph(canvasX, canvasY, graphDecimalsAccuracy) {
 
     return graphPosition;
 }
-
-function printPoint(point) {
-    return "(" + point.xs[graphs[0].currentlySelectedDimension] + ", " + point.y + ")";
-}

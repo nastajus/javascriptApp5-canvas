@@ -10,15 +10,14 @@ function AxisLine(graphDimension) {
     this.a2 = [];
 
     if (graphDimension === "x") {
-        this.p1 = new Point([0, 0], 0);
-        this.p2 = new Point([0, Point.maxX], 0);
-
+        this.p1 = new CanvasPoint(0, 0);
+        this.p2 = new CanvasPoint(CanvasPoint.maxX, 0);
         this.a1.push(new AxisArrows(this.p1, "left"));
         this.a2.push(new AxisArrows(this.p2, "right"));
     }
     else if (graphDimension === "y") {
-        this.p1 = new Point([0, 0], 0);
-        this.p2 = new Point([0, 0], Point.maxY);
+        this.p1 = new CanvasPoint(0, 0);
+        this.p2 = new CanvasPoint(0, CanvasPoint.maxY);
 
         this.a1.push(new AxisArrows(this.p1, "down"));
         this.a2.push(new AxisArrows(this.p2, "up"));
@@ -63,8 +62,8 @@ function AxisLine(graphDimension) {
         }
 
         this.pTip = point;
-        this.p1 = new Point([0, point.x + off[0][0] * dir[0][0]], point.y + off[0][1] * dir[0][1]);
-        this.p2 = new Point([0, point.x + off[0][0] * dir[0][0]], point.y + off[0][1] * dir[0][1]);
+        this.p1 = new CanvasPoint(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
+        this.p2 = new CanvasPoint(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
 
         this.arrowTipBranch1 = new Line(this.pTip, this.p1);
 

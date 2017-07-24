@@ -15,12 +15,12 @@ function Model(numDimensions) {
     /**
      * Determine secondary point on same y coordinate
      *
-     * @param {Point} point
-     * @returns {Point} point
+     * @param {DataPoint} point
+     * @returns {DataPoint} point
      */
     this.CalculateShadowPoint = (point) => {
         const y = this.hypothesisLine.Evaluate(point.xs);
-        return new Point(point.xs, y);
+        return new DataPoint(point.xs, y);
     };
 
     /**
@@ -40,20 +40,20 @@ function Model(numDimensions) {
     };
 
     this.BuildSampleDataPoints = () => {
-        this.dataPoints.push(new Point([1, 1], 1));
-        this.dataPoints.push(new Point([1, 3], 4));
-        this.dataPoints.push(new Point([1, 2], 5));
-        this.dataPoints.push(new Point([1, 3], 6));
-        this.dataPoints.push(new Point([1, 5], 5));
-        this.dataPoints.push(new Point([1, 5], 9));
-        this.dataPoints.push(new Point([1, 6], 4));
-        this.dataPoints.push(new Point([1, 7], 7));
-        this.dataPoints.push(new Point([1, 7], 8));
-        this.dataPoints.push(new Point([1, 8], 7));
-        this.dataPoints.push(new Point([1, 9], 9));
-        this.dataPoints.push(new Point([1, 12], 8));
-        this.dataPoints.push(new Point([1, 13], 9));
-        this.dataPoints.push(new Point([1, 14], 7));
+        this.dataPoints.push(new DataPoint([1, 1], 1));
+        this.dataPoints.push(new DataPoint([1, 3], 4));
+        this.dataPoints.push(new DataPoint([1, 2], 5));
+        this.dataPoints.push(new DataPoint([1, 3], 6));
+        this.dataPoints.push(new DataPoint([1, 5], 5));
+        this.dataPoints.push(new DataPoint([1, 5], 9));
+        this.dataPoints.push(new DataPoint([1, 6], 4));
+        this.dataPoints.push(new DataPoint([1, 7], 7));
+        this.dataPoints.push(new DataPoint([1, 7], 8));
+        this.dataPoints.push(new DataPoint([1, 8], 7));
+        this.dataPoints.push(new DataPoint([1, 9], 9));
+        this.dataPoints.push(new DataPoint([1, 12], 8));
+        this.dataPoints.push(new DataPoint([1, 13], 9));
+        this.dataPoints.push(new DataPoint([1, 14], 7));
     };
 
     this.BuildSampleHypothesisLines = () => {

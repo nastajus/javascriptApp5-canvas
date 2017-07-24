@@ -3,12 +3,12 @@
  */
 
 /**
- * Creates new point for graphing.
+ * Creates new data point for graphing. These are composed of multidimensional xs (features), not just one x value.
  *
  * @param {[Number]} xs - the features; independent variables
  * @param {Number} y - the known cost; labeled variable;
  */
-function Point(xs, y) {
+function DataPoint(xs, y) {
 
     if (!Array.isArray(xs)) {
         throw new TypeError("XS features is not an array.");
@@ -17,14 +17,44 @@ function Point(xs, y) {
     this.xs = xs;
     this.y = y;
 
-    Point.maxX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
-    Point.maxY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
+    // this.PrintPoint = () => {
+    //     return "(" + this.xs[graphs[0].currentlySelectedDimension] + ", " + this.y + ")";
+    // };
 
-    //poorly designed counter for rapid disambiguation for debugging
-    // Point.counter = (Point.counter === undefined) ? 0 : ++Point.counter;
-    // this.count = Point.counter;
+    DataPoint.prototype.toString = (decimals) => {
+        if (decimals) {
+            return "(" + round(this.xs[graphs[0].currentlySelectedDimension], decimals) + ", " + round(this.y, decimals) + ")";
+        }
+        return "(" + this.xs[graphs[0].currentlySelectedDimension] + ", " + this.y + ")";
+    };
 }
 
-Point.prototype.toString = function () {
-    return printPoint(this);
-};
+/**
+ * Creates new simple grid point for graphing.
+ *
+ * @param {Number} x - simple x scalar
+ * @param {Number} y - simple y scalar
+ */
+function CanvasPoint(x, y) {
+
+    if (Array.isArray(x)) {
+        throw new TypeError("X cannot be an array.");
+    }
+
+    this.x = x;
+    this.y = y;
+
+    CanvasPoint.maxX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
+    CanvasPoint.maxY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_SCALE;
+
+    // this.PrintPoint = () => {
+    //     return "(" + this.x + ", " + this.y + ")";
+    // };
+
+    CanvasPoint.prototype.toString = (decimals) => {
+        if (decimals) {
+            return "(" + round(this.x, decimals) + ", " + round(this.y, decimals) + ")";
+        }
+        return "(" + this.x + ", " + this.y + ")";
+    };
+}
