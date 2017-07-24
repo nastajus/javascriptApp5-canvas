@@ -101,7 +101,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.drawCartesianGraphPoints("lightgray");
-        this.drawDataPoints(model.dataPoints, 1, "darkred", true);
+        this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
         this.drawLine(this.cartesianAxes[0].p1, this.cartesianAxes[0].p2, 1, "black", 5);
         this.drawLine(this.cartesianAxes[1].p1, this.cartesianAxes[1].p2, 1, "black", 5);
 
@@ -202,10 +202,10 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             let p1 = points[p];
             let p2 = model.CalculateShadowPoint(points[p]);
 
-            this.drawPoint(p1, dimensionX, fillStyle);
+            this.drawPoint(p1, dimensionX, (fillStyle instanceof Array) ? fillStyle[0] : fillStyle);
 
             // draw error line
-            this.drawLine(p1, p2, dimensionX, fillStyle);
+            this.drawLine(p1, p2, dimensionX, (fillStyle instanceof Array) ? fillStyle[1] : fillStyle);
 
             // draw error text.... or something
             let diff = p2.y - p1.y;
@@ -214,8 +214,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             let midpoint = new Point(p1.xs, p1.y + diff / 2);
 
             if (drawText) {
-                this.drawPointText(midpoint, dimensionX, magnitude, fillStyle);
-                this.drawPointText(p1, dimensionX, p1.toString(), fillStyle);
+                this.drawPointText(midpoint, dimensionX, magnitude, (fillStyle instanceof Array) ? fillStyle[1] : fillStyle);
+                this.drawPointText(p1, dimensionX, p1.toString(), (fillStyle instanceof Array) ? fillStyle[0] : fillStyle);
             }
         }
     };

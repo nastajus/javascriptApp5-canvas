@@ -137,10 +137,6 @@ textarea {
     justify-content: center;
 }
 
-.axis-move {
-
-}
-
 .control-row { /* also a third nested flexbox, but a row  */
     flex: 1;
     background-color: royalblue;
