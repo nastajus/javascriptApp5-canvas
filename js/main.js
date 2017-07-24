@@ -152,12 +152,13 @@ function injectTemplateControls() {
         control.SetDimension(i);
         control.SetSymbol("θ");
         control.SetSymbolSubscript(i);
-        control.SetTitle("sample test data");
         parentContainer.appendChild(control.element);
     }
 
     controls[0].SetEnabled(false);
     controls[1].SetEnabled(true);
+    controls[0].SetTitle("whut whut whut whut");
+    controls[1].SetTitle("cartesian values to ~" + round(CANVAS_WIDTH / CANVAS_SCALE, 0));
 }
 
 let model = new Model(2);

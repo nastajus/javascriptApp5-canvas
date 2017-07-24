@@ -19,6 +19,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
+    this.origin ={x:0, y:0};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.currentlySelectedDimension = 1;
     let shownDimensions = new Array(model.numDimensions);
@@ -83,19 +84,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         return dimensionChangeValid;
     };
 
-
-    /**
-     * Convert from Cartesian point system to Canvas pixel system, and while incorporating which x dimension is used.
-     *
-     * @param point
-     * @param dimension
-     * @returns {{x: number, y: number}}
-     */
-    this.GetCanvasPoint = (point, dimension) => ({
-        x: point.xs[dimension] * CANVAS_SCALE,
-        y: CANVAS_HEIGHT - (point.y * CANVAS_SCALE) + CANVAS_TEXT_OFFSET_COORD
-    });
-
     this.RenderCanvas = () => {
 
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -104,16 +92,12 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
         this.drawAxisLine(this.axisLines[0].p1, this.axisLines[0].p2, "black", 5);
         this.drawAxisLine(this.axisLines[1].p1, this.axisLines[1].p2, "black", 5);
-
         //drawArrowHeads(graph, graph.axisLinesArrows, "black", 5);
 
         this.drawHighlightPoints(this.highlightPoints);
         //removeArrayFromArrayOnce();
 
         this.drawComplexLine(model.hypothesisLine, 1, "black");
-
-        //drawEachLine(graph, model.hypothesisLine.errorLines, "forestgreen");
-        //drawEachLineText(graph, model.hypothesisLine.errorLines, "forestgreen");
     };
 
     /**
@@ -121,8 +105,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      *      (A) adapting click position to cartesian system
      *      (B) adding to array
      *      (C) triggering redraw of canvas
-     * @param canvasX
-     * @param canvasY
+     * @param {Number} canvasX
+     * @param {Number} canvasY
      */
 
     //AddPoint(scalarX, xDimension, scalarY) //returns the new Point //These are in cartesianCoordinates
@@ -187,8 +171,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
         this.context.beginPath();
-        let cp1 = this.GetCanvasPoint(pointBegin, dimensionX);
-        let cp2 = this.GetCanvasPoint(pointEnd, dimensionX);
+        let cp1 = pointBegin.GetCanvasPoint(dimensionX);
+        let cp2 = pointEnd.GetCanvasPoint(dimensionX);
         this.context.moveTo(cp1.x, cp1.y);
         this.context.lineTo(cp2.x, cp2.y);
 
@@ -258,14 +242,14 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             let midpoint = new DataPoint(p1.xs, p1.y + diff / 2);
 
             if (drawText) {
-                this.drawDataPointText(p1, dimensionX, {x:8, y:2}, p1.toString(2), (fillStyle instanceof Array) ? fillStyle[0] : fillStyle);
+                this.drawDataPointText(p1, dimensionX, {x:8, y:2}, p1.Print(2), (fillStyle instanceof Array) ? fillStyle[0] : fillStyle);
                 this.drawDataPointText(midpoint, dimensionX, null, magnitude, (fillStyle instanceof Array) ? fillStyle[1] : fillStyle);
             }
         }
     };
 
     this.drawPoint = (point, dimensionX, fillStyle, pointRadius) => {
-        let canvasPoint = this.GetCanvasPoint(point, dimensionX);
+        let canvasPoint = point.GetCanvasPoint(dimensionX);
         this.drawCanvasPoint(canvasPoint.x, canvasPoint.y, fillStyle, pointRadius);
     };
 
@@ -283,7 +267,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         canvasOffset = (!canvasOffset) ? {x:0, y:0} : canvasOffset;
         const originalFillStyle = this.context.fillStyle;
         this.context.fillStyle = fillStyle;
-        let canvasPoint = this.GetCanvasPoint(point, dimensionX);
+        let canvasPoint = point.GetCanvasPoint(dimensionX);
         this.context.fillText(text, canvasPoint.x + canvasOffset.x, canvasPoint.y + canvasOffset.y);
         this.context.fillStyle = originalFillStyle;
     };
@@ -332,7 +316,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
         //except x_0 (which is 1) and x_n.
-        for (let x_n_i = 0; x_n_i < CANVAS_WIDTH / CANVAS_SCALE; x_n_i += sampleRate) {
+        for (let x_n_i = 0; x_n_i < CANVAS_WIDTH / CANVAS_SCALE + CANVAS_SCALE; x_n_i += sampleRate) {
             //sampling the line  at x_n = x_n_i
             xs_sample[dimension_n] = x_n_i;
             //Todo: I hate javascript
@@ -347,11 +331,11 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawCanvasPoints = (fillStyle, drawText) => {
 
-        for (let x = 0; x <= CANVAS_WIDTH; x += CANVAS_SCALE) {
-            for (let y = 0; y <= CANVAS_HEIGHT; y += CANVAS_SCALE) {
-                this.drawCanvasPoint(x, y, fillStyle);
+        for (let canvasX = 0; canvasX <= CANVAS_WIDTH; canvasX += CANVAS_SCALE) {
+            for (let canvasY = CANVAS_HEIGHT; canvasY >= 0; canvasY -= CANVAS_SCALE) {
+                this.drawCanvasPoint(canvasX, canvasY, fillStyle);
                 if (drawText) {
-                    let canvasPoint = new CanvasPoint(x,y);
+                    let canvasPoint = new CanvasPoint(canvasX,canvasY);
                     this.drawCanvasPointText(canvasPoint, {x:5, y:15}, canvasPoint.toString(), fillStyle);
                 }
             }
