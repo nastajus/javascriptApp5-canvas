@@ -23,10 +23,14 @@ function DataPoint(xs, y) {
 
     DataPoint.prototype.toString = (decimals) => {
         if (decimals) {
-            return "(" + round(this.xs[graphs[0].currentlySelectedDimension], decimals) + ", " + round(this.y, decimals) + ")";
+            return "P"+ counter +"(" + round(this.xs[graphs[0].currentlySelectedDimension], decimals) + ", " + round(this.y, decimals) + ")";
         }
         return "(" + this.xs[graphs[0].currentlySelectedDimension] + ", " + this.y + ")";
     };
+
+    //DataPoint.counter = !DataPoint.counter ? 0 : ++DataPoint.counter;
+    DataPoint.counter = DataPoint.counter || 0;
+    let counter = ++DataPoint.counter;
 }
 
 /**

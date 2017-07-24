@@ -100,7 +100,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.drawCanvasPoints("lightgray", true);
+        this.drawCanvasPoints("lightgray", false);
         this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
         this.drawAxisLine(this.axisLines[0].p1, this.axisLines[0].p2, "black", 5);
         this.drawAxisLine(this.axisLines[1].p1, this.axisLines[1].p2, "black", 5);
