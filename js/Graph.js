@@ -90,8 +90,9 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         this.drawCanvasPoints("lightgray", false);
         this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
-        this.drawAxisLines(this.axisLines, "black", 5);
+        this.drawSimpleLineSet(this.axisLines, "black", 5);
         //drawArrowHeads(graph, graph.axisLinesArrows, "black", 5);
+        this.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
 
         this.drawHighlightPoints(this.highlightPoints);
         //removeArrayFromArrayOnce();
@@ -189,17 +190,17 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
     /**
-     * Draws axis line based off SimplePoint points
+     * Draws simple line based off SimplePoint points
      *
-     * @param {[AxisLine]} axisLines
+     * @param {[AxisLine || Line]} lineSet   //invalid js doc syntax... I know...
      * @param strokeStyle
      * @param lineWidth
      */
-    this.drawAxisLines = (axisLines, strokeStyle, lineWidth) => {
-        for (let i = 0; i < axisLines.length; i++)
+    this.drawSimpleLineSet = (lineSet, strokeStyle, lineWidth) => {
+        for (let i = 0; i < lineSet.length; i++)
         {
-            let pointBegin = axisLines[i].p1.GetCanvasPoint(this);
-            let pointEnd = axisLines[i].p2.GetCanvasPoint(this);
+            let pointBegin = lineSet[i].p1.GetCanvasPoint(this);
+            let pointEnd = lineSet[i].p2.GetCanvasPoint(this);
 
             const originalStrokeStyle = this.context.strokeStyle;
             const originalLineWidth = this.context.lineWidth;
@@ -220,6 +221,45 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             this.context.lineWidth = originalLineWidth;
         }
 
+    };
+
+
+    /**
+     * Draw tick lines & values respective to dimension shown, at the intervalCanvasUnits sampling rate.
+     *
+     * @param intervalCanvasUnits
+     */
+    this.drawAxisScale = (intervalCanvasUnits) => {
+
+        let xTicks = [];
+        for (let x = 0 + this.canvasOriginShift.x; x < CANVAS_WIDTH + this.canvasOriginShift.x ; x += intervalCanvasUnits.x) {
+
+            //create tick mark
+            //this.drawSimpleLine();
+            xTicks.push(new Line(
+                new SimplePoint(x / intervalCanvasUnits.x, TICK_SIZE / intervalCanvasUnits.y),
+                new SimplePoint(x / intervalCanvasUnits.x, -TICK_SIZE / intervalCanvasUnits.y))
+            );
+
+            //print number of X's [selected dimension].
+            this.drawCanvasPointText(new SimplePoint(x / intervalCanvasUnits.x, 0).GetCanvasPoint(this), null, x, "black");
+        }
+        this.drawSimpleLineSet(xTicks);
+
+        let yTicks = [];
+        for (let y = 0 - this.canvasOriginShift.y; y < CANVAS_WIDTH + this.canvasOriginShift.y ; y += intervalCanvasUnits.y) {
+
+            //create tick mark
+            //this.drawSimpleLine();
+            yTicks.push(new Line(
+                new SimplePoint(TICK_SIZE / intervalCanvasUnits.x, y / intervalCanvasUnits.y),
+                new SimplePoint(-TICK_SIZE / intervalCanvasUnits.x, y / intervalCanvasUnits.y))
+            );
+
+            //print number of X's [selected dimension].
+            //this.drawCanvasPointText();
+        }
+        this.drawSimpleLineSet(yTicks);
     };
 
     /**
@@ -278,6 +318,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
     this.drawCanvasPointText = (point, pointOffset, text, fillStyle) => {
+        pointOffset = (!pointOffset) ? {x:0, y:0} : pointOffset;
         const originalFillStyle = this.context.fillStyle;
         this.context.fillStyle = fillStyle;
         this.context.fillText(text, point.x + pointOffset.x, point.y + pointOffset.y);

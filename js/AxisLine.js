@@ -2,6 +2,15 @@
  * Created by Ian Nastajus on 7/22/2017.
  */
 
+
+/**
+ * Basic Line concept, defined as only between two end points.
+ */
+function Line(p1, p2) {
+    this.p1 = p1;
+    this.p2 = p2;
+}
+
 function AxisLine(graphDimension) {
 
     this.p1 = {};
@@ -25,13 +34,6 @@ function AxisLine(graphDimension) {
     }
     Line.call(this, this.p1, this.p2);
 
-    /**
-     * Basic Line concept, defined as only between two end points.
-     */
-    function Line(p1, p2) {
-        this.p1 = p1;
-        this.p2 = p2;
-    }
 
     /**
      *
@@ -65,7 +67,7 @@ function AxisLine(graphDimension) {
         this.p1 = new SimplePoint(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
         this.p2 = new SimplePoint(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
 
-        this.arrowTipBranch1 = new Line(this.pTip, this.p1);
+        //this.arrowTipBranch1 = new Line(this.pTip, this.p1);
 
         //this.arrowTipBranch2 = new Line(this.pTip, this.p2);
 
