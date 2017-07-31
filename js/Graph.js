@@ -295,7 +295,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
     /**
-     * Draws over the graph's currently selected dimension of X.
+     * Draws over the graph's currently selected dimension of X, by iterating over segments of the canvas at sample rate.
      *
      * @param complexLine
      * @param sampleRate
@@ -303,15 +303,11 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawComplexLine = (complexLine, sampleRate, fillStyle) => {
 
-        let xs_sample = new Array(model.numDimensions);
-        for (let i = 0; i < xs_sample.length; i++){
-            //Todo: Experiment
-            xs_sample[i] = 0;
-        }
-        xs_sample[0]= 1;
-
-
         //xs = [1 , 0]
+        let xs_sample = [];
+        xs_sample.push(1);
+        xs_sample.push(0);
+        //new Array(model.numDimensions);
 
         let dimension_n = this.currentlySelectedDimension;
 
@@ -321,7 +317,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
         //except x_0 (which is 1) and x_n.
-        for (let x_n_i = 0; x_n_i < CANVAS_WIDTH / CANVAS_SCALE + CANVAS_SCALE; x_n_i += sampleRate) {
+        for (let x_n_i = -this.canvasOriginShift.x; x_n_i < CANVAS_WIDTH / CANVAS_SCALE + CANVAS_SCALE + this.canvasOriginShift.x; x_n_i += sampleRate) {
             //sampling the line  at x_n = x_n_i
             xs_sample[dimension_n] = x_n_i;
             //Todo: I hate javascript
@@ -336,12 +332,15 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawCanvasPoints = (fillStyle, drawText) => {
 
-        let subOriginScaleShift = { x: this.canvasOriginShift.x % CANVAS_SCALE, y: this.canvasOriginShift.y % CANVAS_SCALE};
+        let subOriginScaleShift = {
+            x: this.canvasOriginShift.x % CANVAS_SCALE,
+            y: this.canvasOriginShift.y % CANVAS_SCALE
+        };
 
         let startX = 0 - this.canvasOriginShift.x + subOriginScaleShift.x;
-        let endX = CANVAS_WIDTH + this.canvasOriginShift.x;
+        let endX = CANVAS_WIDTH - this.canvasOriginShift.x;
         let startY = CANVAS_HEIGHT + this.canvasOriginShift.y - subOriginScaleShift.y;
-        let endY = 0 - this.canvasOriginShift.y;
+        let endY = this.canvasOriginShift.y;
 
         for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
             for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
