@@ -16,12 +16,11 @@ const GRAPH_TYPES = {
 
 const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
-const CANVAS_SCALE = 30;
 const POINT_RADIUS = 5;
 const TICK_SIZE = 10;
 const CANVAS_TEXT_OFFSET_COORD = 10;
 const CANVAS_TEXT_OFFSET_MAGNI = 5;
-const GRAPH_DECIMALS_ACCURACY = 1;
+const DATA_DECIMALS_ACCURACY = 1;
 const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 
 function initGraphs() {
@@ -60,15 +59,24 @@ function onClickCanvas(e) {
         } while ((element = element.offsetParent));
     }
 
-    let canvasX = e.pageX - offsetX - graph.canvasOriginShift.x;
-    let canvasY = e.pageY - offsetY + graph.canvasOriginShift.y;
+    let canvasCoordinates = {
+        x: e.pageX - offsetX,
+        y: e.pageY - offsetY
+    };
+
+    console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
+
+    let planeCoordinates = Graph.GetCanvasToPlane(canvasCoordinates, false);
+
+    let dataCoordinates = Model.GetPlaneToData(planeCoordinates, DATA_DECIMALS_ACCURACY, false);
 
     let btnCode = e.button;
 
     switch (btnCode) {
         case 0:
-            console.log("Left button clicked, in graph: " + graph + ", attempting To Add point, at (canvasX: " + canvasX + ", canvasY: " + canvasY + ").");
-            graph.AddPoint(canvasX, canvasY);
+            console.log("Left button clicked, in graph: " + graph + ", attempting To Add point, at (plane x: " + dataCoordinates.x + ", plane y: " + dataCoordinates.y + ").");
+            model.AddPoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y);
+            graph.RenderCanvas();
             break;
 
         case 1:
@@ -76,8 +84,9 @@ function onClickCanvas(e) {
             break;
 
         case 2:
-            console.log("Right button clicked, in graph: " + graph + ", attempting To Remove point, at (canvasX: " + canvasX + ", canvasY: " + canvasY + ").");
-            graph.RemovePoint(canvasX, canvasY);
+            console.log("Right button clicked, in graph: " + graph + ", attempting To Remove point, at (plane x: " + dataCoordinates.x + ", plane y: " + dataCoordinates.y + ").");
+            model.RemovePoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y);
+            graph.RenderCanvas();
             //Todo: fix
             break;
 
@@ -98,12 +107,16 @@ function onMoveCanvas(e) {
         } while ((element = element.offsetParent));
     }
 
-    let canvasX = e.pageX - offsetX;
-    let canvasY = e.pageY - offsetY;
+    let canvasCoordinates = {
+        x: e.pageX - offsetX,
+        y: e.pageY - offsetY
+    };
 
-    let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
+    let planeCoordinate = Graph.GetCanvasToPlane(canvasCoordinates, false);
 
-    let closestDataPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT);
+    let dataPosition = Model.GetPlaneToData(planeCoordinate, DATA_DECIMALS_ACCURACY, false);
+
+    let closestDataPoints = model.findClosestDataPoints(dataPosition, graph.dimensionXSelected, CLICK_DISTANCE_ACCURACY_TO_POINT);
 
     addHighlightPoints(closestDataPoints, graph.highlightPoints);
 
@@ -113,23 +126,6 @@ function onMoveCanvas(e) {
     removeArrayFromArrayOnce(diff, graph.highlightPoints);
 
     graph.RenderCanvas();
-}
-
-/**
- * Find nearest element (for now just data points) within a range of 1 cartesian unit, based on mouse hover position.
- * @param {{cartesianX: Number, cartesianY: Number}} targetGraphPosition
- * @param {Number} accuracyDistance
- * @returns {Array.<*>} foundPoints
- */
-function findClosestDataPoints(targetGraphPosition, accuracyDistance) {
-
-    let foundPoints = model.dataPoints.filter(function (entry) {
-        let foo = targetGraphPosition.cartesianX > entry.x + -accuracyDistance && targetGraphPosition.cartesianX < entry.x + accuracyDistance &&
-            targetGraphPosition.cartesianY > entry.y + -accuracyDistance && targetGraphPosition.cartesianY < entry.y + accuracyDistance;
-        return foo;
-    });
-
-    return foundPoints;
 }
 
 function addHighlightPoints(sourceArray, targetArray) {
@@ -206,6 +202,6 @@ bindAxesControls();
 
 //tasks ++
 /*
- - consider consolidation of model.currentlySelectedDimension vs. graphs[0].currentlySelectedDimension...
+ - consider consolidation of model.dimensionXSelected vs. graphs[0].dimensionXSelected...
  - consider refactoring to more carefully chosen public (this.foo) & private (let bar) designs in my original function 'classes', like Graph.
 */

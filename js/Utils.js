@@ -52,25 +52,3 @@ function arrayDifference(arrayA, arrayB) {
     });
     return diff;
 }
-
-
-/**
- * Converts X and Y page positions, into the graphing cartesian system.
- * Note these are already offset by the canvas' position within the page.
- *
- * @param {Number} canvasX
- * @param {Number} canvasY
- * @param {Number} graphDecimalsAccuracy
- * @returns {{cartesianX: Number, cartesianY: Number}}
- */
-function convertCanvasToGraph(canvasX, canvasY, graphDecimalsAccuracy) {
-
-    let graphPosition = {cartesianX: (canvasX / CANVAS_SCALE), cartesianY: ((CANVAS_HEIGHT - canvasY) / CANVAS_SCALE)};
-
-    graphPosition = (graphDecimalsAccuracy) ? {
-        cartesianX: round(graphPosition.cartesianX, graphDecimalsAccuracy),
-        cartesianY: round(graphPosition.cartesianY, graphDecimalsAccuracy)
-    } : graphPosition;
-
-    return graphPosition;
-}

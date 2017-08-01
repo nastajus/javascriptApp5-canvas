@@ -18,14 +18,14 @@ function DataPoint(xs, y) {
     this.y = y;
 
     // this.PrintPoint = () => {
-    //     return "(" + this.xs[graphs[0].currentlySelectedDimension] + ", " + this.y + ")";
+    //     return "(" + this.xs[graphs[0].dimensionXSelected] + ", " + this.y + ")";
     // };
 
     DataPoint.prototype.Print = (decimals) => {
         if (decimals) {
-            return "P" + /*counter +*/ "(" + round(this.xs[graphs[0].currentlySelectedDimension], decimals) + ", " + round(this.y, decimals) + ")";
+            return "P" + /*counter +*/ "(" + round(this.xs[graphs[0].dimensionXSelected], decimals) + ", " + round(this.y, decimals) + ")";
         }
-        return "(" + this.xs[graphs[0].currentlySelectedDimension] + ", " + this.y + ")";
+        return "(" + this.xs[graphs[0].dimensionXSelected] + ", " + this.y + ")";
     };
 
     // DataPoint.counter = DataPoint.counter || 0;
@@ -40,10 +40,10 @@ function DataPoint(xs, y) {
      * @returns {{x: number, y: number}}
      * @param graph
      */
-    this.GetCanvasPoint = (dimension, graph) => ({
-        x: this.xs[dimension] * CANVAS_SCALE + graph.canvasOriginShift.x,
-        y: CANVAS_HEIGHT - (this.y * CANVAS_SCALE) - graph.canvasOriginShift.y
-    });
+    this.GetCanvasPoint = (dimension, graph) => (
+        Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.xs[dimension], y: this.y}, DATA_DECIMALS_ACCURACY, false), false)
+    );
+
 }
 
 /**
@@ -81,10 +81,10 @@ function SimplePoint(x, y) {
      *
      * @returns {{x: number, y: number}}
      */
-    this.GetCanvasPoint = (graph) => ({
-        x: this.x * CANVAS_SCALE + graph.canvasOriginShift.x,
-        y: CANVAS_HEIGHT - (this.y * CANVAS_SCALE) - graph.canvasOriginShift.y
-    });
+    this.GetCanvasPoint = (graph) => (
+        Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.x, y: this.y}, DATA_DECIMALS_ACCURACY, false), false)
+    );
+
 
     SimplePoint.Add = (p1, p2) => {
         return new SimplePoint(p1.x + p2.x, p1.y + p2.y);

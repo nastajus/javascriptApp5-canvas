@@ -21,7 +21,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.canvas.height = CANVAS_HEIGHT;
     this.canvasOriginShift = {x:25, y:66};  // {x:1, y:0};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
-    this.currentlySelectedDimension = 1;
+    this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);
 
     Graph.InitShownDimensions = () => {
@@ -98,64 +98,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         //removeArrayFromArrayOnce();
 
         this.drawComplexLine(model.hypothesisLine, 1, "black");
-    };
-
-    /**
-     * Add point by
-     *      (A) adapting click position to cartesian system
-     *      (B) adding to array
-     *      (C) triggering redraw of canvas
-     * @param {Number} canvasX
-     * @param {Number} canvasY
-     */
-
-    //AddPoint(scalarX, xDimension, scalarY) //returns the new Point //These are in cartesianCoordinates
-    this.AddPoint = (canvasX, canvasY) => {
-
-        //Todo: Review semantics
-        let newXs = model.hypothesisLine.thetas.slice();
-        newXs[0]= 1;
-
-        for (let i = 1; i<newXs.length;i++){
-            newXs[i] = 0;
-        }
-
-        let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
-        newXs[this.currentlySelectedDimension] = graphPosition.cartesianX;
-        let clickPoint = new DataPoint(newXs, graphPosition.cartesianY);
-
-        model.dataPoints.push(clickPoint);
-        //console.log("In graph: " + this + ", Added point at : " + model.dataPoints[clickPoint]);
-        console.log("In graph: " + this + ", Added point, at (cartesianX: " + graphPosition.cartesianX + ", cartesianY: " + graphPosition.cartesianY + ").");
-
-        if (this.graphType === GRAPH_TYPES.REGRESSION) {
-            //buildErrorLinesBetween([clickPoint], model.hypothesisLine);
-            //buildCanvasContent();
-        }
-        this.RenderCanvas(this);
-    };
-
-    /**
-     * Remove point by
-     *      (A) finding nearby point to click position
-     *      (B) removing from array
-     *      (C) triggering redraw of canvas
-     * @param canvasX
-     * @param canvasY
-     */
-    //RemovePoint(point)
-    this.RemovePoint = (canvasX, canvasY) => {
-        let graphPosition = convertCanvasToGraph(canvasX, canvasY, GRAPH_DECIMALS_ACCURACY);
-        let foundPoints = findClosestDataPoints(graphPosition, CLICK_DISTANCE_ACCURACY_TO_POINT);
-        for (let i = 0; i < foundPoints.length; i++) {
-            let firstMatchPointIndex = model.dataPoints.indexOf(foundPoints[i]); //index of on references
-
-            let removedPoints = model.dataPoints.splice(firstMatchPointIndex, 1);
-            let removedPoint = removedPoints[0];
-
-            console.log("In graph: " + this + ", Removed point at : " + removedPoint);
-        }
-        this.RenderCanvas();
     };
 
     /**
@@ -242,7 +184,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             );
 
             //print number of X's [selected dimension].
-            this.drawCanvasPointText(new SimplePoint(x / intervalCanvasUnits.x, 0).GetCanvasPoint(this), null, x, "black");
+            this.drawCanvasPointText(new SimplePoint(x / intervalCanvasUnits.x, 0).GetCanvasPoint(this), {x: -5, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
         }
         this.drawSimpleLineSet(xTicks);
 
@@ -257,7 +199,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             );
 
             //print number of X's [selected dimension].
-            //this.drawCanvasPointText();
+            this.drawCanvasPointText(
+                new SimplePoint(0, y / intervalCanvasUnits.y).GetCanvasPoint(this), {x: -20, y: -5}, round(y / PLANE_TO_MODEL_RATIO.y, 0), "black");
         }
         this.drawSimpleLineSet(yTicks);
     };
@@ -350,7 +293,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         xs_sample.push(0);
         //new Array(model.numDimensions);
 
-        let dimension_n = this.currentlySelectedDimension;
+        let dimension_n = this.dimensionXSelected;
 
         //would start at negative numbers later
         xs_sample[dimension_n] = 0;
@@ -396,5 +339,65 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
     Graph.prototype.toString = () => {
         return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
+    };
+
+
+    /**
+     * Convert from raw Canvas pixel system (without offset) to Plane pixel system (including offset).
+     * Reverses vertical dimension.
+     *
+     * Input is {100,100}, Output is {100 +25, 400 -25}
+     *
+     * Example:
+     *      canvas initialized with 500 x 500 pixels.
+     *      input canvas position: 100 pixel, 100 pixel (top left).
+     *      origin offset by 25 x 25 pixels (bottom left).
+     *      output plane position: 125 pixel, 375 pixel (y reversed + offset).
+     *
+     * @param {{x: number, y: number}} canvasCoordinates
+     * @param {Boolean} logThis
+     * @return {{x: number, y: number}}
+     */
+    Graph.GetCanvasToPlane = (canvasCoordinates, logThis) => {
+
+        let flippedY = CANVAS_HEIGHT - canvasCoordinates.y;
+
+        let planeCoordinates =  {
+            x: canvasCoordinates.x - this.canvasOriginShift.x ,
+            y: flippedY - this.canvasOriginShift.y
+        };
+
+        if (logThis){
+            console.log("planeCoordinates: " + JSON.stringify(planeCoordinates));
+        }
+
+        return planeCoordinates;
+
+    };
+
+    /**
+     * Convert from Plane pixel system (including offset) to Canvas pixel system (without offset).
+     * Reverses vertical dimension.
+     *
+     * Input is {125, 375}, Output is {100,100}
+     *
+     * @param {{x: number, y: number}} planeCoordinates
+     * @param {Boolean} logThis
+     * @return {{x: number, y: number}}
+     */
+    Graph.GetPlaneToCanvas = (planeCoordinates, logThis) => {
+
+        let flippedY = CANVAS_HEIGHT - planeCoordinates.y;
+
+        let canvasCoordinates = {
+            x: planeCoordinates.x + this.canvasOriginShift.x ,
+            y: flippedY - this.canvasOriginShift.y
+        };
+
+        if (logThis) {
+            console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
+        }
+
+        return canvasCoordinates;
     };
 }
