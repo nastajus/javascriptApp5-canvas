@@ -40,12 +40,12 @@ function renderCanvases() {
     console.log("Total error: " + model.GetTotalError());
 }
 
-function buildAxes() {
-    for (let i = 0; i < graphs.length; i++) {
-        graphs[i].axisLines.push(new AxisLine(graphs[i], "x"));
-        graphs[i].axisLines.push(new AxisLine(graphs[i], "y"));
-    }
-}
+// function buildAxes() {
+//     for (let i = 0; i < graphs.length; i++) {
+//         graphs[i].axisLines.push(new AxisLine(graphs[i], "x"));
+//         graphs[i].axisLines.push(new AxisLine(graphs[i], "y"));
+//     }
+// }
 
 function onClickCanvas(e) {
     let element = graphs[0].canvas; //for now just hard-code
@@ -127,7 +127,7 @@ function onMoveCanvas(e) {
     //remove highlight
     removeArrayFromArrayOnce(diff, graph.highlightPoints);
 
-    graph.RenderCanvas();
+    //graph.RenderCanvas();
 }
 
 function addHighlightPoints(sourceArray, targetArray) {
@@ -163,9 +163,9 @@ function addFeatureControls() {
 function bindAxesControls() {
     let axesControl = new AxesControlPair(graphs[0]);
     axesControls.push(axesControl);
-    axesControl.SetValue(graphs[0].canvasOriginShift);
+    axesControl.SetValue(graphs[0].planeOriginToCanvasOriginShift);
     axesControl.OnControlChange = () => {
-        graphs[0].canvasOriginShift = axesControl.GetValue();
+        graphs[0].planeOriginToCanvasOriginShift = axesControl.GetValue();
         renderCanvases();
     };
     axesControl.SetChangeSmall(CANVAS_SCALE/4);
@@ -177,7 +177,7 @@ model.BuildSampleDataPoints();
 model.BuildSampleHypothesisLines();
 
 initGraphs();
-buildAxes();
+//buildAxes();
 renderCanvases();
 addFeatureControls();
 bindAxesControls();

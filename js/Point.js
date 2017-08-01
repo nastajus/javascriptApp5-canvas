@@ -40,7 +40,7 @@ function DataPoint(xs, y) {
      * @returns {{x: number, y: number}}
      * @param graph
      */
-    this.GetCanvasPoint = (dimension, graph) => (
+    this.GetDataToCanvas = (dimension, graph) => (
         Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.xs[dimension], y: this.y}, DATA_DECIMALS_ACCURACY, false), false)
     );
 
@@ -81,9 +81,14 @@ function SimplePoint(x, y) {
      *
      * @returns {{x: number, y: number}}
      */
-    this.GetCanvasPoint = (graph) => (
+    this.GetDataToCanvas = (graph) => (
         Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.x, y: this.y}, 4, false), false)
     );
+    // function GetDataToCanvas (graph) {
+    //     let planeCoordinates = Model.GetDataToPlane({x: this.x, y: this.y}, 4, false);
+    //     let canvasCoordinates = Graph.GetPlaneToCanvas(planeCoordinates, false);
+    //     return canvasCoordinates;
+    // }
 
 
     //Todo: understand root cause of intermittent issue: Uncaught TypeError: SimplePoint.Add is not a function.

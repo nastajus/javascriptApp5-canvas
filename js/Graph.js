@@ -14,12 +14,12 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
     this.graphType = graphType;
-    this.axisLines = [];
-    this.axisLinesArrows = [];
+    // this.axisLines = [];
+    // this.axisLinesArrows = [];
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
-    this.canvasOriginShift = {x:25, y:66};  // {x:1, y:0};
+    this.planeOriginToCanvasOriginShift = {x:25, y:66};  // {x:1, y:0};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);
@@ -91,8 +91,9 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         this.drawCanvasPoints("lightgray", false);
         this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
-        this.drawSimpleLine(this.axisLines[0], "black", 5);
-        this.drawSimpleLine(this.axisLines[1], "black", 5);
+        this.drawAxisLine("x");
+        this.drawAxisLine("y");
+
         //drawArrowHeads(graph, graph.axisLinesArrows, "black", 5);
         this.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
 
@@ -115,8 +116,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
         this.context.beginPath();
-        let cp1 = pointBegin.GetCanvasPoint(dimensionX, this);
-        let cp2 = pointEnd.GetCanvasPoint(dimensionX, this);
+        let cp1 = pointBegin.GetDataToCanvas(dimensionX, this);
+        let cp2 = pointEnd.GetDataToCanvas(dimensionX, this);
         this.context.moveTo(cp1.x, cp1.y);
         this.context.lineTo(cp2.x, cp2.y);
 
@@ -136,15 +137,15 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     /**
      * Draws simple line based off SimplePoint points
      *
-     * @param {Line} line   //invalid js doc syntax... I know...
+     * @param {Line} line
      * @param strokeStyle
      * @param lineWidth
      */
     this.drawSimpleLine = (line, strokeStyle, lineWidth) => {
         // let pointBegin = line.p1;
         // let pointEnd = line.p2;
-        let pointBegin = Graph.GetCanvasToPlane(line.p1, false);
-        let pointEnd = Graph.GetCanvasToPlane(line.p2, false);
+        let pointBegin = Graph.GetPlaneToCanvas(line.p1, false);
+        let pointEnd = Graph.GetPlaneToCanvas(line.p2, false);
 
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
@@ -167,44 +168,129 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
 
     /**
-     * Draw tick lines & values respective to dimension shown, at the intervalCanvasUnits sampling rate.
+     * Lines are defined with two SimplePoint in Plane pixel units.
+     *
+     * @param {String} graphDimension
+     */
+    this.drawAxisLine = (graphDimension) => {
+
+        this.p1 = {};
+        this.p2 = {};
+        // this.a1 = [];
+        // this.a2 = [];
+
+        if (graphDimension === "x") {
+            /**
+             * only works occasionally on first invocation from IDE, usually failing, and always failing on all subsequent refreshes.
+             * suspect a problem with understanding involving any of: SimplePoint instantiation, this, context, new, bind, etc.
+             */
+
+            // this.p1 = SimplePoint.Add(new SimplePoint(0, 0), graph.planeOriginToCanvasOriginShift);
+            // this.p2 = SimplePoint.Add(new SimplePoint(SimplePoint.maxCanvasX, 0), graph.planeOriginToCanvasOriginShift);
+
+            this.p1 = new SimplePoint(0, 0);
+            this.p2 = new SimplePoint(SimplePoint.maxCanvasX, 0);
+
+
+            // this.a1.push(new AxisArrows(this.p1, "left"));
+            // this.a2.push(new AxisArrows(this.p2, "right"));
+        }
+        else if (graphDimension === "y") {
+            // this.p1 = SimplePoint.Add(new SimplePoint(0, 0), graph.planeOriginToCanvasOriginShift);
+            // this.p2 = SimplePoint.Add(new SimplePoint(0, SimplePoint.maxCanvasY), graph.planeOriginToCanvasOriginShift);
+
+            this.p1 = new SimplePoint(0, 0);
+            this.p2 = new SimplePoint(0, SimplePoint.maxCanvasY);
+
+            // this.a1.push(new AxisArrows(this.p1, "down"));
+            // this.a2.push(new AxisArrows(this.p2, "up"));
+
+        }
+
+        this.drawSimpleLine(new Line(this.p1, this.p2), "black", 5);
+
+        //Line.call(this, this.p1, this.p2);
+
+        // /**
+        //  *
+        //  * @param point
+        //  * @param arrowDirection
+        //  */
+        // function AxisArrows(point, arrowDirection) {
+        //
+        //     let off = [[1 / 2, 1 / 2], [1 / 2, 1 / 2]]; //offset
+        //     let dir; //direction
+        //
+        //     switch (arrowDirection) {
+        //         case "right":
+        //             dir = [[-1, 1], [-1, -1]];
+        //             break;
+        //
+        //         case "left":
+        //             dir = [[1, 1], [1, -1]];
+        //             break;
+        //
+        //         case "up":
+        //             dir = [[1, -1], [-1, -1]];
+        //             break;
+        //
+        //         case "down":
+        //             dir = [[1, 1], [-1, 1]];
+        //             break;
+        //     }
+
+        // this.pTip = point;
+        // this.p1 = new SimplePoint(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
+        // this.p2 = new SimplePoint(point.x + off[0][0] * dir[0][0], point.y + off[0][1] * dir[0][1]);
+
+        //this.arrowTipBranch1 = new Line(this.pTip, this.p1);
+
+        //this.arrowTipBranch2 = new Line(this.pTip, this.p2);
+
+        //this.p1 = new Point(pTip.x + offset1x, pTip.y + offset1y);
+        //this.p2 = new Point(pTip.x + offset2x, pTip.y + offset2y);
+        //this.p2 = new Point(pTip.x + offset2x, pTip.y + offset2y);
+
+        //if (arrowDirection === "")
+        // }
+    };
+
+
+    /**
+     * Draw tick lines & values respective to dimension shown, Plane pixel units, at the intervalCanvasUnits sampling rate.
      *
      * @param intervalCanvasUnits
      */
     this.drawAxisScale = (intervalCanvasUnits) => {
 
-        //let xTicks = [];
-        for (let x = -this.canvasOriginShift.x; x < CANVAS_WIDTH + this.canvasOriginShift.x + intervalCanvasUnits.x ; x += intervalCanvasUnits.x) {
+        for (let x = 0; x < CANVAS_WIDTH + intervalCanvasUnits.x ; x += intervalCanvasUnits.x) {
 
             //create tick mark
-            //this.drawSimpleLine();
-            //xTicks.push(new Line(
             this.drawSimpleLine(new Line(
-                new SimplePoint(x / intervalCanvasUnits.x, TICK_SIZE / intervalCanvasUnits.y),
-                new SimplePoint(x / intervalCanvasUnits.x, -TICK_SIZE / intervalCanvasUnits.y))
+                new SimplePoint(x, TICK_SIZE),
+                new SimplePoint(x, -TICK_SIZE))
             );
 
-            //print number of X's [selected dimension].
-            this.drawCanvasPointText(new SimplePoint(x / intervalCanvasUnits.x, 0).GetCanvasPoint(this), {x: -5, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
-        }
-        //this.drawSimpleLine(xTicks);
+            let simplePoint = new SimplePoint(x, 0);
+            let planeCoordinates = Graph.GetPlaneToCanvas({x: simplePoint.x, y: simplePoint.y}, false);
 
-        //let yTicks = [];
-        for (let y = -this.canvasOriginShift.y; y < CANVAS_WIDTH + this.canvasOriginShift.y + intervalCanvasUnits.y ; y += intervalCanvasUnits.y) {
+            this.drawCanvasPointText(planeCoordinates, {x: -3, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
+
+        }
+
+        for (let y = 0; y < CANVAS_WIDTH + intervalCanvasUnits.y ; y += intervalCanvasUnits.y) {
 
             //create tick mark
-            //this.drawSimpleLine();
-            //yTicks.push(new Line(
             this.drawSimpleLine(new Line(
-                new SimplePoint(TICK_SIZE / intervalCanvasUnits.x, y / intervalCanvasUnits.y),
-                new SimplePoint(-TICK_SIZE / intervalCanvasUnits.x, y / intervalCanvasUnits.y))
+                new SimplePoint(TICK_SIZE, y),
+                new SimplePoint(-TICK_SIZE, y))
             );
 
-            //print number of X's [selected dimension].
-            this.drawCanvasPointText(
-                new SimplePoint(0, y / intervalCanvasUnits.y).GetCanvasPoint(this), {x: -20, y: -5}, round(y / PLANE_TO_MODEL_RATIO.y, 0), "black");
+            let simplePoint = new SimplePoint(0, y);
+            let planeCoordinates = Graph.GetPlaneToCanvas({x: simplePoint.x, y: simplePoint.y}, false);
+
+            this.drawCanvasPointText(planeCoordinates, {x: -20, y: +3}, round(y / PLANE_TO_MODEL_RATIO.y, 0), "black");
         }
-        //this.drawSimpleLine(yTicks);
     };
 
     /**
@@ -239,7 +325,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
     this.drawPoint = (point, dimensionX, fillStyle, pointRadius) => {
-        let canvasPoint = point.GetCanvasPoint(dimensionX, this);
+        let canvasPoint = point.GetDataToCanvas(dimensionX, this);
         this.drawCanvasPoint(canvasPoint.x, canvasPoint.y, fillStyle, pointRadius);
     };
 
@@ -257,7 +343,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         textOffset = (!textOffset) ? {x:0, y:0} : textOffset;
         const originalFillStyle = this.context.fillStyle;
         this.context.fillStyle = fillStyle;
-        let canvasPoint = point.GetCanvasPoint(dimensionX, this);
+        let canvasPoint = point.GetDataToCanvas(dimensionX, this);
         this.context.fillText(text, canvasPoint.x + textOffset.x, canvasPoint.y + textOffset.y);
         this.context.fillStyle = originalFillStyle;
     };
@@ -303,7 +389,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
         //except x_0 (which is 1) and x_n.
-        for (let x_n_i = -this.canvasOriginShift.x; x_n_i < CANVAS_WIDTH / CANVAS_SCALE + CANVAS_SCALE + this.canvasOriginShift.x; x_n_i += sampleRate) {
+        for (let x_n_i = -this.planeOriginToCanvasOriginShift.x; x_n_i < CANVAS_WIDTH / CANVAS_SCALE + CANVAS_SCALE + this.planeOriginToCanvasOriginShift.x; x_n_i += sampleRate) {
             //sampling the line  at x_n = x_n_i
             xs_sample[dimension_n] = x_n_i;
             //Todo: I hate javascript
@@ -319,18 +405,18 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.drawCanvasPoints = (fillStyle, drawText) => {
 
         let subOriginScaleShift = {
-            x: this.canvasOriginShift.x % CANVAS_SCALE,
-            y: this.canvasOriginShift.y % CANVAS_SCALE
+            x: this.planeOriginToCanvasOriginShift.x % CANVAS_SCALE,
+            y: this.planeOriginToCanvasOriginShift.y % CANVAS_SCALE
         };
 
-        let startX = 0 - this.canvasOriginShift.x + subOriginScaleShift.x;
-        let endX = CANVAS_WIDTH - this.canvasOriginShift.x;
-        let startY = CANVAS_HEIGHT + this.canvasOriginShift.y - subOriginScaleShift.y;
-        let endY = this.canvasOriginShift.y;
+        let startX = 0 - this.planeOriginToCanvasOriginShift.x + subOriginScaleShift.x;
+        let endX = CANVAS_WIDTH - this.planeOriginToCanvasOriginShift.x;
+        let startY = CANVAS_HEIGHT + this.planeOriginToCanvasOriginShift.y - subOriginScaleShift.y;
+        let endY = this.planeOriginToCanvasOriginShift.y;
 
         for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
             for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
-                this.drawCanvasPoint(canvasX + this.canvasOriginShift.x, canvasY - this.canvasOriginShift.y, fillStyle);
+                this.drawCanvasPoint(canvasX + this.planeOriginToCanvasOriginShift.x, canvasY - this.planeOriginToCanvasOriginShift.y, fillStyle);
                 if (drawText) {
                     let canvasPoint = new SimplePoint(canvasX,canvasY);
                     this.drawCanvasPointText(canvasPoint, {x:5, y:15}, canvasPoint.toString(), fillStyle);
@@ -348,13 +434,17 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * Convert from raw Canvas pixel system (without offset) to Plane pixel system (including offset).
      * Reverses vertical dimension.
      *
-     * Input is {100,100}, Output is {100 +25, 400 -25}
+     * Input is {100,100}, Output is {75, 375}
      *
      * Example:
+     *      init:
      *      canvas initialized with 500 x 500 pixels.
-     *      input canvas position: 100 pixel, 100 pixel (top left).
      *      origin offset by 25 x 25 pixels (bottom left).
-     *      output plane position: 125 pixel, 375 pixel (y reversed + offset).
+     *
+     *      steps:
+     *      input canvas position: 100 pixel, 100 pixel (top left).
+     *      intermediate position: 100 pixel, 400 pixel (y reversed).
+     *      output plane position:  75 pixel, 375 pixel (offset).
      *
      * @param {{x: number, y: number}} canvasCoordinates
      * @param {Boolean} logThis
@@ -366,8 +456,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         let flippedY = CANVAS_HEIGHT - canvasCoordinates.y;
 
         let planeCoordinates =  {
-            x: canvasCoordinates.x - this.canvasOriginShift.x ,
-            y: flippedY - this.canvasOriginShift.y
+            x: canvasCoordinates.x - this.planeOriginToCanvasOriginShift.x,
+            y: flippedY - this.planeOriginToCanvasOriginShift.y
         };
 
         if (logThis){
@@ -385,6 +475,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * Input is {125, 375}, Output is {100,100}
      *
      * @param {{x: number, y: number}} planeCoordinates
+     * //param {{SimplePoint}} planeCoordinates  //TODO: combine?
      * @param {Boolean} logThis
      * @return {{x: number, y: number}}
      */
@@ -393,9 +484,21 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         let flippedY = CANVAS_HEIGHT - planeCoordinates.y;
 
         let canvasCoordinates = {
-            x: planeCoordinates.x + this.canvasOriginShift.x ,
-            y: flippedY - this.canvasOriginShift.y
+            x: planeCoordinates.x + this.planeOriginToCanvasOriginShift.x,
+            y: flippedY - this.planeOriginToCanvasOriginShift.y
         };
+
+        // let canvasCoordinates = {
+        //     x: planeCoordinates.x + this.planeOriginToCanvasOriginShift.x,
+        //     y: planeCoordinates.y - this.planeOriginToCanvasOriginShift.y
+        // };
+        //
+        // let flippedY = CANVAS_HEIGHT - planeCoordinates.y;
+        //
+        // canvasCoordinates = {
+        //     x: canvasCoordinates.x,
+        //     y: flippedY
+        // };
 
         if (logThis) {
             console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
