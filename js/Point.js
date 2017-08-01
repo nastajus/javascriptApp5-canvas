@@ -82,10 +82,12 @@ function SimplePoint(x, y) {
      * @returns {{x: number, y: number}}
      */
     this.GetCanvasPoint = (graph) => (
-        Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.x, y: this.y}, DATA_DECIMALS_ACCURACY, false), false)
+        Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.x, y: this.y}, 4, false), false)
     );
 
 
+    //Todo: understand root cause of intermittent issue: Uncaught TypeError: SimplePoint.Add is not a function.
+    //SimplePoint.prototype.Add = function (p1, p2){
     SimplePoint.Add = (p1, p2) => {
         return new SimplePoint(p1.x + p2.x, p1.y + p2.y);
     };

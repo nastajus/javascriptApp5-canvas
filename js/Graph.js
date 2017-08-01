@@ -47,6 +47,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * @param {boolean} attemptToggleValue
      * @returns {boolean} dimensionChangeValid
      */
+    //Graph.prototype.IsValidDimensionChange = function (dimension, attemptToggleValue) {
     Graph.IsValidDimensionChange = (dimension, attemptToggleValue) => {
 
         if (typeof dimension !== 'number') {
@@ -90,7 +91,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         this.drawCanvasPoints("lightgray", false);
         this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
-        this.drawSimpleLineSet(this.axisLines, "black", 5);
+        this.drawSimpleLine(this.axisLines[0], "black", 5);
+        this.drawSimpleLine(this.axisLines[1], "black", 5);
         //drawArrowHeads(graph, graph.axisLinesArrows, "black", 5);
         this.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
 
@@ -134,35 +136,33 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     /**
      * Draws simple line based off SimplePoint points
      *
-     * @param {[AxisLine || Line]} lineSet   //invalid js doc syntax... I know...
+     * @param {Line} line   //invalid js doc syntax... I know...
      * @param strokeStyle
      * @param lineWidth
      */
-    this.drawSimpleLineSet = (lineSet, strokeStyle, lineWidth) => {
-        for (let i = 0; i < lineSet.length; i++)
-        {
-            let pointBegin = lineSet[i].p1.GetCanvasPoint(this);
-            let pointEnd = lineSet[i].p2.GetCanvasPoint(this);
+    this.drawSimpleLine = (line, strokeStyle, lineWidth) => {
+        // let pointBegin = line.p1;
+        // let pointEnd = line.p2;
+        let pointBegin = Graph.GetCanvasToPlane(line.p1, false);
+        let pointEnd = Graph.GetCanvasToPlane(line.p2, false);
 
-            const originalStrokeStyle = this.context.strokeStyle;
-            const originalLineWidth = this.context.lineWidth;
-            this.context.beginPath();
-            this.context.moveTo(pointBegin.x, pointBegin.y);
-            this.context.lineTo(pointEnd.x, pointEnd.y);
+        const originalStrokeStyle = this.context.strokeStyle;
+        const originalLineWidth = this.context.lineWidth;
+        this.context.beginPath();
+        this.context.moveTo(pointBegin.x, pointBegin.y);
+        this.context.lineTo(pointEnd.x, pointEnd.y);
 
-            if (strokeStyle !== undefined) {
-                this.context.strokeStyle = strokeStyle;
-            }
-
-            if (lineWidth !== undefined) {
-                this.context.lineWidth = lineWidth;
-            }
-
-            this.context.stroke();
-            this.context.strokeStyle = originalStrokeStyle;
-            this.context.lineWidth = originalLineWidth;
+        if (strokeStyle !== undefined) {
+            this.context.strokeStyle = strokeStyle;
         }
 
+        if (lineWidth !== undefined) {
+            this.context.lineWidth = lineWidth;
+        }
+
+        this.context.stroke();
+        this.context.strokeStyle = originalStrokeStyle;
+        this.context.lineWidth = originalLineWidth;
     };
 
 
@@ -173,12 +173,13 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawAxisScale = (intervalCanvasUnits) => {
 
-        let xTicks = [];
-        for (let x = 0 + this.canvasOriginShift.x; x < CANVAS_WIDTH + this.canvasOriginShift.x ; x += intervalCanvasUnits.x) {
+        //let xTicks = [];
+        for (let x = -this.canvasOriginShift.x; x < CANVAS_WIDTH + this.canvasOriginShift.x + intervalCanvasUnits.x ; x += intervalCanvasUnits.x) {
 
             //create tick mark
             //this.drawSimpleLine();
-            xTicks.push(new Line(
+            //xTicks.push(new Line(
+            this.drawSimpleLine(new Line(
                 new SimplePoint(x / intervalCanvasUnits.x, TICK_SIZE / intervalCanvasUnits.y),
                 new SimplePoint(x / intervalCanvasUnits.x, -TICK_SIZE / intervalCanvasUnits.y))
             );
@@ -186,14 +187,15 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             //print number of X's [selected dimension].
             this.drawCanvasPointText(new SimplePoint(x / intervalCanvasUnits.x, 0).GetCanvasPoint(this), {x: -5, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
         }
-        this.drawSimpleLineSet(xTicks);
+        //this.drawSimpleLine(xTicks);
 
-        let yTicks = [];
-        for (let y = 0 - this.canvasOriginShift.y; y < CANVAS_WIDTH + this.canvasOriginShift.y ; y += intervalCanvasUnits.y) {
+        //let yTicks = [];
+        for (let y = -this.canvasOriginShift.y; y < CANVAS_WIDTH + this.canvasOriginShift.y + intervalCanvasUnits.y ; y += intervalCanvasUnits.y) {
 
             //create tick mark
             //this.drawSimpleLine();
-            yTicks.push(new Line(
+            //yTicks.push(new Line(
+            this.drawSimpleLine(new Line(
                 new SimplePoint(TICK_SIZE / intervalCanvasUnits.x, y / intervalCanvasUnits.y),
                 new SimplePoint(-TICK_SIZE / intervalCanvasUnits.x, y / intervalCanvasUnits.y))
             );
@@ -202,7 +204,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             this.drawCanvasPointText(
                 new SimplePoint(0, y / intervalCanvasUnits.y).GetCanvasPoint(this), {x: -20, y: -5}, round(y / PLANE_TO_MODEL_RATIO.y, 0), "black");
         }
-        this.drawSimpleLineSet(yTicks);
+        //this.drawSimpleLine(yTicks);
     };
 
     /**
@@ -337,7 +339,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         }
     };
 
-    Graph.prototype.toString = () => {
+    this.toString = () => {
         return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
     };
 
@@ -358,6 +360,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * @param {Boolean} logThis
      * @return {{x: number, y: number}}
      */
+    //Graph.prototype.GetCanvasToPlane = function (canvasCoordinates, logThis) {
     Graph.GetCanvasToPlane = (canvasCoordinates, logThis) => {
 
         let flippedY = CANVAS_HEIGHT - canvasCoordinates.y;

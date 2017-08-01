@@ -42,8 +42,8 @@ function renderCanvases() {
 
 function buildAxes() {
     for (let i = 0; i < graphs.length; i++) {
-        graphs[i].axisLines.push(new AxisLine("x"));
-        graphs[i].axisLines.push(new AxisLine("y"));
+        graphs[i].axisLines.push(new AxisLine(graphs[i], "x"));
+        graphs[i].axisLines.push(new AxisLine(graphs[i], "y"));
     }
 }
 
@@ -64,18 +64,19 @@ function onClickCanvas(e) {
         y: e.pageY - offsetY
     };
 
-    console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
+    //console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
 
-    let planeCoordinates = Graph.GetCanvasToPlane(canvasCoordinates, false);
+    let planeCoordinates = Graph.GetCanvasToPlane(canvasCoordinates, true);
 
-    let dataCoordinates = Model.GetPlaneToData(planeCoordinates, DATA_DECIMALS_ACCURACY, false);
+    let dataCoordinates = Model.GetPlaneToData(planeCoordinates, DATA_DECIMALS_ACCURACY, true);
 
     let btnCode = e.button;
 
     switch (btnCode) {
         case 0:
-            console.log("Left button clicked, in graph: " + graph + ", attempting To Add point, at (plane x: " + dataCoordinates.x + ", plane y: " + dataCoordinates.y + ").");
-            model.AddPoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y);
+            console.log("Left button clicked, in graph: " + graph + ".");
+            //console.log("Attempting To Add point.");
+            model.AddPoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y, true);
             graph.RenderCanvas();
             break;
 
@@ -84,8 +85,9 @@ function onClickCanvas(e) {
             break;
 
         case 2:
-            console.log("Right button clicked, in graph: " + graph + ", attempting To Remove point, at (plane x: " + dataCoordinates.x + ", plane y: " + dataCoordinates.y + ").");
-            model.RemovePoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y);
+            console.log("Right button clicked, in graph: " + graph + ".");
+            //console.log("Attempting To Remove point.");
+            model.RemovePoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y, true);
             graph.RenderCanvas();
             //Todo: fix
             break;

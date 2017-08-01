@@ -129,6 +129,7 @@ function Model(numDimensions) {
      * @param {Boolean} logThis
      * @returns {{x: number, y: number}} planeCoordinates
      */
+    //Model.prototype.GetDataToPlane = function(dataCoordinates, graphDecimalsAccuracy, logThis) {
     Model.GetDataToPlane = (dataCoordinates, graphDecimalsAccuracy, logThis) => {
         let planeCoordinates = {
             x: (dataCoordinates.x * PLANE_TO_MODEL_RATIO.x),
@@ -156,7 +157,7 @@ function Model(numDimensions) {
      * @param {Number} planeY
      */
     //AddPoint(scalarX, xDimension, scalarY) //returns the new Point //These are in cartesianCoordinates
-    this.AddPoint = (planeX, dimensionX, planeY) => {
+    this.AddPoint = (planeX, dimensionX, planeY, logThis) => {
 
         //Todo: Review semantics
         let newXs = this.hypothesisLine.thetas.slice();
@@ -168,15 +169,11 @@ function Model(numDimensions) {
 
         //let graphPosition = GetPlaneToData(planeX, planeY, DATA_DECIMALS_ACCURACY);
         newXs[dimensionX] = planeX;
-        let clickPoint = new DataPoint(newXs, planeY);
+        let dataPosition = new DataPoint(newXs, planeY);
 
-        this.dataPoints.push(clickPoint);
-        //console.log("In graph: " + this + ", Added point at : " + model.dataPoints[clickPoint]);
-        //console.log("In graph: " + graph + ", Added point, at (cartesianX: " + planeX + ", cartesianY: " + planeY + ").");
-
-        if (this.graphType === GRAPH_TYPES.REGRESSION) {
-            //buildErrorLinesBetween([clickPoint], model.hypothesisLine);
-            //buildCanvasContent();
+        this.dataPoints.push(dataPosition);
+        if (logThis){
+            console.log("Added point, at dataPosition: " + JSON.stringify(dataPosition));
         }
     };
 
@@ -189,7 +186,7 @@ function Model(numDimensions) {
      * @param {Number} canvasY
      */
     //RemovePoint(point)
-    this.RemovePoint = (canvasX, dimensionX, canvasY) => {
+    this.RemovePoint = (canvasX, dimensionX, canvasY, logThis) => {
         let foundPoints = model.findClosestDataPoints({x: canvasX, y: canvasY}, dimensionX, CLICK_DISTANCE_ACCURACY_TO_POINT);
         for (let i = 0; i < foundPoints.length; i++) {
             let firstMatchPointIndex = model.dataPoints.indexOf(foundPoints[i]); //index of on references
@@ -197,7 +194,9 @@ function Model(numDimensions) {
             let removedPoints = model.dataPoints.splice(firstMatchPointIndex, 1);
             let removedPoint = removedPoints[0];
 
-            console.log("In graph: " + this + ", Removed point at : " + removedPoint);
+            if (logThis){
+                console.log("Removed point, at dataPosition " + JSON.stringify(removedPoint));
+            }
         }
     };
 
