@@ -405,7 +405,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         return this.graphType.toUpperCase().substring(0, 1) + this.graphType.toLowerCase().substring(1, this.graphType.length);
     };
 
-
     /**
      * Convert from raw Canvas pixel system (without offset) to Plane pixel system (including offset).
      * Reverses vertical dimension.
@@ -428,8 +427,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     //Graph.prototype.GetCanvasToPlane = function (canvasCoordinates, logThis) {
     this.GetCanvasToPlane = (input, logThis) => {
-
-        //let flippedY = CANVAS_HEIGHT - input.y;
 
         let planeCoordinates =  {
             x: input.x - this.planeOriginToCanvasOriginShift.x,
@@ -467,24 +464,10 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.GetPlaneToCanvas = (input, logThis) => {
 
-        // let flippedY = CANVAS_HEIGHT - input.y;
-        //
-        // let canvasCoordinates = {
-        //     x: input.x + this.planeOriginToCanvasOriginShift.x,
-        //     y: flippedY - this.planeOriginToCanvasOriginShift.y
-        // };
-
         let canvasCoordinates = {
             x: input.x + this.planeOriginToCanvasOriginShift.x,
             y: CANVAS_HEIGHT - input.y - this.planeOriginToCanvasOriginShift.y
         };
-
-        // let flippedY = CANVAS_HEIGHT - canvasCoordinates.y;
-        //
-        // canvasCoordinates = {
-        //     x: canvasCoordinates.x,
-        //     y: flippedY
-        // };
 
         if (logThis) {
             console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));

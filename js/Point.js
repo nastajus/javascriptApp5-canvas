@@ -17,20 +17,12 @@ function DataPoint(xs, y) {
     this.xs = xs;
     this.y = y;
 
-    // this.PrintPoint = () => {
-    //     return "(" + this.xs[graphs[0].dimensionXSelected] + ", " + this.y + ")";
-    // };
-
-    DataPoint.prototype.Print = (decimals) => {
+    this.Print = (decimals) => {
         if (decimals) {
             return "P" + /*counter +*/ "(" + round(this.xs[graphs[0].dimensionXSelected], decimals) + ", " + round(this.y, decimals) + ")";
         }
         return "(" + this.xs[graphs[0].dimensionXSelected] + ", " + this.y + ")";
     };
-
-    // DataPoint.counter = DataPoint.counter || 0;
-    // let counter = ++DataPoint.counter;
-
 
     /**
      * Convert from Cartesian point system to Canvas pixel system, and while incorporating which x dimension is used.
