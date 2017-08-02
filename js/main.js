@@ -66,9 +66,9 @@ function onClickCanvas(e) {
 
     //console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
 
-    let planeCoordinates = Graph.GetCanvasToPlane(canvasCoordinates, true);
+    let planeCoordinates = graph.GetCanvasToPlane(canvasCoordinates, true);
 
-    let dataCoordinates = Model.GetPlaneToData(planeCoordinates, DATA_DECIMALS_ACCURACY, true);
+    let dataCoordinates = graph.GetPlaneToData(planeCoordinates, DATA_DECIMALS_ACCURACY, true);
 
     let btnCode = e.button;
 
@@ -114,9 +114,9 @@ function onMoveCanvas(e) {
         y: e.pageY - offsetY
     };
 
-    let planeCoordinate = Graph.GetCanvasToPlane(canvasCoordinates, false);
+    let planeCoordinate = graph.GetCanvasToPlane(canvasCoordinates, false);
 
-    let dataPosition = Model.GetPlaneToData(planeCoordinate, DATA_DECIMALS_ACCURACY, false);
+    let dataPosition = graph.GetPlaneToData(planeCoordinate, DATA_DECIMALS_ACCURACY, false);
 
     let closestDataPoints = model.findClosestDataPoints(dataPosition, graph.dimensionXSelected, CLICK_DISTANCE_ACCURACY_TO_POINT);
 
@@ -177,7 +177,6 @@ model.BuildSampleDataPoints();
 model.BuildSampleHypothesisLines();
 
 initGraphs();
-//buildAxes();
 renderCanvases();
 addFeatureControls();
 bindAxesControls();

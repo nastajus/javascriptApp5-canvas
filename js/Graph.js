@@ -19,7 +19,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
-    this.planeOriginToCanvasOriginShift = {x:25, y:66};  // {x:1, y:0};
+    this.planeOriginToCanvasOriginShift = {x:20, y:60};  // {x:1, y:0};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);
@@ -93,13 +93,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
         this.drawAxisLine("x");
         this.drawAxisLine("y");
-
-        //drawArrowHeads(graph, graph.axisLinesArrows, "black", 5);
         this.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
-
         this.drawHighlightPoints(this.highlightPoints);
-        //removeArrayFromArrayOnce();
-
         this.drawComplexLine(model.hypothesisLine, 1, "black");
     };
 
@@ -144,8 +139,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.drawSimpleLine = (line, strokeStyle, lineWidth) => {
         // let pointBegin = line.p1;
         // let pointEnd = line.p2;
-        let pointBegin = Graph.GetPlaneToCanvas(line.p1, false);
-        let pointEnd = Graph.GetPlaneToCanvas(line.p2, false);
+        let pointBegin = this.GetPlaneToCanvas(line.p1, false);
+        let pointEnd = this.GetPlaneToCanvas(line.p2, false);
 
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
@@ -176,41 +171,20 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         this.p1 = {};
         this.p2 = {};
-        // this.a1 = [];
-        // this.a2 = [];
 
         if (graphDimension === "x") {
-            /**
-             * only works occasionally on first invocation from IDE, usually failing, and always failing on all subsequent refreshes.
-             * suspect a problem with understanding involving any of: SimplePoint instantiation, this, context, new, bind, etc.
-             */
-
-            // this.p1 = SimplePoint.Add(new SimplePoint(0, 0), graph.planeOriginToCanvasOriginShift);
-            // this.p2 = SimplePoint.Add(new SimplePoint(SimplePoint.maxCanvasX, 0), graph.planeOriginToCanvasOriginShift);
-
             this.p1 = new SimplePoint(0, 0);
             this.p2 = new SimplePoint(SimplePoint.maxCanvasX, 0);
-
-
-            // this.a1.push(new AxisArrows(this.p1, "left"));
-            // this.a2.push(new AxisArrows(this.p2, "right"));
         }
         else if (graphDimension === "y") {
-            // this.p1 = SimplePoint.Add(new SimplePoint(0, 0), graph.planeOriginToCanvasOriginShift);
-            // this.p2 = SimplePoint.Add(new SimplePoint(0, SimplePoint.maxCanvasY), graph.planeOriginToCanvasOriginShift);
-
             this.p1 = new SimplePoint(0, 0);
             this.p2 = new SimplePoint(0, SimplePoint.maxCanvasY);
-
-            // this.a1.push(new AxisArrows(this.p1, "down"));
-            // this.a2.push(new AxisArrows(this.p2, "up"));
-
         }
 
         this.drawSimpleLine(new Line(this.p1, this.p2), "black", 5);
+    };
 
-        //Line.call(this, this.p1, this.p2);
-
+    this.drawArrow = () => {
         // /**
         //  *
         //  * @param point
@@ -253,17 +227,22 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         //if (arrowDirection === "")
         // }
+
     };
 
-
     /**
-     * Draw tick lines & values respective to dimension shown, Plane pixel units, at the intervalCanvasUnits sampling rate.
+     * Draw tick lines & values respective to dimension shown, Canvas pixel units, at the intervalCanvasUnits sampling rate.
      *
      * @param intervalCanvasUnits
      */
     this.drawAxisScale = (intervalCanvasUnits) => {
 
-        for (let x = 0; x < CANVAS_WIDTH + intervalCanvasUnits.x ; x += intervalCanvasUnits.x) {
+        // Page > Canvas > Plane > Data.
+
+        let planeStart = {x: 0, y: 0};
+        let planeEnd = {x: CANVAS_WIDTH, y: CANVAS_HEIGHT};
+
+        for (let x = planeStart.x; x < planeEnd.x; x += intervalCanvasUnits.x) {
 
             //create tick mark
             this.drawSimpleLine(new Line(
@@ -271,14 +250,12 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
                 new SimplePoint(x, -TICK_SIZE))
             );
 
-            let simplePoint = new SimplePoint(x, 0);
-            let planeCoordinates = Graph.GetPlaneToCanvas({x: simplePoint.x, y: simplePoint.y}, false);
-
-            this.drawCanvasPointText(planeCoordinates, {x: -3, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
-
+            let planeCoordinateText = new SimplePoint(x, 0);
+            let canvasCoordinateText = this.GetPlaneToCanvas({x: planeCoordinateText.x, y: planeCoordinateText.y}, false);
+            this.drawCanvasPointText(canvasCoordinateText, {x: -3, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
         }
 
-        for (let y = 0; y < CANVAS_WIDTH + intervalCanvasUnits.y ; y += intervalCanvasUnits.y) {
+        for (let y = planeStart.y; y < planeEnd.y; y += intervalCanvasUnits.y) {
 
             //create tick mark
             this.drawSimpleLine(new Line(
@@ -286,10 +263,9 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
                 new SimplePoint(-TICK_SIZE, y))
             );
 
-            let simplePoint = new SimplePoint(0, y);
-            let planeCoordinates = Graph.GetPlaneToCanvas({x: simplePoint.x, y: simplePoint.y}, false);
-
-            this.drawCanvasPointText(planeCoordinates, {x: -20, y: +3}, round(y / PLANE_TO_MODEL_RATIO.y, 0), "black");
+            let planeCoordinateText = new SimplePoint(0, y);
+            let canvasCoordinateText = this.GetPlaneToCanvas({x: planeCoordinateText.x, y: planeCoordinateText.y}, false);
+            this.drawCanvasPointText(canvasCoordinateText, {x: -20, y: +3}, round(y / PLANE_TO_MODEL_RATIO.y, 0), "black");
         }
     };
 
@@ -446,18 +422,18 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      *      intermediate position: 100 pixel, 400 pixel (y reversed).
      *      output plane position:  75 pixel, 375 pixel (offset).
      *
-     * @param {{x: number, y: number}} canvasCoordinates
+     * @param {{x: number, y: number}, {SimplePoint}} input
      * @param {Boolean} logThis
      * @return {{x: number, y: number}}
      */
     //Graph.prototype.GetCanvasToPlane = function (canvasCoordinates, logThis) {
-    Graph.GetCanvasToPlane = (canvasCoordinates, logThis) => {
+    this.GetCanvasToPlane = (input, logThis) => {
 
-        let flippedY = CANVAS_HEIGHT - canvasCoordinates.y;
+        //let flippedY = CANVAS_HEIGHT - input.y;
 
         let planeCoordinates =  {
-            x: canvasCoordinates.x - this.planeOriginToCanvasOriginShift.x,
-            y: flippedY - this.planeOriginToCanvasOriginShift.y
+            x: input.x - this.planeOriginToCanvasOriginShift.x,
+            y: CANVAS_HEIGHT - input.y - this.planeOriginToCanvasOriginShift.y
         };
 
         if (logThis){
@@ -474,26 +450,36 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      *
      * Input is {125, 375}, Output is {100,100}
      *
-     * @param {{x: number, y: number}} planeCoordinates
-     * //param {{SimplePoint}} planeCoordinates  //TODO: combine?
+     * Example:
+     *      init:
+     *      canvas initialized with 500 x 500 pixels.
+     *      origin offset by 25 x 25 pixels (bottom left).
+     *
+     *      steps:
+     *      input plane position:   125 pixel, 375 pixel (bottom left).
+     *      intermediate position:  100 pixel, 400 pixel (offset).
+     *      output canvas position: 100 pixel, 100 pixel (y reversed).
+     *
+     * @param {{x: number, y: number}} input
+     * //param {{SimplePoint}} input  //TODO: combine?
      * @param {Boolean} logThis
      * @return {{x: number, y: number}}
      */
-    Graph.GetPlaneToCanvas = (planeCoordinates, logThis) => {
+    this.GetPlaneToCanvas = (input, logThis) => {
 
-        let flippedY = CANVAS_HEIGHT - planeCoordinates.y;
+        // let flippedY = CANVAS_HEIGHT - input.y;
+        //
+        // let canvasCoordinates = {
+        //     x: input.x + this.planeOriginToCanvasOriginShift.x,
+        //     y: flippedY - this.planeOriginToCanvasOriginShift.y
+        // };
 
         let canvasCoordinates = {
-            x: planeCoordinates.x + this.planeOriginToCanvasOriginShift.x,
-            y: flippedY - this.planeOriginToCanvasOriginShift.y
+            x: input.x + this.planeOriginToCanvasOriginShift.x,
+            y: CANVAS_HEIGHT - input.y - this.planeOriginToCanvasOriginShift.y
         };
 
-        // let canvasCoordinates = {
-        //     x: planeCoordinates.x + this.planeOriginToCanvasOriginShift.x,
-        //     y: planeCoordinates.y - this.planeOriginToCanvasOriginShift.y
-        // };
-        //
-        // let flippedY = CANVAS_HEIGHT - planeCoordinates.y;
+        // let flippedY = CANVAS_HEIGHT - canvasCoordinates.y;
         //
         // canvasCoordinates = {
         //     x: canvasCoordinates.x,
@@ -506,4 +492,65 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         return canvasCoordinates;
     };
+
+
+
+    /**
+     * Converts from Plane pixel system, into the effective Data point scale system.
+     * TODO: Deprecate entirely the ratio conversion approach, replace with some new way for real data.
+     *
+     * @param {{x: number, y: number}} planeCoordinates
+     * @param {Number} graphDecimalsAccuracy
+     * @param {Boolean} logThis
+     * @returns {{x: number, y: number}} dataCoordinates
+     */
+    this.GetPlaneToData = (planeCoordinates, graphDecimalsAccuracy, logThis) => {
+
+        let dataPosition = {
+            x: (planeCoordinates.x / PLANE_TO_MODEL_RATIO.x),
+            y: (planeCoordinates.y / PLANE_TO_MODEL_RATIO.y)
+        };
+
+        dataPosition = (graphDecimalsAccuracy) ? {
+            x: round(dataPosition.x, graphDecimalsAccuracy),
+            y: round(dataPosition.y, graphDecimalsAccuracy)
+        } : dataPosition;
+
+        //Todo: enhance to display axis names
+        if (logThis){
+            console.log("dataPosition: " + JSON.stringify(dataPosition));
+        }
+
+        return dataPosition;
+    };
+
+    /**
+     * Converts from Plane pixel system, into the effective Data point scale system.
+     * TODO: Deprecate entirely the ratio conversion approach, replace with some new way for real data.
+     *
+     * @param {{x: number, y: number}} dataCoordinates
+     * @param {Number} graphDecimalsAccuracy
+     * @param {Boolean} logThis
+     * @returns {{x: number, y: number}} planeCoordinates
+     */
+    //Graph.prototype.GetDataToPlane = function(dataCoordinates, graphDecimalsAccuracy, logThis) {
+    this.GetDataToPlane = (dataCoordinates, graphDecimalsAccuracy, logThis) => {
+        let planeCoordinates = {
+            x: (dataCoordinates.x * PLANE_TO_MODEL_RATIO.x),
+            y: (dataCoordinates.y * PLANE_TO_MODEL_RATIO.y)
+        };
+
+        planeCoordinates = (graphDecimalsAccuracy) ? {
+            x: round(planeCoordinates.x, graphDecimalsAccuracy),
+            y: round(planeCoordinates.y, graphDecimalsAccuracy)
+        } : planeCoordinates;
+
+        //Todo: enhance to display axis names
+        if (logThis){
+            console.log("planeCoordinates: " + JSON.stringify(planeCoordinates));
+        }
+
+        return planeCoordinates;
+    };
+
 }

@@ -41,7 +41,7 @@ function DataPoint(xs, y) {
      * @param graph
      */
     this.GetDataToCanvas = (dimension, graph) => (
-        Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.xs[dimension], y: this.y}, DATA_DECIMALS_ACCURACY, false), false)
+        graph.GetPlaneToCanvas(graph.GetDataToPlane({x: this.xs[dimension], y: this.y}, DATA_DECIMALS_ACCURACY, false), false)
     );
 
 }
@@ -82,11 +82,11 @@ function SimplePoint(x, y) {
      * @returns {{x: number, y: number}}
      */
     this.GetDataToCanvas = (graph) => (
-        Graph.GetPlaneToCanvas(Model.GetDataToPlane({x: this.x, y: this.y}, 4, false), false)
+        graph.GetPlaneToCanvas(graph.GetDataToPlane({x: this.x, y: this.y}, 4, false), false)
     );
     // function GetDataToCanvas (graph) {
     //     let planeCoordinates = Model.GetDataToPlane({x: this.x, y: this.y}, 4, false);
-    //     let canvasCoordinates = Graph.GetPlaneToCanvas(planeCoordinates, false);
+    //     let canvasCoordinates = this.GetPlaneToCanvas(planeCoordinates, false);
     //     return canvasCoordinates;
     // }
 

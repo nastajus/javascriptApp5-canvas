@@ -3,7 +3,7 @@
  */
 
 /**
- * MVC = View
+ * MVC = Controller
  *
  * @returns {FeatureControl}
  */

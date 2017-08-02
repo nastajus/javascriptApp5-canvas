@@ -92,64 +92,6 @@ function Model(numDimensions) {
     };
 
     /**
-     * Converts from Plane pixel system, into the effective Data point scale system.
-     * TODO: Deprecate entirely the ratio conversion approach, replace with some new way for real data.
-     *
-     * @param {{x: number, y: number}} planeCoordinates
-     * @param {Number} graphDecimalsAccuracy
-     * @param {Boolean} logThis
-     * @returns {{x: number, y: number}} dataCoordinates
-     */
-    Model.GetPlaneToData = (planeCoordinates, graphDecimalsAccuracy, logThis) => {
-
-        let dataPosition = {
-            x: (planeCoordinates.x / PLANE_TO_MODEL_RATIO.x),
-            y: (planeCoordinates.y / PLANE_TO_MODEL_RATIO.y)
-        };
-
-        dataPosition = (graphDecimalsAccuracy) ? {
-            x: round(dataPosition.x, graphDecimalsAccuracy),
-            y: round(dataPosition.y, graphDecimalsAccuracy)
-        } : dataPosition;
-
-        //Todo: enhance to display axis names
-        if (logThis){
-            console.log("dataPosition: " + JSON.stringify(dataPosition));
-        }
-
-        return dataPosition;
-    };
-
-    /**
-     * Converts from Plane pixel system, into the effective Data point scale system.
-     * TODO: Deprecate entirely the ratio conversion approach, replace with some new way for real data.
-     *
-     * @param {{x: number, y: number}} dataCoordinates
-     * @param {Number} graphDecimalsAccuracy
-     * @param {Boolean} logThis
-     * @returns {{x: number, y: number}} planeCoordinates
-     */
-    //Model.prototype.GetDataToPlane = function(dataCoordinates, graphDecimalsAccuracy, logThis) {
-    Model.GetDataToPlane = (dataCoordinates, graphDecimalsAccuracy, logThis) => {
-        let planeCoordinates = {
-            x: (dataCoordinates.x * PLANE_TO_MODEL_RATIO.x),
-            y: (dataCoordinates.y * PLANE_TO_MODEL_RATIO.y)
-        };
-
-        planeCoordinates = (graphDecimalsAccuracy) ? {
-            x: round(planeCoordinates.x, graphDecimalsAccuracy),
-            y: round(planeCoordinates.y, graphDecimalsAccuracy)
-        } : planeCoordinates;
-
-        //Todo: enhance to display axis names
-        if (logThis){
-            console.log("planeCoordinates: " + JSON.stringify(planeCoordinates));
-        }
-
-        return planeCoordinates;
-    };
-
-    /**
      * Add point by adding to array.
      *
      * @param {Number} planeX
