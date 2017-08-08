@@ -37,7 +37,8 @@ function renderCanvases() {
     for (let i = 0; i < graphs.length; i++) {
         graphs[i].RenderCanvas();
     }
-    console.log("Total error: " + model.GetTotalError());
+    console.log("Cost: " + model.Cost());
+    console.log("Gradient Descent Step ([thetas]): " + JSON.stringify(model.hypothesisLine.EvaluateGradientDescentStep(model.hypothesisLine.thetas, model.dataPoints)));
 }
 
 // function buildAxes() {
@@ -134,24 +135,28 @@ function addHighlightPoints(sourceArray, targetArray) {
     addArrayToArrayOnce(sourceArray, targetArray);
 }
 
-function addFeatureControls() {
+function initFeatureControls() {
 
     let parentContainer = document.querySelector('.container-column');
 
     for (let i = 0; i < model.numDimensions; i++) {
 
         let control = new FeatureControl();
+
         control.OnControlChange = () => {
             //update the thetas in the ComplexLine
             model.hypothesisLine.thetas[i] = control.GetValue();
             renderCanvases();
         };
         featureControls.push(control);
-        control.SetValue(model.hypothesisLine.thetas[i]);
+        control.SetValue(i);
         control.SetDimension(i);
         control.SetSymbol("θ");
         control.SetSymbolSubscript(i);
         parentContainer.appendChild(control.element);
+
+        //initial thetas
+        model.hypothesisLine.thetas[i] = control.GetValue();
     }
 
     featureControls[0].SetEnabled(false);
@@ -175,11 +180,12 @@ function bindAxesControls() {
 let model = new Model(2);
 model.BuildSampleDataPoints();
 model.BuildSampleHypothesisLines();
+model.BuildSampleContour();
 
 initGraphs();
-renderCanvases();
-addFeatureControls();
+initFeatureControls();
 bindAxesControls();
+renderCanvases();
 
 
 //tasks
@@ -195,7 +201,7 @@ bindAxesControls();
  - create DataPoints with an array of x's and separate my concerns with drawing and data points.
  - refactor existing sample points to accept arrays of data points, e.g. 1x2 arrays, where every x0=0, and x1=
  (before value).
- - bind the controls so they actually affect the line. (fix bitch)    in addFeatureControls in the call to
+ - bind the controls so they actually affect the line. (fix bitch)    in initFeatureControls in the call to
  "newRow.OnControlChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
  (and rerender the canvas)
  */

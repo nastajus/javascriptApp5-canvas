@@ -24,24 +24,38 @@ function Model(numDimensions) {
      * @returns {DataPoint} point
      */
     this.CalculateShadowPoint = (point) => {
-        const y = this.hypothesisLine.Evaluate(point.xs);
+        const y = this.hypothesisLine.EvaluateY(point.xs);
         return new DataPoint(point.xs, y);
     };
 
     /**
-     * Display scalar amount of error.
-     * @returns {number} totalError
+     * Display scalar amount of cost.
+     *
+     * @returns {number} cost
      */
-    this.GetTotalError = () => {
+    this.Cost = () => {
 
-        let totalError = 0;
+        let cost = 0;
 
+        //m = dataPoints.length
         for (let point of this.dataPoints) {
+
+            //shadow = hθ( point i )
             let shadow = this.CalculateShadowPoint(point);
-            let magnitude = Math.abs(shadow.y - point.y);
-            totalError += magnitude;
+
+            let errorSquared = Math.pow(shadow.y - point.y, 2);
+
+            //Σ from i=1 to m
+            cost += errorSquared;
         }
-        return totalError;
+        return cost;
+    };
+
+    /**
+     * Gradient Descent step
+     */
+    this.CostStep = () => {
+
     };
 
     this.BuildSampleDataPoints = () => {
@@ -62,8 +76,12 @@ function Model(numDimensions) {
     };
 
     this.BuildSampleHypothesisLines = () => {
-        this.hypothesisLine = new ComplexLine([0, 1]);
+        this.hypothesisLine = new ComplexLine();
         this.hypothesisLine.name = "the hypothesis line";
+    };
+
+    this.BuildSampleContour = () => {
+
     };
 
     this.BuildContourRing = () => {

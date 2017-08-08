@@ -3339,7 +3339,7 @@ function factory (type, config, load, typed, math) {
   }
 
   /**
-   * Evaluate the node
+   * EvaluateY the node
    * @param {Object} [scope]  Scope to read/write variables
    * @return {*}              Returns the result
    */
@@ -42505,7 +42505,7 @@ module.exports = {
     'eval(expression)',
     'eval([expr1, expr2, expr3, ...])'
   ],
-  'description': 'Evaluate an expression or an array with expressions.',
+  'description': 'EvaluateY an expression or an array with expressions.',
   'examples': [
     'eval("2 + 3")',
     'eval("sqrt(" + 4 + ")")'
@@ -45201,7 +45201,7 @@ function factory (type, config, load, typed) {
   var parse = load(__webpack_require__(40));
 
   /**
-   * Evaluate an expression.
+   * EvaluateY an expression.
    *
    * Note the evaluating arbitrary expressions may involve security risks,
    * see [http://mathjs.org/docs/expressions/security.html](http://mathjs.org/docs/expressions/security.html) for more information.

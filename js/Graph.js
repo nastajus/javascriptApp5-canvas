@@ -361,7 +361,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         //would start at negative numbers later
         xs_sample[dimension_n] = 0;
-        let prevPoint = new DataPoint(xs_sample, complexLine.Evaluate(xs_sample));
+        let prevPoint = new DataPoint(xs_sample, complexLine.EvaluateY(xs_sample));
 
         //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
         //except x_0 (which is 1) and x_n.
@@ -369,7 +369,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             //sampling the line  at x_n = x_n_i
             xs_sample[dimension_n] = x_n_i;
             //Todo: I hate javascript
-            let newPoint = new DataPoint(xs_sample.slice(), complexLine.Evaluate(xs_sample));
+            let newPoint = new DataPoint(xs_sample.slice(), complexLine.EvaluateY(xs_sample));
             this.drawLine(prevPoint, newPoint, 1, fillStyle);
             prevPoint = newPoint;
         }
