@@ -351,6 +351,19 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawComplexLine = (complexLine, sampleRate, fillStyle) => {
 
+        // Coordinate system conversions: Page > Canvas > Plane > Data
+
+        let canvasTopLeftCorner = {x: 0, y: 0};
+        let canvasBottomRightCorner = {x: CANVAS_WIDTH, y: CANVAS_HEIGHT};
+
+        let dataTopLeftCorner = this.GetPlaneToData(this.GetCanvasToPlane(canvasTopLeftCorner, false), null, false);
+        let dataBottomRightCorner = this.GetPlaneToData(this.GetCanvasToPlane(canvasBottomRightCorner, false), null, false);
+
+        let dataLeft = dataTopLeftCorner.x;
+        let dataRight = dataBottomRightCorner.x;
+        let dataTop = dataTopLeftCorner.y;
+        let dataBottom = dataBottomRightCorner.y;
+
         //xs = [1 , 0]
         let xs_sample = [];
         xs_sample.push(1);
@@ -358,14 +371,12 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         //new Array(model.numDimensions);
 
         let dimension_n = this.dimensionXSelected;
-
-        //would start at negative numbers later
-        xs_sample[dimension_n] = 0;
+        xs_sample[dimension_n] = dataLeft;
         let prevPoint = new DataPoint(xs_sample, complexLine.EvaluateY(xs_sample));
 
         //iterate for every value of x_n, modify xs such that ALL of it's values are set to ZERO,
         //except x_0 (which is 1) and x_n.
-        for (let x_n_i = -this.planeOriginToCanvasOriginShift.x; x_n_i < CANVAS_WIDTH / CANVAS_SCALE + CANVAS_SCALE + this.planeOriginToCanvasOriginShift.x; x_n_i += sampleRate) {
+        for (let x_n_i = dataLeft; x_n_i <= dataRight + 1; x_n_i += sampleRate) {
             //sampling the line  at x_n = x_n_i
             xs_sample[dimension_n] = x_n_i;
             //Todo: I hate javascript
