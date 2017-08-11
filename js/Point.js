@@ -53,13 +53,6 @@ function SimplePoint(x, y) {
     this.x = x;
     this.y = y;
 
-    SimplePoint.maxCanvasX = Math.ceil((CANVAS_WIDTH / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_WIDTH;
-    SimplePoint.maxCanvasY = Math.ceil((CANVAS_HEIGHT / CANVAS_SCALE) / CANVAS_SCALE) * CANVAS_HEIGHT;
-
-    // this.PrintPoint = () => {
-    //     return "(" + this.x + ", " + this.y + ")";
-    // };
-
     SimplePoint.prototype.toString = (decimals) => {
         if (decimals) {
             return "(" + round(this.x, decimals) + ", " + round(this.y, decimals) + ")";

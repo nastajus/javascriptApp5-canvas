@@ -19,7 +19,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
-    this.planeOriginToCanvasOriginShift = {x:20, y:60};  // {x:1, y:0};
+    this.planeOriginToCanvasOriginShift = {x:0, y:0};  // {x:1, y:0};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);
@@ -161,7 +161,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.context.lineWidth = originalLineWidth;
     };
 
-
     /**
      * Lines are defined with two SimplePoint in Plane pixel units.
      *
@@ -169,16 +168,29 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawAxisLine = (graphDimension) => {
 
+        // Coordinate system conversions: Page > Canvas > Plane > Data
+
+        let canvasTopLeftCorner = {x: 0, y: 0};
+        let canvasBottomRightCorner = {x: CANVAS_WIDTH, y: CANVAS_HEIGHT};
+
+        let planeTopLeftCorner = this.GetCanvasToPlane(canvasTopLeftCorner, false);
+        let planeBottomRightCorner = this.GetCanvasToPlane(canvasBottomRightCorner, false);
+
+        let planeLeft = planeTopLeftCorner.x;
+        let planeRight = planeBottomRightCorner.x;
+        let planeTop = planeTopLeftCorner.y;
+        let planeBottom = planeBottomRightCorner.y;
+
         this.p1 = {};
         this.p2 = {};
 
         if (graphDimension === "x") {
-            this.p1 = new SimplePoint(0, 0);
-            this.p2 = new SimplePoint(SimplePoint.maxCanvasX, 0);
+            this.p1 = new SimplePoint(planeLeft, 0);
+            this.p2 = new SimplePoint(planeRight, 0);
         }
         else if (graphDimension === "y") {
-            this.p1 = new SimplePoint(0, 0);
-            this.p2 = new SimplePoint(0, SimplePoint.maxCanvasY);
+            this.p1 = new SimplePoint(0, planeBottom);
+            this.p2 = new SimplePoint(0, planeTop);
         }
 
         this.drawSimpleLine(new Line(this.p1, this.p2), "black", 5);
@@ -236,11 +248,9 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * @param intervalCanvasUnits
      */
     this.drawAxisScale = (intervalCanvasUnits) => {
-
-        // Page > Canvas > Plane > Data.
-
-        let planeStart = {x: 0, y: 0};
-        let planeEnd = {x: CANVAS_WIDTH, y: CANVAS_HEIGHT};
+        
+        let planeStart = new SimplePoint(0, 0);
+        let planeEnd = new SimplePoint(CANVAS_WIDTH, CANVAS_HEIGHT);
 
         for (let x = planeStart.x; x < planeEnd.x; x += intervalCanvasUnits.x) {
 
