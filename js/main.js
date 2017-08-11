@@ -31,6 +31,8 @@ function initGraphs() {
     //graphs[0].canvas.onclick = onClickCanvas;
     graphs[0].canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
     graphs[0].canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
+    graphs[0].canvas.addEventListener("wheel", onScrollCanvas, true);
+
 }
 
 function renderCanvases() {
@@ -40,13 +42,6 @@ function renderCanvases() {
     console.log("Cost: " + model.Cost());
     console.log("Gradient Descent Step ([thetas]): " + JSON.stringify(model.hypothesisLine.EvaluateGradientDescentStep(model.hypothesisLine.thetas, model.dataPoints)));
 }
-
-// function buildAxes() {
-//     for (let i = 0; i < graphs.length; i++) {
-//         graphs[i].axisLines.push(new AxisLine(graphs[i], "x"));
-//         graphs[i].axisLines.push(new AxisLine(graphs[i], "y"));
-//     }
-// }
 
 function onClickCanvas(e) {
     let element = graphs[0].canvas; //for now just hard-code
@@ -66,6 +61,8 @@ function onClickCanvas(e) {
     };
 
     //console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
+
+    canvasCoordinates = {x: canvasCoordinates.x / graph.zoomFactor, y: canvasCoordinates.y / graph.zoomFactor};
 
     let planeCoordinates = graph.GetCanvasToPlane(canvasCoordinates, true);
 
@@ -115,9 +112,9 @@ function onMoveCanvas(e) {
         y: e.pageY - offsetY
     };
 
-    let planeCoordinate = graph.GetCanvasToPlane(canvasCoordinates, false);
+    let planeCoordinates = graph.GetCanvasToPlane(canvasCoordinates, false);
 
-    let dataPosition = graph.GetPlaneToData(planeCoordinate, DATA_DECIMALS_ACCURACY, false);
+    let dataPosition = graph.GetPlaneToData(planeCoordinates, DATA_DECIMALS_ACCURACY, false);
 
     let closestDataPoints = model.findClosestDataPoints(dataPosition, graph.dimensionXSelected, CLICK_DISTANCE_ACCURACY_TO_POINT);
 
@@ -129,6 +126,31 @@ function onMoveCanvas(e) {
     removeArrayFromArrayOnce(diff, graph.highlightPoints);
 
     //graph.RenderCanvas();
+}
+
+function onScrollCanvas(e) {
+    e.preventDefault();
+    let graph = graphs[0];
+    //console.log("deltaY: " + e.deltaY, " e.shiftKey: " + e.shiftKey + " e.ctrlKey: " + e.ctrlKey);
+
+
+    let zoomIncrement = .1;
+
+    if (e.deltaY > 0) {
+        graph.zoomFactor = round(graph.zoomFactor + zoomIncrement, 1);
+    }
+    else if (e.deltaY < 0) {
+        graph.zoomFactor = round(graph.zoomFactor - zoomIncrement, 1);
+    }
+
+    console.log("zoom factor: " + graph.zoomFactor);
+
+    graph.RenderCanvas();
+
+   // e.shiftKey // magnifier
+   // //e.altKey
+   // e.ctrlKey //secondary axis
+   // e.deltaY //magnitude scrolled
 }
 
 function addHighlightPoints(sourceArray, targetArray) {

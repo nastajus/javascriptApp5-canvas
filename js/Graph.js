@@ -20,6 +20,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
     this.planeOriginToCanvasOriginShift = {x:40, y:200};  // {x:1, y:0};
+    this.zoomFactor = 1;
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);
@@ -113,8 +114,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.context.beginPath();
         let cp1 = pointBegin.GetDataToCanvas(dimensionX, this);
         let cp2 = pointEnd.GetDataToCanvas(dimensionX, this);
-        this.context.moveTo(cp1.x, cp1.y);
-        this.context.lineTo(cp2.x, cp2.y);
+        this.context.moveTo(cp1.x * this.zoomFactor, cp1.y * this.zoomFactor);
+        this.context.lineTo(cp2.x * this.zoomFactor, cp2.y * this.zoomFactor);
 
         if (strokeStyle !== undefined) {
             this.context.strokeStyle = strokeStyle;
@@ -145,15 +146,15 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
         this.context.beginPath();
-        this.context.moveTo(pointBegin.x, pointBegin.y);
-        this.context.lineTo(pointEnd.x, pointEnd.y);
+        this.context.moveTo(pointBegin.x * this.zoomFactor, pointBegin.y * this.zoomFactor);
+        this.context.lineTo(pointEnd.x * this.zoomFactor, pointEnd.y * this.zoomFactor);
 
         if (strokeStyle !== undefined) {
             this.context.strokeStyle = strokeStyle;
         }
 
         if (lineWidth !== undefined) {
-            this.context.lineWidth = lineWidth;
+            this.context.lineWidth = lineWidth * this.zoomFactor;
         }
 
         this.context.stroke();
@@ -336,7 +337,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.drawCanvasPoint = (x, y, fillStyle, pointRadius) => {
         const originalFillStyle = this.context.fillStyle;
         this.context.beginPath();
-        this.context.arc(x, y, (pointRadius) ? pointRadius : POINT_RADIUS, 0, Math.PI * 2, true);
+        this.context.arc(x * this.zoomFactor, y * this.zoomFactor, (pointRadius) ? pointRadius * this.zoomFactor : POINT_RADIUS * this.zoomFactor, 0, Math.PI * 2, true);
         this.context.closePath();
         this.context.fillStyle = fillStyle;
         this.context.fill();
@@ -348,16 +349,32 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         const originalFillStyle = this.context.fillStyle;
         this.context.fillStyle = fillStyle;
         let canvasPoint = point.GetDataToCanvas(dimensionX, this);
-        this.context.fillText(text, canvasPoint.x + textOffset.x, canvasPoint.y + textOffset.y);
+
+        let fontParts = this.context.font.split('px');
+        let originalFontSize = fontParts[0];
+        let originalFontType = fontParts[1];
+        let fontSize = originalFontSize * this.zoomFactor;
+        this.context.font = fontSize + 'px ' + originalFontType;
+
+        this.context.fillText(text, (canvasPoint.x + textOffset.x) * this.zoomFactor, (canvasPoint.y + textOffset.y) * this.zoomFactor);
         this.context.fillStyle = originalFillStyle;
+        this.context.font = originalFontSize + 'px ' + originalFontType;
     };
 
     this.drawCanvasPointText = (point, pointOffset, text, fillStyle) => {
         pointOffset = (!pointOffset) ? {x:0, y:0} : pointOffset;
         const originalFillStyle = this.context.fillStyle;
         this.context.fillStyle = fillStyle;
-        this.context.fillText(text, point.x + pointOffset.x, point.y + pointOffset.y);
+
+        let fontParts = this.context.font.split('px');
+        let originalFontSize = fontParts[0];
+        let originalFontType = fontParts[1];
+        let fontSize = originalFontSize * this.zoomFactor;
+        this.context.font = fontSize + 'px ' + originalFontType;
+
+        this.context.fillText(text, (point.x + pointOffset.x) * this.zoomFactor, (point.y + pointOffset.y) * this.zoomFactor);
         this.context.fillStyle = originalFillStyle;
+        this.context.font = originalFontSize + 'px ' + originalFontType;
     };
 
     this.drawHighlightPoints = (highlightPoints) => {
