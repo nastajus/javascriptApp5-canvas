@@ -27,7 +27,15 @@ function round(value, decimals) {
     else {
         throw new TypeError("Cannot round, not a number, for value: " + value);
     }
+}
 
+function roundNearest(n, roundTo) {
+    if (n > 0)
+        return Math.ceil(n/roundTo) * roundTo.toFixed();
+    else if (n < 0)
+        return Math.floor(n/roundTo) * roundTo.toFixed();
+    else
+        return roundTo;
 }
 
 function addArrayToArrayOnce(sourceArray, targetArray) {

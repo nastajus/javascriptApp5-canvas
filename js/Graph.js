@@ -19,7 +19,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
-    this.planeOriginToCanvasOriginShift = {x:0, y:0};  // {x:1, y:0};
+    this.planeOriginToCanvasOriginShift = {x:40, y:200};  // {x:1, y:0};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);
@@ -248,24 +248,42 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      * @param intervalCanvasUnits
      */
     this.drawAxisScale = (intervalCanvasUnits) => {
-        
-        let planeStart = new SimplePoint(0, 0);
-        let planeEnd = new SimplePoint(CANVAS_WIDTH, CANVAS_HEIGHT);
 
-        for (let x = planeStart.x; x < planeEnd.x; x += intervalCanvasUnits.x) {
+        // Coordinate system conversions: Page > Canvas > Plane > Data
+        
+        let rawCanvasTopLeftCorner = {x: 0, y: 0};
+        let rawCanvasBottomRightCorner = {x: CANVAS_WIDTH, y: CANVAS_HEIGHT};
+
+        let rawDataTopLeftCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasTopLeftCorner, false), null, false);
+        let rawDataBottomRightCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasBottomRightCorner, false), null, false);
+
+        let rawDataLeft = rawDataTopLeftCorner.x;
+        let rawDataRight = rawDataBottomRightCorner.x;
+        let rawDataTop = rawDataTopLeftCorner.y;
+        let rawDataBottom = rawDataBottomRightCorner.y;
+
+        let nearestDataLeft = roundNearest(rawDataLeft, 1);
+        let nearestDataRight = roundNearest(rawDataRight, 1);
+        let nearestDataTop = roundNearest(rawDataTop, 1);
+        let nearestDataBottom = roundNearest(rawDataBottom, 1);
+
+        let nearestPlaneAxisEdgeLeft = this.GetDataToPlane({x: nearestDataLeft, y: 0}, 0, false);
+        let nearestPlaneAxisEdgeRight = this.GetDataToPlane({x: nearestDataRight, y: 0}, 0, false);
+        let nearestPlaneAxisEdgeTop = this.GetDataToPlane({x: 0, y: nearestDataTop}, 0, false);
+        let nearestPlaneAxisEdgeBottom = this.GetDataToPlane({x: 0, y: nearestDataBottom}, 0, false);
+
+        for (let x = nearestPlaneAxisEdgeLeft.x; x < nearestPlaneAxisEdgeRight.x; x += intervalCanvasUnits.x) {
 
             //create tick mark
-            this.drawSimpleLine(new Line(
-                new SimplePoint(x, TICK_SIZE),
-                new SimplePoint(x, -TICK_SIZE))
-            );
+            let tick = new Line(new SimplePoint(x, TICK_SIZE), new SimplePoint(x, -TICK_SIZE));
+            this.drawSimpleLine(tick);
 
             let planeCoordinateText = new SimplePoint(x, 0);
             let canvasCoordinateText = this.GetPlaneToCanvas({x: planeCoordinateText.x, y: planeCoordinateText.y}, false);
             this.drawCanvasPointText(canvasCoordinateText, {x: -3, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
         }
 
-        for (let y = planeStart.y; y < planeEnd.y; y += intervalCanvasUnits.y) {
+        for (let y = nearestPlaneAxisEdgeBottom.y; y < nearestPlaneAxisEdgeTop.y; y += intervalCanvasUnits.y) {
 
             //create tick mark
             this.drawSimpleLine(new Line(
