@@ -5,10 +5,9 @@
 /**
  * MVC = View
  *
- * @param {Graph} _graph
  * @returns {AxesControlPair}
  */
-function AxesControlPair(_graph) {
+function AxesControlPair() {
 
     //external variable
     this.element = null;
@@ -34,7 +33,6 @@ function AxesControlPair(_graph) {
     //internal state
     this.element = document.querySelector(".container-column");
     let value = {x: 0, y: 0};
-    let graph = _graph;
     let changeSmall;
     let changeLarge;
 

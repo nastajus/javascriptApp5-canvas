@@ -2,6 +2,8 @@
  * Created by Ian Nastajus on 7/22/2017.
  */
 
+const ZOOM_INCREMENT = .1;
+
 /**
  * MVC = View
  *
@@ -21,6 +23,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.canvas.height = CANVAS_HEIGHT;
     this.planeOriginToCanvasOriginShift = {x:40, y:200};  // {x:1, y:0};
     this.zoomFactor = 1;
+    this.axesControl = {};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);

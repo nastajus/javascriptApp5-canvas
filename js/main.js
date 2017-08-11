@@ -7,7 +7,7 @@
 
 let graphs = [];
 let featureControls = [];
-let axesControls = [];
+//let axesControls = [];
 
 const GRAPH_TYPES = {
     REGRESSION: "REGRESSION",
@@ -131,26 +131,46 @@ function onMoveCanvas(e) {
 function onScrollCanvas(e) {
     e.preventDefault();
     let graph = graphs[0];
-    //console.log("deltaY: " + e.deltaY, " e.shiftKey: " + e.shiftKey + " e.ctrlKey: " + e.ctrlKey);
 
+    let changeSign = 0;
 
-    let zoomIncrement = .1;
-
+    //determine change direction to apply
     if (e.deltaY > 0) {
-        graph.zoomFactor = round(graph.zoomFactor + zoomIncrement, 1);
+        changeSign = 1;
     }
     else if (e.deltaY < 0) {
-        graph.zoomFactor = round(graph.zoomFactor - zoomIncrement, 1);
+        changeSign = -1;
     }
 
+    let value = graph.axesControl.GetValue();
+    let change = graph.axesControl.GetChangeLarge();
+
+    //cause translation vertically
+    if (e.shiftKey) {
+        console.log("SHIFT BUTTON HELD");
+        graph.axesControl.SetValue({
+            x: value.x,
+            y: value.y + changeSign * change
+        });
+    }
+
+    //cause translation horizontally
+    if (e.ctrlKey) {
+        console.log("CONTROL BUTTON HELD");
+        graph.axesControl.SetValue({
+            x: value.x + changeSign * change,
+            y: value.y
+        });
+    }
+
+    if (e.shiftKey || e.ctrlKey) {
+        return;
+    }
+
+    //cause zoom change
+    graph.zoomFactor = round(graph.zoomFactor + changeSign * ZOOM_INCREMENT, 1);
     console.log("zoom factor: " + graph.zoomFactor);
-
     graph.RenderCanvas();
-
-   // e.shiftKey // magnifier
-   // //e.altKey
-   // e.ctrlKey //secondary axis
-   // e.deltaY //magnitude scrolled
 }
 
 function addHighlightPoints(sourceArray, targetArray) {
@@ -188,11 +208,13 @@ function initFeatureControls() {
 }
 
 function bindAxesControls() {
-    let axesControl = new AxesControlPair(graphs[0]);
-    axesControls.push(axesControl);
-    axesControl.SetValue(graphs[0].planeOriginToCanvasOriginShift);
+    let graph = graphs[0];
+    let axesControl = new AxesControlPair();
+    //axesControls.push(axesControl);
+    graph.axesControl = axesControl;
+    axesControl.SetValue(graph.planeOriginToCanvasOriginShift);
     axesControl.OnControlChange = () => {
-        graphs[0].planeOriginToCanvasOriginShift = axesControl.GetValue();
+        graph.planeOriginToCanvasOriginShift = axesControl.GetValue();
         renderCanvases();
     };
     axesControl.SetChangeSmall(CANVAS_SCALE/4);
