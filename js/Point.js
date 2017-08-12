@@ -19,9 +19,24 @@ function DataPoint(xs, y) {
 
     this.Print = (decimals) => {
         if (decimals) {
-            return "P" + /*counter +*/ "(" + round(this.xs[graphs[0].dimensionXSelected], decimals) + ", " + round(this.y, decimals) + ")";
+            return "P" + /*counter +*/ "(" + round(this.xs[Graph.dimensionXSelected], decimals) + ", " + round(this.y, decimals) + ")";
         }
-        return "(" + this.xs[graphs[0].dimensionXSelected] + ", " + this.y + ")";
+        return "(" + this.xs[Graph.dimensionXSelected] + ", " + this.y + ")";
+    };
+
+    this.PrintFull = (decimals) => {
+        let rs = "[";
+        for (let x of xs) {
+            if (decimals) {
+                rs += round(x, decimals) + ", ";
+            }
+            else {
+                rs += x + ", ";
+            }
+        }
+        rs = rs.substr(0, rs.lastIndexOf(", ")) + "]";
+
+        return "(" + rs + ", " + this.y + ")";
     };
 
     /**

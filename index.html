@@ -26,21 +26,12 @@
         <section class="container">
             <section class="container-column">
                 <section class="container-row">
-                    <div class="pad">p</div>
                     <div class="title">linear regression graph</div>
                     <div class="pad">p</div>
                     <div class="title">contour graph</div>
+                    <div class="pad">p</div>
                 </section>
                 <section class="container-row">
-                    <div class="axis-vertical">
-                        <button class="axis-vg-large">⇈<br>LRG</button>
-                        <button class="axis-vg-small">↑<br>SML</button>
-                        <!--<input class="axis-textbox"/>-->
-                        <button class="axis-vl-small">↓<br>SML</button>
-                        <button class="axis-vl-large">⇊<br>LRG</button>
-                        <button class="axis-vm" id="id1">-<br>ZOOM</button>
-                        <button class="axis-vp">+<br>ZOOM</button>
-                    </div>
                     <canvas id="canvas1"></canvas>
                     <div class="axis-vertical">
                         <button class="axis-vg-large">⇈<br>LRG</button>
@@ -52,28 +43,37 @@
                         <button class="axis-vp">+<br>ZOOM</button>
                     </div>
                     <canvas id="canvas2"></canvas>
+                    <div class="axis-vertical">
+                        <button class="axis-vg-large">⇈<br>LRG</button>
+                        <button class="axis-vg-small">↑<br>SML</button>
+                        <!--<input class="axis-textbox"/>-->
+                        <button class="axis-vl-small">↓<br>SML</button>
+                        <button class="axis-vl-large">⇊<br>LRG</button>
+                        <button class="axis-vm" id="id1">-<br>ZOOM</button>
+                        <button class="axis-vp">+<br>ZOOM</button>
+                    </div>
                 </section>
                 <section class="container-row">
-                    <div class="pad">p</div>
                     <div class="axis-horizontal">
-                        <button class="axis-hm">-<br>ZOOM</button>
-                        <button class="axis-hp">+<br>ZOOM</button>
                         <button class="axis-hl-large">⇇<br>LRG</button>
                         <button class="axis-hl-small">←<br>SML</button>
                         <!--<input class="axis-textbox"/>-->
                         <button class="axis-hg-small">→<br>SML</button>
                         <button class="axis-hg-large">⇉<br>LRG</button>
+                        <button class="axis-hm">-<br>ZOOM</button>
+                        <button class="axis-hp">+<br>ZOOM</button>
                     </div>
                     <div class="pad">p</div>
                     <div class="axis-horizontal">
-                        <button class="axis-hm">-<br>ZOOM</button>
-                        <button class="axis-hp">+<br>ZOOM</button>
                         <button class="axis-hl-large">⇇<br>LRG</button>
                         <button class="axis-hl-small">←<br>SML</button>
                         <!--<input class="axis-textbox"/>-->
                         <button class="axis-hg-small">→<br>SML</button>
                         <button class="axis-hg-large">⇉<br>LRG</button>
+                        <button class="axis-hm">-<br>ZOOM</button>
+                        <button class="axis-hp">+<br>ZOOM</button>
                     </div>
+                    <div class="pad">p</div>
                 </section>
                 <section class="container-row" id="controls">
                     <template id="control-template">
@@ -96,6 +96,13 @@
                     </template>
                 </section>
             </section>
+            <template id="data-template">
+                <div>
+                    <select id="data-points" size="20" multiple="multiple">
+                        <!-- javascript inserts options here -->
+                    </select>
+                </div>
+            </template>
         </section>
 
 

@@ -24,7 +24,7 @@ const DATA_DECIMALS_ACCURACY = 1;
 const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 
 function initGraphs() {
-    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, () => model.dataPoints));
+    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, () => model.activeDataPoints));
     graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR, () => model.derivativePoints));
     Graph.InitShownDimensions();
 
@@ -40,7 +40,7 @@ function renderCanvases() {
         graphs[i].RenderCanvas();
     }
     console.log("Cost: " + model.Cost());
-    console.log("Gradient Descent Step ([thetas]): " + JSON.stringify(model.hypothesisLine.EvaluateGradientDescentStep(model.hypothesisLine.thetas, model.dataPoints)));
+    console.log("Gradient Descent Step ([thetas]): " + JSON.stringify(model.hypothesisLine.EvaluateGradientDescentStep(model.hypothesisLine.thetas, model.activeDataPoints)));
 }
 
 function onClickCanvas(e) {
@@ -74,8 +74,9 @@ function onClickCanvas(e) {
         case 0:
             console.log("Left button clicked, in graph: " + graph + ".");
             //console.log("Attempting To Add point.");
-            model.AddPoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y, true);
+            let dataPoint = model.AddPoint(dataCoordinates.x, Graph.dimensionXSelected, dataCoordinates.y, true);
             graph.RenderCanvas();
+            addDataPointOption(dataPoint);
             break;
 
         case 1:
@@ -85,9 +86,9 @@ function onClickCanvas(e) {
         case 2:
             console.log("Right button clicked, in graph: " + graph + ".");
             //console.log("Attempting To Remove point.");
-            model.RemovePoint(dataCoordinates.x, graph.dimensionXSelected, dataCoordinates.y, true);
+            model.RemovePoint(dataCoordinates.x, Graph.dimensionXSelected, dataCoordinates.y, true);
             graph.RenderCanvas();
-            //Todo: fix
+            //removeDataPointOption();
             break;
 
         default:
@@ -116,11 +117,11 @@ function onMoveCanvas(e) {
 
     let dataPosition = graph.GetPlaneToData(planeCoordinates, DATA_DECIMALS_ACCURACY, false);
 
-    let closestDataPoints = model.findClosestDataPoints(dataPosition, graph.dimensionXSelected, CLICK_DISTANCE_ACCURACY_TO_POINT);
+    let closestDataPoints = model.findClosestDataPoints(dataPosition, Graph.dimensionXSelected, CLICK_DISTANCE_ACCURACY_TO_POINT);
 
     addHighlightPoints(closestDataPoints, graph.highlightPoints);
 
-    let diff = arrayDifference(model.dataPoints, closestDataPoints);
+    let diff = arrayDifference(model.activeDataPoints, closestDataPoints);
 
     //remove highlight
     removeArrayFromArrayOnce(diff, graph.highlightPoints);
@@ -173,6 +174,16 @@ function onScrollCanvas(e) {
     graph.RenderCanvas();
 }
 
+function onClickList(e) {
+    //console.log(document.getElementById("data-points").options);
+    //console.log(this.options);
+
+    let selectedIndices = getSelectedOptionsIndices(this);
+    model.SetActiveDataPointIndices(selectedIndices);
+    renderCanvases();
+
+}
+
 function addHighlightPoints(sourceArray, targetArray) {
     addArrayToArrayOnce(sourceArray, targetArray);
 }
@@ -221,6 +232,43 @@ function bindAxesControls() {
     axesControl.SetChangeLarge(CANVAS_SCALE);
 }
 
+function initDataPointOptions() {
+    //initialize the data select list section to appear
+    let template = document.querySelector("#data-template").content;
+    let node = document.importNode(template, true);
+    let parentContainer = document.querySelector('.container');
+    parentContainer.appendChild(node);
+
+    //populate the data point list
+    let selectorNode = document.querySelector("#data-points");
+
+    for (let dataPoint of model.activeDataPoints) {
+        let element = document.createElement("option");
+        let textNode = document.createTextNode(dataPoint.PrintFull());
+        element.appendChild(textNode);
+        element.setAttribute("value", dataPoint.xs[Graph.dimensionXSelected] + "," + dataPoint.y);
+        element.setAttribute("selected", "selected");
+        selectorNode.appendChild(element);
+    }
+
+    //todo: consider moving this somewhere better
+    //document.getElementById("data-points").addEventListener("click", onClickList, true);
+}
+
+function addDataPointOption(dataPoint) {
+    let selectorNode = document.querySelector("#data-points");
+    let element = document.createElement("option");
+    let textNode = document.createTextNode(dataPoint.PrintFull());
+    element.appendChild(textNode);
+    element.setAttribute("value", dataPoint.xs[Graph.dimensionXSelected] + "," + dataPoint.y);
+    element.setAttribute("selected", "selected");
+    selectorNode.appendChild(element);
+}
+
+function removeDataPointOption(dataPoint) {
+    //...
+}
+
 let model = new Model(2);
 model.BuildSampleDataPoints();
 model.BuildSampleHypothesisLines();
@@ -229,12 +277,12 @@ model.BuildSampleContour();
 initGraphs();
 initFeatureControls();
 bindAxesControls();
+initDataPointOptions();
 renderCanvases();
 
 
 //tasks
 /*
- - move axes to show negatives plz (at least some way to scale)
  - as you modify b0,b1 (with a button), plot a point a point on the second canvas
  where it's color represents the total error (lerp).
  (ties nicely into gradient descent as is).
@@ -243,8 +291,6 @@ renderCanvases();
 //tasks redux
 /*
  - create DataPoints with an array of x's and separate my concerns with drawing and data points.
- - refactor existing sample points to accept arrays of data points, e.g. 1x2 arrays, where every x0=0, and x1=
- (before value).
  - bind the controls so they actually affect the line. (fix bitch)    in initFeatureControls in the call to
  "newRow.OnControlChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
  (and rerender the canvas)
@@ -253,6 +299,6 @@ renderCanvases();
 
 //tasks ++
 /*
- - consider consolidation of model.dimensionXSelected vs. graphs[0].dimensionXSelected...
+ - consider consolidation of model.dimensionXSelected vs. Graph.dimensionXSelected...
  - consider refactoring to more carefully chosen public (this.foo) & private (let bar) designs in my original function 'classes', like Graph.
 */

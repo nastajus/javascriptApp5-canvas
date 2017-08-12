@@ -3,6 +3,7 @@
  */
 
 const ZOOM_INCREMENT = .1;
+const DEFAULT_DIMENSION_SELECTED = 1;
 
 /**
  * MVC = View
@@ -25,8 +26,9 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.zoomFactor = 1;
     this.axesControl = {};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
-    this.dimensionXSelected = 1;
     let shownDimensions = new Array(model.numDimensions);
+
+    Graph.dimensionXSelected = DEFAULT_DIMENSION_SELECTED;
 
     Graph.InitShownDimensions = () => {
         for (let i = 0; i < shownDimensions.length; i++){
@@ -94,7 +96,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.drawCanvasPoints("lightgray", false);
-        this.drawDataPoints(model.dataPoints, 1, ["darkred", "forestgreen"], true);
+        this.drawDataPoints(model.activeDataPoints, 1, ["darkred", "forestgreen"], true);
         this.drawAxisLine("x");
         this.drawAxisLine("y");
         this.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
@@ -418,7 +420,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         xs_sample.push(0);
         //new Array(model.numDimensions);
 
-        let dimension_n = this.dimensionXSelected;
+        let dimension_n = Graph.dimensionXSelected;
         xs_sample[dimension_n] = dataLeft;
         let prevPoint = new DataPoint(xs_sample, complexLine.EvaluateY(xs_sample));
 

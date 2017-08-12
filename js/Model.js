@@ -11,7 +11,8 @@ let PLANE_TO_MODEL_RATIO;
 function Model(numDimensions) {
 
     this.numDimensions = numDimensions;
-    this.dataPoints = [];
+    this.dataSets = [];
+    this.activeDataPoints = [];
     this.hypothesisLine = {};
     this.derivativePoints = [];
 
@@ -37,8 +38,8 @@ function Model(numDimensions) {
 
         let cost = 0;
 
-        //m = dataPoints.length
-        for (let point of this.dataPoints) {
+        //m = activeDataPoints.length
+        for (let point of this.activeDataPoints) {
 
             //shadow = hθ( point i )
             let shadow = this.CalculateShadowPoint(point);
@@ -59,20 +60,25 @@ function Model(numDimensions) {
     };
 
     this.BuildSampleDataPoints = () => {
-        this.dataPoints.push(new DataPoint([1, 1], 1));
-        // this.dataPoints.push(new DataPoint([1, 3], 4));
-        // this.dataPoints.push(new DataPoint([1, 2], 5));
-        // this.dataPoints.push(new DataPoint([1, 3], 6));
-        // this.dataPoints.push(new DataPoint([1, 5], 5));
-        // this.dataPoints.push(new DataPoint([1, 5], 9));
-        // this.dataPoints.push(new DataPoint([1, 6], 4));
-        // this.dataPoints.push(new DataPoint([1, 7], 7));
-        // this.dataPoints.push(new DataPoint([1, 7], 8));
-        // this.dataPoints.push(new DataPoint([1, 8], 7));
-        // this.dataPoints.push(new DataPoint([1, 9], 9));
-        // this.dataPoints.push(new DataPoint([1, 12], 8));
-        // this.dataPoints.push(new DataPoint([1, 13], 9));
-        // this.dataPoints.push(new DataPoint([1, 14], 7));
+        let dataPoints = [];
+
+        dataPoints.push(new DataPoint([1, 1], 1));
+        dataPoints.push(new DataPoint([1, 3], 4));
+        dataPoints.push(new DataPoint([1, 2], 5));
+        dataPoints.push(new DataPoint([1, 3], 6));
+        dataPoints.push(new DataPoint([1, 5], 5));
+        dataPoints.push(new DataPoint([1, 5], 9));
+        dataPoints.push(new DataPoint([1, 6], 4));
+        dataPoints.push(new DataPoint([1, 7], 7));
+        dataPoints.push(new DataPoint([1, 7], 8));
+        dataPoints.push(new DataPoint([1, 8], 7));
+        dataPoints.push(new DataPoint([1, 9], 9));
+        dataPoints.push(new DataPoint([1, 12], 8));
+        dataPoints.push(new DataPoint([1, 13], 9));
+        dataPoints.push(new DataPoint([1, 14], 7));
+
+        this.activeDataPoints = dataPoints;
+        this.dataSets.push(dataPoints);
     };
 
     this.BuildSampleHypothesisLines = () => {
@@ -88,6 +94,13 @@ function Model(numDimensions) {
 
     };
 
+    this.SetActiveDataPointIndices = (dataPointIndices) => {
+        let dataPoints = [];
+        for (let index of dataPointIndices) {
+            dataPoints.push(this.dataSets[0][index]);
+        }
+        this.activeDataPoints = dataPoints;
+    };
 
     /**
      * Find nearest element (for now just data points) within a range of 1 cartesian unit.
@@ -99,7 +112,7 @@ function Model(numDimensions) {
      */
     this.findClosestDataPoints = (targetDataPosition, dimensionX, accuracyDataDistance) => {
 
-        let foundPoints = this.dataPoints.filter(entry =>
+        let foundPoints = this.activeDataPoints.filter(entry =>
             targetDataPosition.x > entry.xs[dimensionX] - accuracyDataDistance &&
             targetDataPosition.x <= entry.xs[dimensionX] + accuracyDataDistance &&
             targetDataPosition.y > entry.y - accuracyDataDistance &&
@@ -131,10 +144,12 @@ function Model(numDimensions) {
         newXs[dimensionX] = planeX;
         let dataPosition = new DataPoint(newXs, planeY);
 
-        this.dataPoints.push(dataPosition);
+        this.activeDataPoints.push(dataPosition);
         if (logThis){
             console.log("Added point, at dataPosition: " + JSON.stringify(dataPosition));
         }
+
+        return dataPosition;
     };
 
     /**
@@ -149,9 +164,9 @@ function Model(numDimensions) {
     this.RemovePoint = (canvasX, dimensionX, canvasY, logThis) => {
         let foundPoints = model.findClosestDataPoints({x: canvasX, y: canvasY}, dimensionX, CLICK_DISTANCE_ACCURACY_TO_POINT);
         for (let i = 0; i < foundPoints.length; i++) {
-            let firstMatchPointIndex = model.dataPoints.indexOf(foundPoints[i]); //index of on references
+            let firstMatchPointIndex = model.activeDataPoints.indexOf(foundPoints[i]); //index of on references
 
-            let removedPoints = model.dataPoints.splice(firstMatchPointIndex, 1);
+            let removedPoints = model.activeDataPoints.splice(firstMatchPointIndex, 1);
             let removedPoint = removedPoints[0];
 
             if (logThis){
@@ -159,5 +174,4 @@ function Model(numDimensions) {
             }
         }
     };
-
 }

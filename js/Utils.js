@@ -60,3 +60,23 @@ function arrayDifference(arrayA, arrayB) {
     });
     return diff;
 }
+
+function getSelectedOptions(selectionList) {
+    let optionsSelected = [];
+    for (let i = 0, len = selectionList.options.length; i < len; i++ ) {
+        if ( selectionList.options[i].selected === true ) {
+            optionsSelected.push(selectionList.options[i]);
+        }
+    }
+    return optionsSelected;
+}
+
+function getSelectedOptionsIndices(selectionList) {
+    let optionsSelected = [];
+    for (let i = 0, len = selectionList.options.length; i < len; i++ ) {
+        if ( selectionList.options[i].selected === true ) {
+            optionsSelected.push(i);
+        }
+    }
+    return optionsSelected;
+}
