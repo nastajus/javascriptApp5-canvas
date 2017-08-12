@@ -39,8 +39,10 @@ function renderCanvases() {
     for (let i = 0; i < graphs.length; i++) {
         graphs[i].RenderCanvas();
     }
-    console.log("Cost: " + model.Cost());
-    console.log("Gradient Descent Step ([thetas]): " + JSON.stringify(model.hypothesisLine.EvaluateGradientDescentStep(model.hypothesisLine.thetas, model.activeDataPoints)));
+    let costNode = document.querySelector("#cost");
+    costNode.textContent = round(model.Cost(), 0);
+
+    console.log("Gradient Descent Step ([thetas]): " + JSON.stringify(model.hypothesisLine.EvaluateGradientDescentStep(model.hypothesisLine.thetas, model.activeDataSet.dataPoints)));
 }
 
 function onClickCanvas(e) {
@@ -121,7 +123,7 @@ function onMoveCanvas(e) {
 
     addHighlightPoints(closestDataPoints, graph.highlightPoints);
 
-    let diff = arrayDifference(model.activeDataPoints, closestDataPoints);
+    let diff = arrayDifference(model.activeDataSet.dataPoints, closestDataPoints);
 
     //remove highlight
     removeArrayFromArrayOnce(diff, graph.highlightPoints);
@@ -190,11 +192,13 @@ function addHighlightPoints(sourceArray, targetArray) {
 
 function initFeatureControls() {
 
+    addMathFunctionOptionToTemplate();
+
     let parentContainer = document.querySelector('.container-column');
 
     for (let i = 0; i < model.numDimensions; i++) {
 
-        let control = new FeatureControl();
+        let control = new FeatureControl("control-template");
 
         control.OnControlChange = () => {
             //update the thetas in the ComplexLine
@@ -208,14 +212,12 @@ function initFeatureControls() {
         control.SetSymbolSubscript(i);
         parentContainer.appendChild(control.element);
 
+        featureControls[i].SetEnabled(true);
+        featureControls[i].SetTitle(model.activeDataSet.featureLabels[i]);
+
         //initial thetas
         model.hypothesisLine.thetas[i] = control.GetValue();
     }
-
-    featureControls[0].SetEnabled(false);
-    featureControls[1].SetEnabled(true);
-    featureControls[0].SetTitle("hidden base cartesian value");
-    featureControls[1].SetTitle("cartesian values to ~" + round(CANVAS_WIDTH / CANVAS_SCALE, 0));
 }
 
 function bindAxesControls() {
@@ -242,7 +244,7 @@ function initDataPointOptions() {
     //populate the data point list
     let selectorNode = document.querySelector("#data-points");
 
-    for (let dataPoint of model.activeDataPoints) {
+    for (let dataPoint of model.activeDataSet.dataPoints) {
         let element = document.createElement("option");
         let textNode = document.createTextNode(dataPoint.PrintFull());
         element.appendChild(textNode);
@@ -269,6 +271,78 @@ function removeDataPointOption(dataPoint) {
     //...
 }
 
+function addMathFunctionOptionToTemplate() {
+    //let selectorNode = document.querySelector(".math-functions");
+    let template = document.querySelector("#feature-template").content;
+    let node = document.importNode(template, true);
+    let selectorNode = node.querySelector(".math-functions");
+
+
+    //const initMathFunctionList = () => {
+        // for (let property in MATH_FUNCTIONS) {
+        //     if (object.hasOwnProperty(property)) {
+        //         // do stuff
+        //     }
+        // }
+
+        Object.keys(MATH_FUNCTIONS).forEach(function(key,index) {
+            // key: the name of the object key
+            // index: the ordinal position of the key within the object
+
+            let element = document.createElement("option");
+            let textNode = document.createTextNode(index + ": " + key);
+            element.appendChild(textNode);
+            element.setAttribute("value", index.toString());
+            selectorNode.appendChild(element);
+        });
+
+    //};
+    
+    let parentContainer = document.querySelector(".container-column");
+    parentContainer.appendChild(selectorNode);  
+}
+
+/**
+ * Intended to replace existing paradigm used in: function initFeatureControls.
+ * Will likely cause that one to be deprecated.
+ *
+ * Create a new row in the page.
+ *
+ */
+function addFeature(title) {
+    let parentContainer = document.querySelector('.container-column');
+
+    let numThetas = model.hypothesisLine.thetas.length;
+
+    let control = new FeatureControl2("feature-template");
+
+    control.OnControlChange = () => {
+        //update the thetas in the ComplexLine
+        model.hypothesisLine.thetas[numThetas] = control.GetValue();
+        renderCanvases();
+    };
+
+    //featureControls.push(control);
+    //control.SetValue(i);
+    control.SetDimension(numThetas);
+
+            //control.SetSymbol("θ");
+            //control.SetSymbolSubscript(numThetas);
+
+    //featureControls[numThetas].;
+            //control.SetEnabled(true);
+    //featureControls[numThetas].;
+            //control.SetTitle(title);
+
+    control.SetMathFunction(MATH_FUNCTIONS.squared);
+
+    parentContainer.appendChild(control.element);
+
+    //initial thetas
+    ///////model.hypothesisLine.thetas[i] = control.GetValue();
+
+}
+
 let model = new Model(2);
 model.BuildSampleDataPoints();
 model.BuildSampleHypothesisLines();
@@ -280,6 +354,7 @@ bindAxesControls();
 initDataPointOptions();
 renderCanvases();
 
+addFeature("pickles");
 
 //tasks
 /*

@@ -142,7 +142,6 @@ textarea {
     background-color: royalblue;
     display: flex;
     align-items: center;
-
 }
 
 canvas {
@@ -182,9 +181,17 @@ canvas {
 /*}*/
 
 
+input[type=checkbox] {
+    transform: scale(2);
+}
 
+.control-x-close {
+    font-size: 1.25em;
+}
 
-
+#addFeature {
+    font-size: 2em;
+}
 
 
 /* ==========================================================================

@@ -75,11 +75,17 @@
                     </div>
                     <div class="pad">p</div>
                 </section>
+                <section id="stats">
+                    <div class="control-row">
+                        <div class="pad">p</div>
+                        <button id="addFeature">ADD FEATURE</button>
+                        <div class="pad">p</div>
+                        <h1>COST: <span id="cost">###</span></h1>
+                    </div>
+                </section>
                 <section class="container-row" id="controls">
                     <template id="control-template">
                         <div class="control-row">
-                            <div class="pad">p</div>
-                            <input class="control-checkbox" type="checkbox" />
                             <div class="pad">p</div>
                             <h1 class="control-symbol"><span>&theta;</span><sub>0</sub></h1>
                             <div class="pad">p</div>
@@ -92,6 +98,20 @@
                             <button class="control-gt-small">&gt; SML</button>
                             <button class="control-gt-medium">&gt; MED</button>
                             <button class="control-gt-large">&gt; LRG</button>
+                            <div class="pad">p</div>
+                            <input class="control-checkbox" type="checkbox" />
+                            <button class="control-x-close">X</button>
+                        </div>
+                    </template>
+                    <template id="feature-template">
+                        <div class="control-row">
+                            <div class="pad">p</div>
+                            <select class="math-functions">
+                                <!-- javascript inserts options here -->
+                            </select>
+                            <!-- - 1: function (x, x^2, x^3, 2^x, 3^x, log(x), x+a?)-->
+                            <!-- - 2: feature selected from data set (dynamically added by javascript), id by xs[0] ?-->
+                            <!-- - 3: new feature name (reuse existing by default)-->
                         </div>
                     </template>
                 </section>
@@ -112,7 +132,9 @@
         <script src="js/Graph.js"></script>
         <script src="js/Model.js"></script>
         <script src="js/Line.js"></script>
-        <script src="js/Point.js"></script>
+        <script src="js/SimplePoint.js"></script>
+        <script src="js/DataPoint.js"></script>
+        <script src="js/DataSet.js"></script>
         <script src="js/Utils.js"></script>
         <script src="js/ComplexLine.js"></script>
         <script src="js/main.js"></script>

@@ -45,48 +45,9 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         return false;
     };
 
-
-    /**
-     * Evaluates state of pending dimension change, determining whether new visualization is permitted or not.
-     *
-     * @param {Number} dimension
-     * @param {boolean} attemptToggleValue
-     * @returns {boolean} dimensionChangeValid
-     */
-    //Graph.prototype.IsValidDimensionChange = function (dimension, attemptToggleValue) {
     Graph.IsValidDimensionChange = (dimension, attemptToggleValue) => {
 
-        if (typeof dimension !== 'number') {
-            throw new TypeError ("Cannot validate dimension change, variable dimension: " + dimension + " is not a number as expected." );
-        }
-
-        if (typeof attemptToggleValue !== 'boolean') {
-            throw new TypeError ("Cannot validate dimension change, variable attemptToggleValue: " + attemptToggleValue + " is not a boolean as expected." );
-        }
-
-        if (dimension < 0 || dimension > shownDimensions.length) {
-            throw new RangeError ("Cannot validate dimension change, variable dimension: " + dimension + " is beyond range of initialized dimensions." );
-        }
-
-
-        /// ... actual logic goes here ...
-
-        let MAX_DIMENSIONS_VISIBLE = 1;
-
-        //rule draft attempt:
-        //max 1 dimension allowed at a time.
         let dimensionChangeValid = true;
-        let countEnabled = 0;
-        for (let i = 0; i <= shownDimensions.length; i++) {
-            if (shownDimensions[i] === true){
-                countEnabled++;
-            }
-            if (attemptToggleValue === true && dimension !== i && countEnabled >= MAX_DIMENSIONS_VISIBLE) {
-                dimensionChangeValid = false;
-                console.log("Invalid to visualize dimension " + dimension + ", would exceed maximum of " + MAX_DIMENSIONS_VISIBLE + " dimensions that can be visualized.");
-                break;
-            }
-        }
 
         return dimensionChangeValid;
     };
@@ -96,7 +57,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.drawCanvasPoints("lightgray", false);
-        this.drawDataPoints(model.activeDataPoints, 1, ["darkred", "forestgreen"], true);
+        this.drawDataPoints(model.activeDataSet.dataPoints, 1, ["darkred", "forestgreen"], true);
         this.drawAxisLine("x");
         this.drawAxisLine("y");
         this.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
