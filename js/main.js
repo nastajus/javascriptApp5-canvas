@@ -171,8 +171,9 @@ function onScrollCanvas(e) {
     }
 
     //cause zoom change
-    graph.zoomFactor = round(graph.zoomFactor + changeSign * ZOOM_INCREMENT, 1);
-    console.log("zoom factor: " + graph.zoomFactor);
+    //graph.zoomFactor = round(graph.zoomFactor + changeSign * ZOOM_INCREMENT, 1);
+    graph.SetZoomFactor(round(graph.GetZoomFactor() + changeSign * ZOOM_INCREMENT, 1));
+    console.log("zoom factor: " + graph.GetZoomFactor());
     graph.RenderCanvas();
 }
 

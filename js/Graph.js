@@ -23,7 +23,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
     this.planeOriginToCanvasOriginShift = {x:40, y:200};  // {x:1, y:0};
-    this.zoomFactor = 1;
+    let zoomFactor = 1;
     this.axesControl = {};
     this.canvas.oncontextmenu = (e) => e.preventDefault();
     let shownDimensions = new Array(model.numDimensions);
@@ -80,8 +80,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         this.context.beginPath();
         let cp1 = pointBegin.GetDataToCanvas(dimensionX, this);
         let cp2 = pointEnd.GetDataToCanvas(dimensionX, this);
-        this.context.moveTo(cp1.x * this.zoomFactor, cp1.y * this.zoomFactor);
-        this.context.lineTo(cp2.x * this.zoomFactor, cp2.y * this.zoomFactor);
+        this.context.moveTo(cp1.x * zoomFactor, cp1.y * zoomFactor);
+        this.context.lineTo(cp2.x * zoomFactor, cp2.y * zoomFactor);
 
         if (strokeStyle !== undefined) {
             this.context.strokeStyle = strokeStyle;
@@ -112,15 +112,15 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         const originalStrokeStyle = this.context.strokeStyle;
         const originalLineWidth = this.context.lineWidth;
         this.context.beginPath();
-        this.context.moveTo(pointBegin.x * this.zoomFactor, pointBegin.y * this.zoomFactor);
-        this.context.lineTo(pointEnd.x * this.zoomFactor, pointEnd.y * this.zoomFactor);
+        this.context.moveTo(pointBegin.x * zoomFactor, pointBegin.y * zoomFactor);
+        this.context.lineTo(pointEnd.x * zoomFactor, pointEnd.y * zoomFactor);
 
         if (strokeStyle !== undefined) {
             this.context.strokeStyle = strokeStyle;
         }
 
         if (lineWidth !== undefined) {
-            this.context.lineWidth = lineWidth * this.zoomFactor;
+            this.context.lineWidth = lineWidth * zoomFactor;
         }
 
         this.context.stroke();
@@ -138,7 +138,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         // Coordinate system conversions: Page > Canvas > Plane > Data
 
         let canvasTopLeftCorner = {x: 0, y: 0};
-        let canvasBottomRightCorner = {x: CANVAS_WIDTH, y: CANVAS_HEIGHT};
+        let canvasBottomRightCorner = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
 
         let planeTopLeftCorner = this.GetCanvasToPlane(canvasTopLeftCorner, false);
         let planeBottomRightCorner = this.GetCanvasToPlane(canvasBottomRightCorner, false);
@@ -218,11 +218,11 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         // Coordinate system conversions: Page > Canvas > Plane > Data
         
-        let rawCanvasTopLeftCorner = {x: 0, y: 0};
-        let rawCanvasBottomRightCorner = {x: CANVAS_WIDTH, y: CANVAS_HEIGHT};
+        let rawCanvasAxisEdgesTopLeft = {x: 0, y: 0};
+        let rawCanvasAxisEdgesBottomRight = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
 
-        let rawDataTopLeftCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasTopLeftCorner, false), null, false);
-        let rawDataBottomRightCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasBottomRightCorner, false), null, false);
+        let rawDataTopLeftCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesTopLeft, false), null, false);
+        let rawDataBottomRightCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesBottomRight, false), null, false);
 
         let rawDataLeft = rawDataTopLeftCorner.x;
         let rawDataRight = rawDataBottomRightCorner.x;
@@ -234,12 +234,10 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         let nearestDataTop = roundNearest(rawDataTop, 1);
         let nearestDataBottom = roundNearest(rawDataBottom, 1);
 
-        let nearestPlaneAxisEdgeLeft = this.GetDataToPlane({x: nearestDataLeft, y: 0}, 0, false);
-        let nearestPlaneAxisEdgeRight = this.GetDataToPlane({x: nearestDataRight, y: 0}, 0, false);
-        let nearestPlaneAxisEdgeTop = this.GetDataToPlane({x: 0, y: nearestDataTop}, 0, false);
-        let nearestPlaneAxisEdgeBottom = this.GetDataToPlane({x: 0, y: nearestDataBottom}, 0, false);
+        let nearestPlaneAxisEdgesTopLeft = this.GetDataToPlane({x: nearestDataLeft, y: nearestDataTop}, 0, false);
+        let nearestPlaneAxisEdgesBottomRight = this.GetDataToPlane({x: nearestDataRight, y: nearestDataBottom}, 0, false);
 
-        for (let x = nearestPlaneAxisEdgeLeft.x; x < nearestPlaneAxisEdgeRight.x; x += intervalCanvasUnits.x) {
+        for (let x = nearestPlaneAxisEdgesTopLeft.x; x < nearestPlaneAxisEdgesBottomRight.x; x += intervalCanvasUnits.x) {
 
             //create tick mark
             let tick = new Line(new SimplePoint(x, TICK_SIZE), new SimplePoint(x, -TICK_SIZE));
@@ -250,7 +248,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             this.drawCanvasPointText(canvasCoordinateText, {x: -3, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
         }
 
-        for (let y = nearestPlaneAxisEdgeBottom.y; y < nearestPlaneAxisEdgeTop.y; y += intervalCanvasUnits.y) {
+        for (let y = nearestPlaneAxisEdgesBottomRight.y; y < nearestPlaneAxisEdgesTopLeft.y; y += intervalCanvasUnits.y) {
 
             //create tick mark
             this.drawSimpleLine(new Line(
@@ -303,7 +301,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.drawCanvasPoint = (x, y, fillStyle, pointRadius) => {
         const originalFillStyle = this.context.fillStyle;
         this.context.beginPath();
-        this.context.arc(x * this.zoomFactor, y * this.zoomFactor, (pointRadius) ? pointRadius * this.zoomFactor : POINT_RADIUS * this.zoomFactor, 0, Math.PI * 2, true);
+        this.context.arc(x * zoomFactor, y * zoomFactor, (pointRadius) ? pointRadius * zoomFactor : POINT_RADIUS * zoomFactor, 0, Math.PI * 2, true);
         this.context.closePath();
         this.context.fillStyle = fillStyle;
         this.context.fill();
@@ -319,10 +317,10 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         let fontParts = this.context.font.split('px');
         let originalFontSize = fontParts[0];
         let originalFontType = fontParts[1];
-        let fontSize = originalFontSize * this.zoomFactor;
+        let fontSize = originalFontSize * zoomFactor;
         this.context.font = fontSize + 'px ' + originalFontType;
 
-        this.context.fillText(text, (canvasPoint.x + textOffset.x) * this.zoomFactor, (canvasPoint.y + textOffset.y) * this.zoomFactor);
+        this.context.fillText(text, (canvasPoint.x + textOffset.x) * zoomFactor, (canvasPoint.y + textOffset.y) * zoomFactor);
         this.context.fillStyle = originalFillStyle;
         this.context.font = originalFontSize + 'px ' + originalFontType;
     };
@@ -335,10 +333,10 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         let fontParts = this.context.font.split('px');
         let originalFontSize = fontParts[0];
         let originalFontType = fontParts[1];
-        let fontSize = originalFontSize * this.zoomFactor;
+        let fontSize = originalFontSize * zoomFactor;
         this.context.font = fontSize + 'px ' + originalFontType;
 
-        this.context.fillText(text, (point.x + pointOffset.x) * this.zoomFactor, (point.y + pointOffset.y) * this.zoomFactor);
+        this.context.fillText(text, (point.x + pointOffset.x) * zoomFactor, (point.y + pointOffset.y) * zoomFactor);
         this.context.fillStyle = originalFillStyle;
         this.context.font = originalFontSize + 'px ' + originalFontType;
     };
@@ -416,11 +414,12 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         //let start = this.GetPlaneToCanvas(new SimplePoint(0, 0), false);  //webstorm limitation with invalid argument
         let start = this.GetPlaneToCanvas({x: 0, y: 0}, false);
-        let end = this.GetPlaneToCanvas({x: CANVAS_WIDTH, y: CANVAS_HEIGHT}, false);
+        let end = this.GetPlaneToCanvas({x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor}, false);
 
         //for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
         for (let canvasX = start.x; canvasX <= end.x; canvasX += CANVAS_SCALE) {
-            for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
+            //for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
+            for (let canvasY = start.y; canvasY >= end.y; canvasY -= CANVAS_SCALE) {
                 //this.drawCanvasPoint(canvasX + this.planeOriginToCanvasOriginShift.x, canvasY - this.planeOriginToCanvasOriginShift.y, fillStyle);
                 this.drawCanvasPoint(canvasX, canvasY, fillStyle);
                 if (drawText) {
@@ -564,6 +563,24 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         }
 
         return planeCoordinates;
+    };
+
+
+    /**
+     * Public accessor for limiting mutation externally in ways that could break the application.
+     * @returns {number}
+     * @constructor
+     */
+    this.SetZoomFactor = (newZoomFactor) => {
+        if (newZoomFactor === 0) {
+            console.log("Zoom factor not permitted to equal 0. Returning previous zoom factor of : " + zoomFactor);
+            return zoomFactor;
+        }
+        zoomFactor = newZoomFactor;
+        return newZoomFactor;
+    };
+    this.GetZoomFactor = () => {
+        return zoomFactor;
     };
 
 }
