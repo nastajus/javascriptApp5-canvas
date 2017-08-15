@@ -64,7 +64,7 @@ function onClickCanvas(e) {
 
     //console.log("canvasCoordinates: " + JSON.stringify(canvasCoordinates));
 
-    canvasCoordinates = {x: canvasCoordinates.x / graph.zoomFactor, y: canvasCoordinates.y / graph.zoomFactor};
+    canvasCoordinates = {x: canvasCoordinates.x / graph.GetZoomFactor(), y: canvasCoordinates.y / graph.GetZoomFactor()};
 
     let planeCoordinates = graph.GetCanvasToPlane(canvasCoordinates, true);
 

@@ -218,12 +218,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         // Coordinate system conversions: Page > Canvas > Plane > Data
 
-        // let rawCanvasAxisEdgesTopLeft = {x: 0, y: 0};
-        // let rawCanvasAxisEdgesBottomRight = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
-
-        //let cornersPlaneTopLeft = this.GetCorner({x: 0, y: 0}).temp_placeholder_a;
-        //let cornersPlaneBottomRight = this.GetCorner({x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor}).temp_placeholder_b;
-
         let cornersPlaneTopLeft = this.GetCorner({x: 0, y: 0});
         let cornersPlaneBottomRight = this.GetCorner({x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor});
 
@@ -350,6 +344,10 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
      */
     this.drawComplexLine = (complexLine, sampleRate, fillStyle) => {
 
+        // at this time, exactly 2 dimensions of x are iterated over, as well as exactly 2 thetas.
+        // what i want to do is transition this from that to 1 to many.
+        // suppose in the case of 1 feature, in theory, lines would have no ascension aspect, and only go left-right.
+
         // Coordinate system conversions: Page > Canvas > Plane > Data
 
         let canvasTopLeftCorner = {x: 0, y: 0};
@@ -360,8 +358,6 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         let dataLeft = dataTopLeftCorner.x;
         let dataRight = dataBottomRightCorner.x;
-        let dataTop = dataTopLeftCorner.y;
-        let dataBottom = dataBottomRightCorner.y;
 
         //xs = [1 , 0]
         let xs_sample = [];
@@ -392,24 +388,29 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         // Coordinate system conversions: Page > Canvas > Plane > Data
 
-        let subOriginScaleShift = {
-            x: this.planeOriginToCanvasOriginShift.x % CANVAS_SCALE,
-            y: this.planeOriginToCanvasOriginShift.y % CANVAS_SCALE
-        };
+        let cornerCanvasTopLeft = {x: 0, y: 0};
+        let cornerCanvasBottomRight = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
 
-        // let startX = 0 - this.planeOriginToCanvasOriginShift.x + subOriginScaleShift.x;
-        // let endX = CANVAS_WIDTH - this.planeOriginToCanvasOriginShift.x;
-        let startY = CANVAS_HEIGHT + this.planeOriginToCanvasOriginShift.y - subOriginScaleShift.y;
-        let endY = this.planeOriginToCanvasOriginShift.y;
+        let rawDataCornerTopLeft = this.GetPlaneToData(this.GetCanvasToPlane(cornerCanvasTopLeft, false), null, false);
+        let rawDataCornerBottomRight = this.GetPlaneToData(this.GetCanvasToPlane(cornerCanvasBottomRight, false), null, false);
 
-        //let start = this.GetPlaneToCanvas(new SimplePoint(0, 0), false);  //webstorm limitation with invalid argument
-        let start = this.GetPlaneToCanvas({x: 0, y: 0}, false);
-        let end = this.GetPlaneToCanvas({x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor}, false);
+        let rawDataEdgeLeft = rawDataCornerTopLeft.x;
+        let rawDataEdgeTop = rawDataCornerTopLeft.y;
+        let rawDataEdgeRight = rawDataCornerBottomRight.x;
+        let rawDataEdgeBottom = rawDataCornerBottomRight.y;
+
+        let nearestDataLeft = roundNearest(rawDataEdgeLeft, 1);
+        let nearestDataTop = roundNearest(rawDataEdgeTop, 1);
+        let nearestDataRight = roundNearest(rawDataEdgeRight, 1);
+        let nearestDataBottom = roundNearest(rawDataEdgeBottom, 1);
+
+        let start = this.GetPlaneToCanvas(this.GetDataToPlane({x: nearestDataLeft, y: nearestDataTop}, 0, false), false);
+        let end = this.GetPlaneToCanvas(this.GetDataToPlane({x: nearestDataRight, y: nearestDataBottom}, 0, false), false);
 
         //for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
         for (let canvasX = start.x; canvasX <= end.x; canvasX += CANVAS_SCALE) {
             //for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
-            for (let canvasY = start.y; canvasY >= end.y; canvasY -= CANVAS_SCALE) {
+            for (let canvasY = start.y; canvasY <= end.y; canvasY += CANVAS_SCALE) {
                 //this.drawCanvasPoint(canvasX + this.planeOriginToCanvasOriginShift.x, canvasY - this.planeOriginToCanvasOriginShift.y, fillStyle);
                 this.drawCanvasPoint(canvasX, canvasY, fillStyle);
                 if (drawText) {
@@ -556,33 +557,27 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     };
 
 
+    /**
+     * Convert a "raw canvas corner" across coordinate systems to output "nearest plane corner"
+     * Todo: Perhaps RE-INTEGRATE this GetCorner() code into drawAxisScale(). Only one usage at present.
+     *
+     * @param rawCanvasCorner
+     * @returns {{x: number, y: number}} nearestPlaneCorner
+     */
     this.GetCorner = (rawCanvasCorner) => {
-        // let rawCanvasAxisEdgesTopLeft = {x: 0, y: 0};
-        // let rawCanvasAxisEdgesBottomRight = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
 
-        // let rawDataTopLeftCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesTopLeft, false), null, false);
-        // let rawDataBottomRightCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesBottomRight, false), null, false);
+        // Coordinate system conversions: Page > Canvas > Plane > Data
+
         let rawDataCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasCorner, false), null, false);
 
-        // let rawDataLeft = rawDataTopLeftCorner.x;
-        // let rawDataRight = rawDataBottomRightCorner.x;
-        // let rawDataTop = rawDataTopLeftCorner.y;
-        // let rawDataBottom = rawDataBottomRightCorner.y;
         let rawDataEdgeHorizontal = rawDataCorner.x;
         let rawDataEdgeVertical = rawDataCorner.y;
 
-        // let nearestDataLeft = roundNearest(rawDataLeft, 1);
-        // let nearestDataRight = roundNearest(rawDataRight, 1);
-        // let nearestDataTop = roundNearest(rawDataTop, 1);
-        // let nearestDataBottom = roundNearest(rawDataBottom, 1);
         let nearestDataHorizontal = roundNearest(rawDataEdgeHorizontal, 1);
         let nearestDataVertical = roundNearest(rawDataEdgeVertical, 1);
 
-        // let nearestPlaneAxisEdgesTopLeft = this.GetDataToPlane({x: nearestDataLeft, y: nearestDataTop}, 0, false);
-        // let nearestPlaneAxisEdgesBottomRight = this.GetDataToPlane({x: nearestDataRight, y: nearestDataBottom}, 0, false);
         let nearestPlaneCorner = this.GetDataToPlane({x: nearestDataHorizontal, y: nearestDataVertical}, 0, false);
 
-        // return {temp_placeholder_a: nearestPlaneAxisEdgesTopLeft, temp_placeholder_b: nearestPlaneAxisEdgesBottomRight} ;
         return nearestPlaneCorner;
     };
 
