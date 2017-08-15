@@ -217,27 +217,17 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.drawAxisScale = (intervalCanvasUnits) => {
 
         // Coordinate system conversions: Page > Canvas > Plane > Data
-        
-        let rawCanvasAxisEdgesTopLeft = {x: 0, y: 0};
-        let rawCanvasAxisEdgesBottomRight = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
 
-        let rawDataTopLeftCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesTopLeft, false), null, false);
-        let rawDataBottomRightCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesBottomRight, false), null, false);
+        // let rawCanvasAxisEdgesTopLeft = {x: 0, y: 0};
+        // let rawCanvasAxisEdgesBottomRight = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
 
-        let rawDataLeft = rawDataTopLeftCorner.x;
-        let rawDataRight = rawDataBottomRightCorner.x;
-        let rawDataTop = rawDataTopLeftCorner.y;
-        let rawDataBottom = rawDataBottomRightCorner.y;
+        //let cornersPlaneTopLeft = this.GetCorner({x: 0, y: 0}).temp_placeholder_a;
+        //let cornersPlaneBottomRight = this.GetCorner({x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor}).temp_placeholder_b;
 
-        let nearestDataLeft = roundNearest(rawDataLeft, 1);
-        let nearestDataRight = roundNearest(rawDataRight, 1);
-        let nearestDataTop = roundNearest(rawDataTop, 1);
-        let nearestDataBottom = roundNearest(rawDataBottom, 1);
+        let cornersPlaneTopLeft = this.GetCorner({x: 0, y: 0});
+        let cornersPlaneBottomRight = this.GetCorner({x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor});
 
-        let nearestPlaneAxisEdgesTopLeft = this.GetDataToPlane({x: nearestDataLeft, y: nearestDataTop}, 0, false);
-        let nearestPlaneAxisEdgesBottomRight = this.GetDataToPlane({x: nearestDataRight, y: nearestDataBottom}, 0, false);
-
-        for (let x = nearestPlaneAxisEdgesTopLeft.x; x < nearestPlaneAxisEdgesBottomRight.x; x += intervalCanvasUnits.x) {
+        for (let x = cornersPlaneTopLeft.x; x < cornersPlaneBottomRight.x; x += intervalCanvasUnits.x) {
 
             //create tick mark
             let tick = new Line(new SimplePoint(x, TICK_SIZE), new SimplePoint(x, -TICK_SIZE));
@@ -248,7 +238,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
             this.drawCanvasPointText(canvasCoordinateText, {x: -3, y: +20}, round(x / PLANE_TO_MODEL_RATIO.x, 0), "black");
         }
 
-        for (let y = nearestPlaneAxisEdgesBottomRight.y; y < nearestPlaneAxisEdgesTopLeft.y; y += intervalCanvasUnits.y) {
+        for (let y = cornersPlaneBottomRight.y; y < cornersPlaneTopLeft.y; y += intervalCanvasUnits.y) {
 
             //create tick mark
             this.drawSimpleLine(new Line(
@@ -565,6 +555,36 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         return planeCoordinates;
     };
 
+
+    this.GetCorner = (rawCanvasCorner) => {
+        // let rawCanvasAxisEdgesTopLeft = {x: 0, y: 0};
+        // let rawCanvasAxisEdgesBottomRight = {x: CANVAS_WIDTH / zoomFactor, y: CANVAS_HEIGHT / zoomFactor};
+
+        // let rawDataTopLeftCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesTopLeft, false), null, false);
+        // let rawDataBottomRightCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasAxisEdgesBottomRight, false), null, false);
+        let rawDataCorner = this.GetPlaneToData(this.GetCanvasToPlane(rawCanvasCorner, false), null, false);
+
+        // let rawDataLeft = rawDataTopLeftCorner.x;
+        // let rawDataRight = rawDataBottomRightCorner.x;
+        // let rawDataTop = rawDataTopLeftCorner.y;
+        // let rawDataBottom = rawDataBottomRightCorner.y;
+        let rawDataEdgeHorizontal = rawDataCorner.x;
+        let rawDataEdgeVertical = rawDataCorner.y;
+
+        // let nearestDataLeft = roundNearest(rawDataLeft, 1);
+        // let nearestDataRight = roundNearest(rawDataRight, 1);
+        // let nearestDataTop = roundNearest(rawDataTop, 1);
+        // let nearestDataBottom = roundNearest(rawDataBottom, 1);
+        let nearestDataHorizontal = roundNearest(rawDataEdgeHorizontal, 1);
+        let nearestDataVertical = roundNearest(rawDataEdgeVertical, 1);
+
+        // let nearestPlaneAxisEdgesTopLeft = this.GetDataToPlane({x: nearestDataLeft, y: nearestDataTop}, 0, false);
+        // let nearestPlaneAxisEdgesBottomRight = this.GetDataToPlane({x: nearestDataRight, y: nearestDataBottom}, 0, false);
+        let nearestPlaneCorner = this.GetDataToPlane({x: nearestDataHorizontal, y: nearestDataVertical}, 0, false);
+
+        // return {temp_placeholder_a: nearestPlaneAxisEdgesTopLeft, temp_placeholder_b: nearestPlaneAxisEdgesBottomRight} ;
+        return nearestPlaneCorner;
+    };
 
     /**
      * Public accessor for limiting mutation externally in ways that could break the application.
