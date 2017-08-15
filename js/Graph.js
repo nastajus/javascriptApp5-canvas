@@ -56,7 +56,7 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
 
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.drawCanvasPoints("lightgray", false);
+        this.drawReferencePoints("lightgray", false);
         this.drawDataPoints(model.activeDataSet.dataPoints, 1, ["darkred", "forestgreen"], true);
         this.drawAxisLine("x");
         this.drawAxisLine("y");
@@ -400,21 +400,29 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     /**
      * Draw cartesian graph visualization aid, by making a grid of Points, spaced apart consistently.
      */
-    this.drawCanvasPoints = (fillStyle, drawText) => {
+    this.drawReferencePoints = (fillStyle, drawText) => {
+
+        // Coordinate system conversions: Page > Canvas > Plane > Data
 
         let subOriginScaleShift = {
             x: this.planeOriginToCanvasOriginShift.x % CANVAS_SCALE,
             y: this.planeOriginToCanvasOriginShift.y % CANVAS_SCALE
         };
 
-        let startX = 0 - this.planeOriginToCanvasOriginShift.x + subOriginScaleShift.x;
-        let endX = CANVAS_WIDTH - this.planeOriginToCanvasOriginShift.x;
+        // let startX = 0 - this.planeOriginToCanvasOriginShift.x + subOriginScaleShift.x;
+        // let endX = CANVAS_WIDTH - this.planeOriginToCanvasOriginShift.x;
         let startY = CANVAS_HEIGHT + this.planeOriginToCanvasOriginShift.y - subOriginScaleShift.y;
         let endY = this.planeOriginToCanvasOriginShift.y;
 
-        for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
+        //let start = this.GetPlaneToCanvas(new SimplePoint(0, 0), false);  //webstorm limitation with invalid argument
+        let start = this.GetPlaneToCanvas({x: 0, y: 0}, false);
+        let end = this.GetPlaneToCanvas({x: CANVAS_WIDTH, y: CANVAS_HEIGHT}, false);
+
+        //for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
+        for (let canvasX = start.x; canvasX <= end.x; canvasX += CANVAS_SCALE) {
             for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
-                this.drawCanvasPoint(canvasX + this.planeOriginToCanvasOriginShift.x, canvasY - this.planeOriginToCanvasOriginShift.y, fillStyle);
+                //this.drawCanvasPoint(canvasX + this.planeOriginToCanvasOriginShift.x, canvasY - this.planeOriginToCanvasOriginShift.y, fillStyle);
+                this.drawCanvasPoint(canvasX, canvasY, fillStyle);
                 if (drawText) {
                     let canvasPoint = new SimplePoint(canvasX,canvasY);
                     this.drawCanvasPointText(canvasPoint, {x:5, y:15}, canvasPoint.toString(), fillStyle);

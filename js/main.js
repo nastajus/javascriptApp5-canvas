@@ -299,7 +299,7 @@ function addMathFunctionOptionToTemplate() {
     //};
     
     let parentContainer = document.querySelector(".container-column");
-    parentContainer.appendChild(selectorNode);  
+    parentContainer.appendChild(selectorNode);
 }
 
 /**
