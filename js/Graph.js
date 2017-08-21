@@ -407,11 +407,8 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         let start = this.GetPlaneToCanvas(this.GetDataToPlane({x: nearestDataLeft, y: nearestDataTop}, 0, false), false);
         let end = this.GetPlaneToCanvas(this.GetDataToPlane({x: nearestDataRight, y: nearestDataBottom}, 0, false), false);
 
-        //for (let canvasX = startX; canvasX <= endX; canvasX += CANVAS_SCALE) {
         for (let canvasX = start.x; canvasX <= end.x; canvasX += CANVAS_SCALE) {
-            //for (let canvasY = startY; canvasY >= endY; canvasY -= CANVAS_SCALE) {
             for (let canvasY = start.y; canvasY <= end.y; canvasY += CANVAS_SCALE) {
-                //this.drawCanvasPoint(canvasX + this.planeOriginToCanvasOriginShift.x, canvasY - this.planeOriginToCanvasOriginShift.y, fillStyle);
                 this.drawCanvasPoint(canvasX, canvasY, fillStyle);
                 if (drawText) {
                     let canvasPoint = new SimplePoint(canvasX,canvasY);

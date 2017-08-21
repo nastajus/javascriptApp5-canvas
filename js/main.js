@@ -193,13 +193,13 @@ function addHighlightPoints(sourceArray, targetArray) {
 
 function initFeatureControls() {
 
-    addMathFunctionOptionToTemplate();
+    //addMathFunctionOptionToTemplate();
 
     let parentContainer = document.querySelector('.container-column');
 
     for (let i = 0; i < model.numDimensions; i++) {
 
-        let control = new FeatureControl("control-template");
+        let control = new FeatureControl("control-template-old");
 
         control.OnControlChange = () => {
             //update the thetas in the ComplexLine
@@ -213,7 +213,7 @@ function initFeatureControls() {
         control.SetSymbolSubscript(i);
         parentContainer.appendChild(control.element);
 
-        featureControls[i].SetEnabled(true);
+        // featureControls[i].SetEnabled(true);
         featureControls[i].SetTitle(model.activeDataSet.featureLabels[i]);
 
         //initial thetas
@@ -274,7 +274,7 @@ function removeDataPointOption(dataPoint) {
 
 function addMathFunctionOptionToTemplate() {
     //let selectorNode = document.querySelector(".math-functions");
-    let template = document.querySelector("#feature-template").content;
+    let template = document.querySelector("#control-template-new").content;
     let node = document.importNode(template, true);
     let selectorNode = node.querySelector(".math-functions");
 
@@ -303,47 +303,6 @@ function addMathFunctionOptionToTemplate() {
     parentContainer.appendChild(selectorNode);
 }
 
-/**
- * Intended to replace existing paradigm used in: function initFeatureControls.
- * Will likely cause that one to be deprecated.
- *
- * Create a new row in the page.
- *
- */
-function addFeature(title) {
-    let parentContainer = document.querySelector('.container-column');
-
-    let numThetas = model.hypothesisLine.thetas.length;
-
-    let control = new FeatureControl2("feature-template");
-
-    control.OnControlChange = () => {
-        //update the thetas in the ComplexLine
-        model.hypothesisLine.thetas[numThetas] = control.GetValue();
-        renderCanvases();
-    };
-
-    //featureControls.push(control);
-    //control.SetValue(i);
-    control.SetDimension(numThetas);
-
-            //control.SetSymbol("θ");
-            //control.SetSymbolSubscript(numThetas);
-
-    //featureControls[numThetas].;
-            //control.SetEnabled(true);
-    //featureControls[numThetas].;
-            //control.SetTitle(title);
-
-    control.SetMathFunction(MATH_FUNCTIONS.squared);
-
-    parentContainer.appendChild(control.element);
-
-    //initial thetas
-    ///////model.hypothesisLine.thetas[i] = control.GetValue();
-
-}
-
 let model = new Model(2);
 model.BuildSampleDataPoints();
 model.BuildSampleHypothesisLines();
@@ -355,7 +314,6 @@ bindAxesControls();
 initDataPointOptions();
 renderCanvases();
 
-addFeature("pickles");
 
 //tasks
 /*

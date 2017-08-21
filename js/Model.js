@@ -81,7 +81,7 @@ function Model(numDimensions) {
 
         //this.activeDataPoints = basicDataPoints;
 
-        let basicDataSet = new DataSet(basicDataPoints, ["data value base (y-intercept)", "data values to ~" + + round(CANVAS_WIDTH / CANVAS_SCALE, 0) + " (slope)"]);
+        let basicDataSet = new DataSet(basicDataPoints, ["bias", "data values"]);
         this.dataSets.push(basicDataSet);
         this.activeDataSet = basicDataSet;
     };
