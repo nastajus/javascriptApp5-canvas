@@ -10,9 +10,10 @@ const DEFAULT_DIMENSION_SELECTED = 1;
  *
  * @param canvasId
  * @param graphType
+ * @param planeOriginToCanvasOriginShift
  * @param getDataPointsCallback
  */
-function Graph(canvasId, graphType, getDataPointsCallback) {
+function Graph(canvasId, graphType, planeOriginToCanvasOriginShift, getDataPointsCallback) {
 
     this.canvas = document.getElementById(canvasId);
     this.context = this.canvas.getContext("2d");
@@ -22,11 +23,19 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
     this.highlightPoints = [];
     this.canvas.width = CANVAS_WIDTH;
     this.canvas.height = CANVAS_HEIGHT;
-    this.planeOriginToCanvasOriginShift = {x:40, y:200};  // {x:1, y:0};
+    this.planeOriginToCanvasOriginShift = (!planeOriginToCanvasOriginShift? {x: 0, y: 0} : planeOriginToCanvasOriginShift);
     let zoomFactor = 1;
     this.axesControl = {};
-    this.canvas.oncontextmenu = (e) => e.preventDefault();
     let shownDimensions = new Array(model.numDimensions);
+    this.canvas.oncontextmenu = (e) => e.preventDefault();
+
+    // Callback called when render invoked
+    this.Render = null;
+
+    // this.ClickCanvas = null;
+    // this.MoveCanvas = null;
+    // this.ScrollCanvas = null;
+
 
     Graph.dimensionXSelected = DEFAULT_DIMENSION_SELECTED;
 

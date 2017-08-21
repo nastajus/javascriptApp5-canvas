@@ -84,4 +84,10 @@ function AxesControlPair() {
     buttonHorizontalIncrementSmall.onclick = () => modifyValueBy({x: changeSmall});
     buttonHorizontalIncrementLarge.onclick = () => modifyValueBy({x: changeLarge});
 
+    // flow of execution of public & private methods
+    // stage 1: an onclick event fires
+    // stage 2: that triggers modifyValueBy(...)
+    // stage 3: that triggers invokeChanged(...)
+    // stage 4: the body of invokeChanged verifies OnControlChange is bound to anything, and if so, executes it.
+
 }
