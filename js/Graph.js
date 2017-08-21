@@ -52,18 +52,9 @@ function Graph(canvasId, graphType, getDataPointsCallback) {
         return dimensionChangeValid;
     };
 
-    this.RenderCanvas = () => {
-
-        this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-
-        this.drawReferencePoints("lightgray", false);
-        this.drawDataPoints(model.activeDataSet.dataPoints, 1, ["darkred", "forestgreen"], true);
-        this.drawAxisLine("x");
-        this.drawAxisLine("y");
-        this.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
-        this.drawHighlightPoints(this.highlightPoints);
-        this.drawComplexLine(model.hypothesisLine, 1, "black");
-    };
+    // this.RenderCanvas = () => {
+    //     this;
+    // };
 
     /**
      * Draws line based off DataPoint points

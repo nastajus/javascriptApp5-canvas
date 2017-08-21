@@ -5,7 +5,7 @@
  *
  */
 
-let graphs = [];
+let graphs = {};
 let featureControls = [];
 //let axesControls = [];
 
@@ -24,30 +24,45 @@ const DATA_DECIMALS_ACCURACY = 1;
 const CLICK_DISTANCE_ACCURACY_TO_POINT = 1 / 2;
 
 function initGraphs() {
-    graphs.push(new Graph("canvas1", GRAPH_TYPES.REGRESSION, () => model.activeDataPoints));
-    graphs.push(new Graph("canvas2", GRAPH_TYPES.CONTOUR, () => model.derivativePoints));
+    graphs.regression = new Graph("canvas1", GRAPH_TYPES.REGRESSION, () => model.activeDataPoints);
+    graphs.contour = new Graph("canvas2", GRAPH_TYPES.CONTOUR, () => model.derivativePoints);
+
     Graph.InitShownDimensions();
 
-    //graphs[0].canvas.onclick = onClickCanvas;
-    graphs[0].canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
-    graphs[0].canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
-    graphs[0].canvas.addEventListener("wheel", onScrollCanvas, true);
-
+    graphs.regression.canvas.onmouseup = onClickCanvas;  //try passing variable here of `graph`
+    graphs.regression.canvas.onmousemove = onMoveCanvas; //try passing variable here of `graph`
+    graphs.regression.canvas.addEventListener("wheel", onScrollCanvas, true);
 }
 
 function renderCanvases() {
-    for (let i = 0; i < graphs.length; i++) {
-        graphs[i].RenderCanvas();
-    }
+
+    renderRegression();
+    renderCountour();
+
     let costNode = document.querySelector("#cost");
     costNode.textContent = round(model.Cost(), 0);
 
     console.log("Gradient Descent Step ([thetas]): " + JSON.stringify(model.hypothesisLine.EvaluateGradientDescentStep(model.hypothesisLine.thetas, model.activeDataSet.dataPoints)));
 }
 
+function renderRegression() {
+    graphs.regression.context.clearRect(0, 0, graphs.regression.canvas.width, graphs.regression.canvas.height);
+    graphs.regression.drawReferencePoints("lightgray", false);
+    graphs.regression.drawDataPoints(model.activeDataSet.dataPoints, 1, ["darkred", "forestgreen"], true);
+    graphs.regression.drawAxisLine("x");
+    graphs.regression.drawAxisLine("y");
+    graphs.regression.drawAxisScale({x: CANVAS_SCALE, y: CANVAS_SCALE});
+    graphs.regression.drawHighlightPoints(graphs.regression.highlightPoints);
+    graphs.regression.drawComplexLine(model.hypothesisLine, 1, "black");
+}
+
+function renderCountour() {
+
+}
+
 function onClickCanvas(e) {
-    let element = graphs[0].canvas; //for now just hard-code
-    let graph = graphs[0];
+    let element = graphs.regression.canvas; //for now just hard-code
+    let graph = graphs.regression;
     let offsetX = 0, offsetY = 0;
 
     if (element.offsetParent) {
@@ -77,7 +92,7 @@ function onClickCanvas(e) {
             console.log("Left button clicked, in graph: " + graph + ".");
             //console.log("Attempting To Add point.");
             let dataPoint = model.AddPoint(dataCoordinates.x, Graph.dimensionXSelected, dataCoordinates.y, true);
-            graph.RenderCanvas();
+            renderRegression();
             addDataPointOption(dataPoint);
             break;
 
@@ -89,7 +104,7 @@ function onClickCanvas(e) {
             console.log("Right button clicked, in graph: " + graph + ".");
             //console.log("Attempting To Remove point.");
             model.RemovePoint(dataCoordinates.x, Graph.dimensionXSelected, dataCoordinates.y, true);
-            graph.RenderCanvas();
+            renderRegression();
             //removeDataPointOption();
             break;
 
@@ -99,8 +114,8 @@ function onClickCanvas(e) {
 }
 
 function onMoveCanvas(e) {
-    let element = graphs[0].canvas; //for now just hard-code
-    let graph = graphs[0];
+    let element = graphs.regression.canvas; //for now just hard-code
+    let graph = graphs.regression;
     let offsetX = 0, offsetY = 0;
 
     if (element.offsetParent) {
@@ -133,7 +148,7 @@ function onMoveCanvas(e) {
 
 function onScrollCanvas(e) {
     e.preventDefault();
-    let graph = graphs[0];
+    let graph = graphs.regression;
 
     let changeSign = 0;
 
@@ -174,7 +189,7 @@ function onScrollCanvas(e) {
     //graph.zoomFactor = round(graph.zoomFactor + changeSign * ZOOM_INCREMENT, 1);
     graph.SetZoomFactor(round(graph.GetZoomFactor() + changeSign * ZOOM_INCREMENT, 1));
     console.log("zoom factor: " + graph.GetZoomFactor());
-    graph.RenderCanvas();
+    renderRegression();
 }
 
 function onClickList(e) {
@@ -191,6 +206,10 @@ function addHighlightPoints(sourceArray, targetArray) {
     addArrayToArrayOnce(sourceArray, targetArray);
 }
 
+/**
+ * Note that the "bias control" is a limited subset.
+ *
+ */
 function initFeatureControls() {
 
     //addMathFunctionOptionToTemplate();
@@ -222,7 +241,7 @@ function initFeatureControls() {
 }
 
 function bindAxesControls() {
-    let graph = graphs[0];
+    let graph = graphs.regression;
     let axesControl = new AxesControlPair();
     //axesControls.push(axesControl);
     graph.axesControl = axesControl;
