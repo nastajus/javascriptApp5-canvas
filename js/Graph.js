@@ -581,7 +581,6 @@ function Graph(canvasId, graphType, planeOriginToCanvasOriginShift, getDataPoint
     /**
      * Public accessor for limiting mutation externally in ways that could break the application.
      * @returns {number}
-     * @constructor
      */
     this.SetZoomFactor = (newZoomFactor) => {
         if (newZoomFactor === 0) {

@@ -166,7 +166,7 @@ function onScrollCanvas(e) {
     }
 
     let value = graph.GetOriginShift();
-    let changeDistance = graph.axesControl.GetChangeLarge();
+    let changeDistance = graph.axesControl.GetTranslateLarge();
 
     //cause translation vertically
     if (e.shiftKey) {
@@ -203,7 +203,7 @@ function onKeyPressDocument(e) {
     let key = e.key.toLowerCase();
     let graph = graphs.regression;
     let value = graph.GetOriginShift();
-    let changeDistance = graph.axesControl.GetChangeLarge();
+    let changeDistance = graph.axesControl.GetTranslateLarge();
 
     //left
     if (key === "a") {
@@ -239,7 +239,7 @@ function onKeyPressDocument(e) {
     }
     //out
     if (key === "e") {
-        graph.SetZoomFactor(round(graph.GetZoomFactor() - ZOOM_qINCREMENT, 1));
+        graph.SetZoomFactor(round(graph.GetZoomFactor() - ZOOM_INCREMENT, 1));
     }
 
     graph.Render();
@@ -296,15 +296,18 @@ function initFeatureControls() {
 function bindAxesControls() {
     let graph = graphs.regression;
     let axesControl = new AxesControlPair();
-    //axesControls.push(axesControl);
+
     graph.axesControl = axesControl;
+    axesControl.graph = graph;
+
     axesControl.SetValue(graph.planeOriginToCanvasOriginShift);
     axesControl.OnControlChange = () => {
         graph.planeOriginToCanvasOriginShift = axesControl.GetValue();
         renderCanvases();
     };
-    axesControl.SetChangeSmall(CANVAS_SCALE/4);
-    axesControl.SetChangeLarge(CANVAS_SCALE);
+    axesControl.SetTranslateSmall(CANVAS_SCALE/4);
+    axesControl.SetTranslateLarge(CANVAS_SCALE);
+    axesControl.SetZoomFactor(graph.GetZoomFactor());
 }
 
 

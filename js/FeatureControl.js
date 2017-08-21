@@ -94,7 +94,6 @@ function FeatureControl(which) {
     let buttonIncrementLarge = this.element.querySelector(".control-gt-large");
     let textbox = this.element.querySelector(".control-textbox");
 
-
     //internal methods
     //for subscribers (utility function so we don'thave to check for null everytime)
     const invokeChanged = () => {

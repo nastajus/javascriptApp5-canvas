@@ -11,6 +11,7 @@ function AxesControlPair() {
 
     //external variable
     this.element = null;
+    this.graph = null;
 
     // Callback called when control changes
     this.OnControlChange = null;
@@ -20,21 +21,26 @@ function AxesControlPair() {
         value = _value;
     };
 
-    this.GetChangeLarge = () => changeLarge;
-    this.SetChangeLarge = (_changeLarge) => {
-        changeLarge = _changeLarge;
+    this.GetTranslateLarge = () => translateLarge;
+    this.SetTranslateLarge = (_translateLarge) => {
+        translateLarge = _translateLarge;
     };
 
-    this.GetChangeSmall = () => changeSmall;
-    this.SetChangeSmall = (_changeSmall) => {
-        changeSmall = _changeSmall;
+    this.GetTranslateSmall = () => translateSmall;
+    this.SetTranslateSmall = (_translateSmall) => {
+        translateSmall = _translateSmall;
+    };
+
+    this.GetZoomFactor = () => this.graph.GetZoomFactor();
+    this.SetZoomFactor = (zoomFactor) => {
+        this.graph.SetZoomFactor(zoomFactor);
     };
 
     //internal state
     this.element = document.querySelector(".container-column");
     let value = {x: 0, y: 0};
-    let changeSmall;
-    let changeLarge;
+    let translateSmall;
+    let translateLarge;
 
     let buttonVerticalIncrementLarge = this.element.querySelector(".axis-vg-large");
     let buttonVerticalIncrementSmall = this.element.querySelector(".axis-vg-small");
@@ -45,6 +51,11 @@ function AxesControlPair() {
     let buttonHorizontalIncrementSmall = this.element.querySelector(".axis-hg-small");
     let buttonHorizontalDecrementSmall = this.element.querySelector(".axis-hl-small");
     let buttonHorizontalDecrementLarge = this.element.querySelector(".axis-hl-large");
+
+    let buttonZoomHorizontalIn = this.element.querySelector(".axis-hm");
+    let buttonZoomHorizontalOut = this.element.querySelector(".axis-hp");
+    let buttonZoomVerticalIn = this.element.querySelector(".axis-vm");
+    let buttonZoomVerticalOut = this.element.querySelector(".axis-vp");
 
     //internal methods
     //for subscribers (utility functions so don't have to check for null every time)
@@ -73,16 +84,27 @@ function AxesControlPair() {
         invokeChanged();
     };
 
-    //init logic
-    buttonVerticalDecrementSmall.onclick = () => modifyValueBy({y: -changeSmall});
-    buttonVerticalDecrementLarge.onclick = () => modifyValueBy({y: -changeLarge});
-    buttonVerticalIncrementSmall.onclick = () => modifyValueBy({y: changeSmall});
-    buttonVerticalIncrementLarge.onclick = () => modifyValueBy({y: changeLarge});
+    const modifyZoomBy = (zoomFactor) => {
+        this.SetZoomFactor(zoomFactor);
+        invokeChanged();
+    };
 
-    buttonHorizontalDecrementSmall.onclick = () => modifyValueBy({x: -changeSmall});
-    buttonHorizontalDecrementLarge.onclick = () => modifyValueBy({x: -changeLarge});
-    buttonHorizontalIncrementSmall.onclick = () => modifyValueBy({x: changeSmall});
-    buttonHorizontalIncrementLarge.onclick = () => modifyValueBy({x: changeLarge});
+    //init logic
+    buttonVerticalDecrementSmall.onclick = () => modifyValueBy({y: -translateSmall});
+    buttonVerticalDecrementLarge.onclick = () => modifyValueBy({y: -translateLarge});
+    buttonVerticalIncrementSmall.onclick = () => modifyValueBy({y: translateSmall});
+    buttonVerticalIncrementLarge.onclick = () => modifyValueBy({y: translateLarge});
+
+    buttonHorizontalDecrementSmall.onclick = () => modifyValueBy({x: -translateSmall});
+    buttonHorizontalDecrementLarge.onclick = () => modifyValueBy({x: -translateLarge});
+    buttonHorizontalIncrementSmall.onclick = () => modifyValueBy({x: translateSmall});
+    buttonHorizontalIncrementLarge.onclick = () => modifyValueBy({x: translateLarge});
+
+    buttonZoomHorizontalIn.onclick = () => modifyZoomBy(round(this.graph.GetZoomFactor() - ZOOM_INCREMENT, 1));
+    buttonZoomHorizontalOut.onclick = () => modifyZoomBy(round(this.graph.GetZoomFactor() + ZOOM_INCREMENT, 1));
+    buttonZoomVerticalIn.onclick = () => modifyZoomBy(round(this.graph.GetZoomFactor() - ZOOM_INCREMENT, 1));
+    buttonZoomVerticalOut.onclick = () => modifyZoomBy(round(this.graph.GetZoomFactor() + ZOOM_INCREMENT, 1));
+
 
     // flow of execution of public & private methods
     // stage 1: an onclick event fires
