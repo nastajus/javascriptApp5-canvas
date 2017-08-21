@@ -34,6 +34,8 @@ function initGraphs() {
     graphs.regression.canvas.addEventListener("mousemove", onMoveCanvas, true); //try passing variable here of `graph`
     graphs.regression.canvas.addEventListener("wheel", onScrollCanvas, true);
 
+    document.addEventListener("keypress", onKeyPressDocument, true);
+
     graphs.regression.Render = () => {
         graphs.regression.context.clearRect(0, 0, graphs.regression.canvas.width, graphs.regression.canvas.height);
         graphs.regression.drawReferencePoints("lightgray", false);
@@ -163,35 +165,83 @@ function onScrollCanvas(e) {
         changeSign = -1;
     }
 
-    let value = graph.axesControl.GetValue();
-    let change = graph.axesControl.GetChangeLarge();
+    let value = graph.GetOriginShift();
+    let changeDistance = graph.axesControl.GetChangeLarge();
 
     //cause translation vertically
     if (e.shiftKey) {
         console.log("SHIFT BUTTON HELD");
-        graph.axesControl.SetValue({
+        graph.SetOriginShift({
             x: value.x,
-            y: value.y + changeSign * change
+            y: value.y + changeSign * changeDistance
         });
     }
 
     //cause translation horizontally
     if (e.ctrlKey) {
         console.log("CONTROL BUTTON HELD");
-        graph.axesControl.SetValue({
-            x: value.x + changeSign * change,
+        graph.SetOriginShift({
+            x: value.x + changeSign * changeDistance,
             y: value.y
         });
     }
+
+    graph.Render();
 
     if (e.shiftKey || e.ctrlKey) {
         return;
     }
 
     //cause zoom change
-    //graph.zoomFactor = round(graph.zoomFactor + changeSign * ZOOM_INCREMENT, 1);
     graph.SetZoomFactor(round(graph.GetZoomFactor() + changeSign * ZOOM_INCREMENT, 1));
     console.log("zoom factor: " + graph.GetZoomFactor());
+    graph.Render();
+}
+
+function onKeyPressDocument(e) {
+
+    let key = e.key.toLowerCase();
+    let graph = graphs.regression;
+    let value = graph.GetOriginShift();
+    let changeDistance = graph.axesControl.GetChangeLarge();
+
+    //left
+    if (key === "a") {
+        graph.SetOriginShift({
+            x: value.x - changeDistance,
+            y: value.y
+        });
+    }
+    //right
+    if (key === "d") {
+        graph.SetOriginShift({
+            x: value.x + changeDistance,
+            y: value.y
+        });
+    }
+    //up
+    if (key === "w") {
+        graph.SetOriginShift({
+            x: value.x,
+            y: value.y + changeDistance
+        });
+    }
+    //down
+    if (key === "s") {
+        graph.SetOriginShift({
+            x: value.x,
+            y: value.y - changeDistance
+        });
+    }
+    //in
+    if (key === "q") {
+        graph.SetZoomFactor(round(graph.GetZoomFactor() + ZOOM_INCREMENT, 1));
+    }
+    //out
+    if (key === "e") {
+        graph.SetZoomFactor(round(graph.GetZoomFactor() - ZOOM_qINCREMENT, 1));
+    }
+
     graph.Render();
 }
 

@@ -595,4 +595,11 @@ function Graph(canvasId, graphType, planeOriginToCanvasOriginShift, getDataPoint
         return zoomFactor;
     };
 
+    this.GetOriginShift = () => this.planeOriginToCanvasOriginShift;
+    this.SetOriginShift = (originShift) => {
+        if (originShift.x && originShift.y) {
+            this.planeOriginToCanvasOriginShift = originShift;
+        }
+    }
+
 }
