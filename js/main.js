@@ -245,6 +245,10 @@ function onKeyPressDocument(e) {
     graph.Render();
 }
 
+function onChangeDroplist(e) {
+    console.log(e + " working");
+}
+
 function onClickList(e) {
     //console.log(document.getElementById("data-points").options);
     //console.log(this.options);
@@ -263,34 +267,48 @@ function addHighlightPoints(sourceArray, targetArray) {
  * Note that the "bias control" is a limited subset.
  *
  */
-function initFeatureControls() {
+function addFeatureControl(fullFeature) {
 
-    //addMathFunctionOptionToTemplate();
 
     let parentContainer = document.querySelector('.container-column');
+    let control = new FeatureControl("control-template-old", fullFeature);
 
-    for (let i = 0; i < model.numDimensions; i++) {
-
-        let control = new FeatureControl("control-template-old");
-
-        control.OnControlChange = () => {
-            //update the thetas in the ComplexLine
-            model.hypothesisLine.thetas[i] = control.GetValue();
-            renderCanvases();
-        };
-        featureControls.push(control);
-        control.SetValue(i);
-        control.SetDimension(i);
-        control.SetSymbol("θ");
-        control.SetSymbolSubscript(i);
-        parentContainer.appendChild(control.element);
-
-        // featureControls[i].SetEnabled(true);
-        featureControls[i].SetTitle(model.activeDataSet.featureLabels[i]);
-
-        //initial thetas
-        model.hypothesisLine.thetas[i] = control.GetValue();
+    let droplist = {};
+    if (fullFeature) {
+        droplist = addMathFunctionOptionToTemplate(control.element);
     }
+
+    let i = model.numDimensions;
+
+    control.OnControlChange = () => {
+        //update the thetas in the ComplexLine
+        //model.hypothesisLine.thetas[i] = control.GetValue();
+        model.thetas[i] = control.GetValue();
+        console.log(droplist.value);
+        control.SetMathFunction(droplist.value);
+        //console.log(control.GetMathFunction());
+
+
+        renderCanvases();
+    };
+    featureControls.push(control);
+    control.SetValue(i);
+    control.SetDimension(i);
+    control.SetWeightSymbol("θ");
+    control.SetWeightSubscript(i);
+    control.SetXSubscript(i);
+    control.SetMathFunction(MATH_FUNCTIONS.linear);
+    parentContainer.appendChild(control.element);
+
+    // featureControls[i].SetEnabled(true);
+    featureControls[i].SetTitle(model.activeDataSet.featureLabels[i]);
+
+    //initial thetas
+    //model.hypothesisLine.thetas[i] = control.GetValue();
+    model.thetas[i] = control.GetValue();
+
+    model.numDimensions++;
+
 }
 
 function bindAxesControls() {
@@ -313,10 +331,10 @@ function bindAxesControls() {
 
 function initDataPointOptions() {
     //initialize the data select list section to appear
-    let template = document.querySelector("#data-template").content;
-    let node = document.importNode(template, true);
+    let templateContents = document.querySelector("#data-template").content;
+    let template = document.importNode(templateContents, true);
     let parentContainer = document.querySelector('.container');
-    parentContainer.appendChild(node);
+    parentContainer.appendChild(template);
 
     //populate the data point list
     let selectorNode = document.querySelector("#data-points");
@@ -348,44 +366,44 @@ function removeDataPointOption(dataPoint) {
     //...
 }
 
-function addMathFunctionOptionToTemplate() {
+/**
+ *
+ * @param targetElement
+ */
+function addMathFunctionOptionToTemplate(targetElement) {
     //let selectorNode = document.querySelector(".math-functions");
-    let template = document.querySelector("#control-template-new").content;
-    let node = document.importNode(template, true);
-    let selectorNode = node.querySelector(".math-functions");
+    let templateContent = document.querySelector("#control-template-new").content;
+    let template = document.importNode(templateContent, true);
+    let selectorNode = template.querySelector(".math-functions");
 
+    Object.keys(MATH_FUNCTIONS).forEach(function(key,index) {
+        // key: the name of the object key
+        // index: the ordinal position of the key within the object
 
-    //const initMathFunctionList = () => {
-        // for (let property in MATH_FUNCTIONS) {
-        //     if (object.hasOwnProperty(property)) {
-        //         // do stuff
-        //     }
-        // }
+        let option = document.createElement("option");
+        let textNode = document.createTextNode(key);
+        option.appendChild(textNode);
+        option.setAttribute("value", index.toString());
+        selectorNode.appendChild(option);
+    });
 
-        Object.keys(MATH_FUNCTIONS).forEach(function(key,index) {
-            // key: the name of the object key
-            // index: the ordinal position of the key within the object
-
-            let element = document.createElement("option");
-            let textNode = document.createTextNode(index + ": " + key);
-            element.appendChild(textNode);
-            element.setAttribute("value", index.toString());
-            selectorNode.appendChild(element);
-        });
-
-    //};
-    
-    let parentContainer = document.querySelector(".container-column");
+    let parentContainer = targetElement.querySelector(".control-row:last-child");
     parentContainer.appendChild(selectorNode);
+
+    //selectorNode.AddEventListener("onchange", onChangeDroplist, true);
+    return selectorNode;
+    //return selectorNode.content;
 }
 
-let model = new Model(2);
+let model = new Model();
 model.BuildSampleDataPoints();
 model.BuildSampleHypothesisLines();
 model.BuildSampleContour();
 
 initGraphs();
-initFeatureControls();
+addFeatureControl(false);
+addFeatureControl(true);
+addFeatureControl(true);
 bindAxesControls();
 initDataPointOptions();
 renderCanvases();
@@ -401,7 +419,7 @@ renderCanvases();
 //tasks redux
 /*
  - create DataPoints with an array of x's and separate my concerns with drawing and data points.
- - bind the controls so they actually affect the line. (fix bitch)    in initFeatureControls in the call to
+ - bind the controls so they actually affect the line. (fix bitch)    in addFeatureControl in the call to
  "newRow.OnControlChange", update the thetas in the ComplexLine, e.g. can make a property to access (from the model)
  (and rerender the canvas)
  */

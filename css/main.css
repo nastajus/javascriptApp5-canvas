@@ -180,6 +180,10 @@ canvas {
     /*width: 300px;*/
 /*}*/
 
+.math-functions {
+    font-size: 2em;
+    font-weight: bold;
+}
 
 input[type=checkbox] {
     transform: scale(2);

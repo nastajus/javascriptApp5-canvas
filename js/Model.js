@@ -10,13 +10,14 @@ let PLANE_TO_MODEL_RATIO;
  */
 function Model(numDimensions) {
 
-    this.numDimensions = numDimensions;
+    this.numDimensions = 0; //!numDimensions? 2 : numDimensions;
     this.dataSets = [];
     this.activeFeatureLabels = [];
     this.activeDataPoints = [];
     this.activeDataSet = {};
     this.hypothesisLine = {};
     this.derivativePoints = [];
+    this.thetas = new Array(this.numDimensions);
 
     PLANE_TO_MODEL_RATIO = {x: CANVAS_SCALE, y: CANVAS_SCALE};
 
@@ -64,20 +65,20 @@ function Model(numDimensions) {
     this.BuildSampleDataPoints = () => {
         let basicDataPoints = [];
 
-        basicDataPoints.push(new DataPoint([1, 1], 1));
-        basicDataPoints.push(new DataPoint([1, 3], 4));
-        basicDataPoints.push(new DataPoint([1, 2], 5));
-        basicDataPoints.push(new DataPoint([1, 3], 6));
-        basicDataPoints.push(new DataPoint([1, 5], 5));
-        basicDataPoints.push(new DataPoint([1, 5], 9));
-        basicDataPoints.push(new DataPoint([1, 6], 4));
-        basicDataPoints.push(new DataPoint([1, 7], 7));
-        basicDataPoints.push(new DataPoint([1, 7], 8));
-        basicDataPoints.push(new DataPoint([1, 8], 7));
-        basicDataPoints.push(new DataPoint([1, 9], 9));
-        basicDataPoints.push(new DataPoint([1, 12], 8));
-        basicDataPoints.push(new DataPoint([1, 13], 9));
-        basicDataPoints.push(new DataPoint([1, 14], 7));
+        basicDataPoints.push(new DataPoint([0, 1, 0], 1));
+        basicDataPoints.push(new DataPoint([0, 3, 0], 4));
+        basicDataPoints.push(new DataPoint([0, 2, 0], 5));
+        basicDataPoints.push(new DataPoint([0, 3, 0], 6));
+        basicDataPoints.push(new DataPoint([0, 5, 0], 5));
+        basicDataPoints.push(new DataPoint([0, 5, 0], 9));
+        basicDataPoints.push(new DataPoint([0, 6, 0], 4));
+        basicDataPoints.push(new DataPoint([0, 7, 0], 7));
+        basicDataPoints.push(new DataPoint([0, 7, 0], 8));
+        basicDataPoints.push(new DataPoint([0, 8, 0], 7));
+        basicDataPoints.push(new DataPoint([0, 9, 0], 9));
+        //basicDataPoints.push(new DataPoint([1, 12], 8));
+        //basicDataPoints.push(new DataPoint([1, 13], 9));
+        //basicDataPoints.push(new DataPoint([1, 14], 7));
 
         //this.activeDataPoints = basicDataPoints;
 
@@ -87,7 +88,7 @@ function Model(numDimensions) {
     };
 
     this.BuildSampleHypothesisLines = () => {
-        this.hypothesisLine = new ComplexLine();
+        this.hypothesisLine = new ComplexLine(model);
         this.hypothesisLine.name = "the hypothesis line";
     };
 
@@ -138,7 +139,7 @@ function Model(numDimensions) {
     this.AddPoint = (planeX, dimensionX, planeY, logThis) => {
 
         //Todo: Review semantics
-        let newXs = this.hypothesisLine.thetas.slice();
+        let newXs = this.thetas.slice();
         newXs[0]= 1;
 
         for (let i = 1; i<newXs.length;i++){

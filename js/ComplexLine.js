@@ -7,7 +7,7 @@
  * Create a line, using an array of parameters of θ (thetas), e.g. y = θ_0 * x_0 + θ_1 * x_1
  * @param {[Number]} thetas - the weighted parameters
  */
-function ComplexLine() {
+function ComplexLine(model) {
 
     //y=mx + b
     //y_hat = b0 + b1 * x;
@@ -21,7 +21,7 @@ function ComplexLine() {
     //hθ(x) = θ_0 * x_0 + θ_1 * x_1 + ... + θ_n * x_n
 
 
-    this.thetas = [];
+    //this.thetas = [];
     this.name = "";
 
     /**
@@ -33,15 +33,13 @@ function ComplexLine() {
      */
     this.EvaluateY = (xs) => {
 
-        if (this.thetas.length !== xs.length) {
-            throw new RangeError("Amount of θ (thetas) does not match amount of X parameters. Cannot evaluate.")
-        }
+        let smallerArrayLength = (model.thetas.length < xs.length) ? model.thetas.length : xs.length;
 
         let y = 0;
 
-        for (let i = 0; i < xs.length; i++) {
+        for (let i = 0; i < smallerArrayLength; i++) {
             let x = xs[i];
-            let θ = this.thetas[i];
+            let θ = model.thetas[i];
             y += x * θ;
         }
 
@@ -50,27 +48,25 @@ function ComplexLine() {
 
     this.EvaluateGradientDescentStep = (thetas, points) => {
 
-        if (thetas.length !== points[0].xs.length) {
-            throw new RangeError("Amount of θ (thetas) does not match amount of X parameters. Cannot evaluate.")
-        }
+        let smallerArrayLength = (model.thetas.length < points[0].xs.length) ? model.thetas.length : points[0].xs.length;
 
         let m = points.length;
-        let thetasNext = new Array(thetas.length);
+        let thetasNext = new Array(model.thetas.length);
 
-        for (let t = 0; t < thetas.length; t++) {
+        for (let t = 0; t < smallerArrayLength; t++) {
 
             let summation = 0;
 
             for (let i = 0; i < m; i++) {
                 let p = points[i];
-                summation += (thetas[i] * p.xs[i] - p.y) * p.xs[i];
+                summation += (model.thetas[i] * p.xs[i] - p.y) * p.xs[i];
             }
 
             //return summation;
 
-            thetasNext[t] = thetas[t] - (1/m) * summation;
+            thetasNext[t] = model.thetas[t] - (1/m) * summation;
         }
 
-        return {thetas: thetas, thetasNext: thetasNext};
+        return {thetas: model.thetas, thetasNext: thetasNext};
     };
 }
