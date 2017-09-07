@@ -273,22 +273,18 @@ function addFeatureControl(fullFeature) {
     let parentContainer = document.querySelector('.container-column');
     let control = new FeatureControl("control-template-old", fullFeature);
 
-    let droplist = {};
-    if (fullFeature) {
-        droplist = addMathFunctionOptionToTemplate(control.element);
-    }
+    // let droplist = {};
+    // if (fullFeature) {
+    //     droplist = addMathFunctionOptionToTemplate(control.element);
+    // }
 
     let i = model.numDimensions;
 
     control.OnControlChange = () => {
         //update the thetas in the ComplexLine
-        //model.hypothesisLine.thetas[i] = control.GetValue();
         model.thetas[i] = control.GetValue();
-        console.log(droplist.value);
-        control.SetMathFunction(droplist.value);
-        //console.log(control.GetMathFunction());
-
-
+        //console.log(droplist.value);
+        //control.SetMathFunction(droplist.value);
         renderCanvases();
     };
     featureControls.push(control);
@@ -349,7 +345,7 @@ function initDataPointOptions() {
     }
 
     //todo: consider moving this somewhere better
-    //document.getElementById("data-points").addEventListener("click", onClickList, true);
+    document.getElementById("data-points").addEventListener("click", onClickList, true);
 }
 
 function addDataPointOption(dataPoint) {
@@ -403,7 +399,7 @@ model.BuildSampleContour();
 initGraphs();
 addFeatureControl(false);
 addFeatureControl(true);
-addFeatureControl(true);
+//addFeatureControl(true);
 bindAxesControls();
 initDataPointOptions();
 renderCanvases();

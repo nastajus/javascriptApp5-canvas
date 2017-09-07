@@ -65,17 +65,17 @@ function Model(numDimensions) {
     this.BuildSampleDataPoints = () => {
         let basicDataPoints = [];
 
-        basicDataPoints.push(new DataPoint([0, 1, 0], 1));
-        basicDataPoints.push(new DataPoint([0, 3, 0], 4));
-        basicDataPoints.push(new DataPoint([0, 2, 0], 5));
-        basicDataPoints.push(new DataPoint([0, 3, 0], 6));
-        basicDataPoints.push(new DataPoint([0, 5, 0], 5));
-        basicDataPoints.push(new DataPoint([0, 5, 0], 9));
-        basicDataPoints.push(new DataPoint([0, 6, 0], 4));
-        basicDataPoints.push(new DataPoint([0, 7, 0], 7));
-        basicDataPoints.push(new DataPoint([0, 7, 0], 8));
-        basicDataPoints.push(new DataPoint([0, 8, 0], 7));
-        basicDataPoints.push(new DataPoint([0, 9, 0], 9));
+        basicDataPoints.push(new DataPoint([1, 1, 0], 1));
+        basicDataPoints.push(new DataPoint([1, 3, 0], 4));
+        basicDataPoints.push(new DataPoint([1, 2, 0], 5));
+        basicDataPoints.push(new DataPoint([1, 3, 0], 6));
+        basicDataPoints.push(new DataPoint([1, 5, 0], 5));
+        basicDataPoints.push(new DataPoint([1, 5, 0], 9));
+        basicDataPoints.push(new DataPoint([1, 6, 0], 4));
+        basicDataPoints.push(new DataPoint([1, 7, 0], 7));
+        basicDataPoints.push(new DataPoint([1, 7, 0], 8));
+        basicDataPoints.push(new DataPoint([1, 8, 0], 7));
+        basicDataPoints.push(new DataPoint([1, 9, 0], 9));
         //basicDataPoints.push(new DataPoint([1, 12], 8));
         //basicDataPoints.push(new DataPoint([1, 13], 9));
         //basicDataPoints.push(new DataPoint([1, 14], 7));
@@ -103,9 +103,13 @@ function Model(numDimensions) {
     this.SetActiveDataPointIndices = (dataPointIndices) => {
         let dataPoints = [];
         for (let index of dataPointIndices) {
-            dataPoints.push(this.dataSets[0][index]);
+            dataPoints.push(this.dataSets[0].dataPoints[index]);
         }
-        this.activeDataSet.dataPoints = dataPoints;
+        console.log(this.activeDataSet);
+        console.log(this.activeDataSet.dataPoints);
+        // this.activeDataSet.dataPoints = dataPoints.slice();
+        // console.log(this.activeDataSet);
+        // console.log(this.activeDataSet.dataPoints);
     };
 
     /**

@@ -25,7 +25,7 @@ function ComplexLine(model) {
     this.name = "";
 
     /**
-     * EvaluateY y over all dimensions of x.  e.g. y = x_0 * θ_0 + x_1 * θ_1 + ... + x_n * θ_n
+     * Evaluate y over all dimensions of x.  e.g. y = x_0 * θ_0 + x_1 * θ_1 + ... + x_n * θ_n
      *
      * @param xs Array of x values
      * (implicit) param [thetas] Array Thetas
